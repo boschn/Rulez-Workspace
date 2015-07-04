@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("otRulez")]
-[assembly: AssemblyDescription("OnTrack Rulez Engine")]
+[assembly: AssemblyTitle("Rulez Workspace")]
+[assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("sfk engineering services UG")]
-[assembly: AssemblyProduct("otRulez")]
+[assembly: AssemblyCompany("")]
+[assembly: AssemblyProduct("Rulez Workspace")]
 [assembly: AssemblyCopyright("Copyright ©  2015")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("a9ea4641-4356-4efc-b983-7b10be7b2aa4")]
+[assembly: Guid("02e223de-6707-4cea-b3c8-984b2db9d6d2")]
 
 // Version information for an assembly consists of the following four values:
 //

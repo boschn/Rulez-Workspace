@@ -1,3 +1,0 @@
-[submodule "otIOCSV"]
-    path = otIOCSV
-    url = C:/vol/projekte/OnTrack/OnTrack4XLS Workspace/OnTrack4XLS/otAddInCommon/otBackEnd/otRulez/otIOCSV
