@@ -1,13 +1,13 @@
 ﻿using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Rulez_Workspace
+namespace OnTrack.Testing
 {
     [TestClass]
-    public class UnitTest1
+    public class CSVTesting
     {
         [TestMethod]
-        public void TestMethod1()
+        public void MainTesting()
         {
         }
     }
