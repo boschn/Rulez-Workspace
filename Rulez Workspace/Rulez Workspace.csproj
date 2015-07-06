@@ -4,7 +4,7 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{F2B2AF7D-468E-4305-BC55-4948C00282AC}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>OnTrack.Testing</RootNamespace>
     <AssemblyName>Rulez Workspace</AssemblyName>
@@ -39,6 +39,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Windows" />
+    <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <Choose>
     <When Condition="('$(VisualStudioVersion)' == '10.0' or '$(VisualStudioVersion)' == '') and '$(TargetFrameworkVersion)' == 'v3.5'">
@@ -56,6 +58,21 @@
     <Compile Include="Program.cs" />
     <Compile Include="CSVTesting.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\otIOCSV\otIOCSV.csproj">
+      <Project>{4208b73c-ac5f-489f-abe2-e92a1b3dc871}</Project>
+      <Name>otIOCSV</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\otRulez\otRulez\otRulez.csproj">
+      <Project>{9178cced-ea77-491d-abea-ecf6b692b0e3}</Project>
+      <Name>otRulez</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\15_ObjectMessageTypes.csv">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
