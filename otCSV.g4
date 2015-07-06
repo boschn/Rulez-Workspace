@@ -4,6 +4,8 @@
 
 grammar otCSV;
 
+tokens { TEXT } 
+
 /*
  * Parser Rules
  */
@@ -11,7 +13,7 @@ grammar otCSV;
 csvbuffer: header row+ ;
 header : row ;
 
-row : field (',' field)* '\r'? '\n' ;
+row : field (DELIMITER field)* '\r'? '\n'  ;
 
 field
     : TEXT		# text
@@ -24,14 +26,17 @@ field
  * Lexer Rules
  */
 
-TEXT   : ~[,\n\r"]+ ;
-STRING : '"' ('""'|~'"')* '"' ; // quote-quote is an escaped quote
-
-//B.1.2 Comments
+//Comments first and check if the '#' is really in the first column
 SINGLE_LINE_COMMENT 
-  : ('//' Input_character* NEW_LINE_CHARACTER
-  |  '#'  Input_character* NEW_LINE_CHARACTER) -> channel(HIDDEN)
+  :   (
+     '#'  {isFirst()}? Input_character* NEW_LINE_CHARACTER+
+	 ) -> channel(HIDDEN)
   ;
+
+STRING : '"' ('""'|~'"')* '"' ; // quote-quote is an escaped quote
+TEXT:  {tryText();}  ; // dynamic since delimiter is also dynamic
+DELIMITER:  ~["\n\r] {isDelimiter()}?  ; // dynamic Delimiter Token which is set by the property of the LExer
+
 fragment Input_characters
   : Input_character+
   ;

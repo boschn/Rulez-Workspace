@@ -27,31 +27,39 @@ namespace OnTrack.IO.CSV
         private Antlr4.Runtime.ICharStream _input; // Input Stream
         private List<String> _header; // header list
         private List<Dictionary<String, String>> _rows; // rows are dictionary of string, string
+        private String _delimiter = ";"; // Optional Delimiter
 
         /// <summary>
         /// Creator from a string buffer
         /// </summary>
         /// <param name="buffer"></param>
-        public Reader(String buffer)
+        public Reader(String buffer, String delimiter = null)
         {
             _input = new Antlr4.Runtime.AntlrInputStream(buffer);
+            if (delimiter != null) this.Delimiter = delimiter;
         }
         /// <summary>
         /// Creator from a text reader 
         /// </summary>
         /// <param name="buffer"></param>
-        public Reader(System.IO.TextReader reader)
+        public Reader(System.IO.TextReader reader, String delimiter = null)
         {
             _input = new Antlr4.Runtime.AntlrInputStream(reader);
+             if (delimiter !=null) this.Delimiter = delimiter;
         }
         /// <summary>
         /// Creator from a stream reader 
         /// </summary>
         /// <param name="buffer"></param>
-        public Reader(System.IO.StreamReader reader)
+        public Reader(System.IO.StreamReader reader, String delimiter = null)
         {
             _input = new Antlr4.Runtime.AntlrInputStream (reader);
+             if (delimiter != null) this.Delimiter = delimiter;
         }
+        /// <summary>
+        /// get or sets the Delimiter to be used
+        /// </summary>
+        public String Delimiter { get { return _delimiter; } set { _delimiter = value; } }
         /// <summary>
         /// returns the Header of the CSV
         /// </summary>
@@ -70,6 +78,7 @@ namespace OnTrack.IO.CSV
                 try
                 {
                     otCSVLexer _lexer = new otCSVLexer(_input);
+                    _lexer.Delimiter = _delimiter;
                     // wrap a token-stream around the lexer
                     Antlr4.Runtime.CommonTokenStream tokens = new Antlr4.Runtime.CommonTokenStream(_lexer);
                     // create the aParser
