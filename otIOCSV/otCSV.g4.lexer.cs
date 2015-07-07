@@ -57,23 +57,17 @@ namespace OnTrack.IO.CSV
             return true;
         }
         /// <summary>
-        /// check if the Comment is in first column of line
+        /// check if n-th la is new line character
         /// </summary>
         /// <returns></returns>
-        bool isFirst()
+        bool isNewLine(int i)
         {
-            if (this.Line == 102)
-                System.Console.Write("STOP");
-            // return if '#' was not recognized
-            if (this.Text == null || (char)this.Text[0] != '#') 
-                return false;
              // first character We are here after the '#'
-            if (_input.Index ==1) 
+            if ((_input.Index + i) < 0) 
                 return true;
-
            
             // NEW_LINE_CHARACTER  ?? -> 2 back sind one back is the '#'
-            switch ((int)_input.La(-2))
+            switch ((int)_input.La(i))
             {
                 case (int)'\n': //'<Line Feed Character (U+000A)>'
                 case (int)'\r'://'<Carriage Return Character (U+000D)>'
@@ -97,55 +91,17 @@ namespace OnTrack.IO.CSV
             // See if what is ahead in the CharStream.
             for (int i = 0; i < _input.Size - _input.Index; i++)
             {
-                // NEW_LINE_CHARACTER 
-                switch ((int)_input.La(1 + i))
+                // NEW_LINE_CHARACTER  or delimiter
+                if (isNewLine(1 + i) || ((char)_input.La(1 + i) == (char)this.Delimiter[0]))
                 {
-                    case (int) '#': // comment ?!
-                        if (i == 0)
-                        {
-                            // NEW_LINE_CHARACTER  ?? 
-                            switch ((int)_input.La(-1))
-                            {
-                                case (int)'\n': //'<Line Feed Character (U+000A)>'
-                                case (int)'\r'://'<Carriage Return Character (U+000D)>'
-                                case (int)'\u0085': //'<Next Line Character (U+0085)>'
-                                case (int)'\u2028': //'<Line Separator Character (U+2028)>'
-                                case (int)'\u2029': //'<Paragraph Separator Character (U+2029)>'
-                                    return false;
-                                    break;
-                            }
-                        }
-                        break;
-                    case (int)'\n': //'<Line Feed Character (U+000A)>'
-                    case (int)'\r'://'<Carriage Return Character (U+000D)>'
-                    case (int)'\u0085': //'<Next Line Character (U+0085)>'
-                    case (int)'\u2028': //'<Line Separator Character (U+2028)>'
-                    case (int)'\u2029': //'<Paragraph Separator Character (U+2029)>'
-                    case (int)'"':
-                        // return false
-                        if (i == 0) return false;
-                        else
-                        {
-                            // Since we found the text, increase the CharStream's index.
-                            _input.Seek(_input.Index + i  );
-                            return true;
-                        }
-                        break;
-                    default:
-                        // delimiter ?!
-                        if ((char)_input.La(1 + i) == (char)this.Delimiter[0])
-                        {
-                            // return false
-                            if (i == 0)
-                                return false;
-                            else
-                            {
-                                // Since we found the text, increase the CharStream's index.
-                                _input.Seek(_input.Index + i);
-                                return true;
-                            }
-                        }
-                        break;
+                    // return false if no text is found but a delimiter like ";;"
+                    // evolves to empty
+                    if (i == 0) return false;
+                    else{
+                        // Since we found the text, increase the CharStream's index.
+                        _input.Seek(_input.Index + i);
+                        return true;
+                    }
                 }
             }
 

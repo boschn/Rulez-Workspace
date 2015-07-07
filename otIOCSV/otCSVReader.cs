@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Collections;
 
 namespace OnTrack.IO.CSV
 {
@@ -21,12 +22,11 @@ namespace OnTrack.IO.CSV
     /// CSV Reader Class
     /// </summary>
 
-    public class Reader
+    public class Reader : IEnumerable <String[]>, IEnumerable 
     {
-       
         private Antlr4.Runtime.ICharStream _input; // Input Stream
         private List<String> _header; // header list
-        private List<Dictionary<String, String>> _rows; // rows are dictionary of string, string
+        private List<String[]> _rows; // rows are dictionary of string, string
         private String _delimiter = ";"; // Optional Delimiter
 
         /// <summary>
@@ -67,7 +67,7 @@ namespace OnTrack.IO.CSV
         /// <summary>
         /// returns the Rows
         /// </summary>
-        public List<Dictionary<String, String>> Rows { get { return _rows; } }
+        public List<String[]> Rows { get { return _rows; } }
         /// <summary>
         /// run the reader
         /// </summary>
@@ -123,21 +123,27 @@ namespace OnTrack.IO.CSV
             // build the rows
             if (_rows != null)
             {
-                foreach (Dictionary <String,String> row in _rows)
+                foreach (String[] row in _rows)
                 {
                     for (int i = 0; i < _header.Count; i++)
                     {
-                        if (row.ContainsKey(_header[i])) aBuilder.AppendFormat("{0}", row[_header[i]]);
-                        else aBuilder.Append("(null)");
-
-                        if (_header.Count > 0 && i < _header.Count - 1) aBuilder.Append("\t");
+                       if (row.GetUpperBound (0) >= i) aBuilder.AppendFormat("{0}", row[i]);
+                       if (_header.Count > 0 && i < _header.Count - 1) aBuilder.Append("\t");
                     }
                     aBuilder.AppendLine();
                 }
             }
             return aBuilder.ToString();
         }
+        public IEnumerator<String[]> GetEnumerator()
+        {
+            return _rows.GetEnumerator();
+        }
 
+        System.Collections.IEnumerator IEnumerable.GetEnumerator()
+        {
+            return _rows.GetEnumerator();
+        }
     }
     /// <summary>
     /// ErrorListener
@@ -173,7 +179,7 @@ namespace OnTrack.IO.CSV
         private otCSVParser _parser;
         private List<String> _header; // header list
         private List<String> _currentRowFieldValues; // temp list for all the current row fields
-        private List<Dictionary<String, String>> _rows; // rows are dictionary of string, string
+        private List<String[]> _rows; // rows are list of String
         /// <summary>
         /// constructor
         /// </summary>
@@ -189,14 +195,14 @@ namespace OnTrack.IO.CSV
         /// <summary>
         /// returns the Rows
         /// </summary>
-        public List<Dictionary <String,String>> Rows {get { return _rows;} }
+        public List<String[]> Rows {get { return _rows;} }
         /// <summary>
         /// Enters the Csvbuffer Rule -> new rows
         /// </summary>
         /// <param name="ctx"></param>
         public override void EnterCsvbuffer(otCSVParser.CsvbufferContext ctx)
         {
-            _rows = new List<Dictionary<string, string>>();
+            _rows = new List<String[]>();
         }
         /// <summary>
         /// Exit the Header Rule -> build header
@@ -237,17 +243,24 @@ namespace OnTrack.IO.CSV
                     _currentRowFieldValues.RemoveAt(_currentRowFieldValues.Count - 1);
                 return;
             }
+
             // else
-            Dictionary<String, String> _row = new Dictionary<string, string>();
+             String[]  _row = null;
+
+            // no _header ?
+            if (_header.Count > 0)  _row = new String [_header.Count];
             int i = 0;
+
             // build and add - lose additional fields if we donot have them
-            foreach (string v in _currentRowFieldValues)
-            {
-                if (_header.Count > i) _row.Add(key: _header[i], value: v);
+            foreach (string v in _currentRowFieldValues){
+                // resize if no header
+                if (_header == null && (_row == null || _row.GetUpperBound(0) < i)) Array.Resize<String>(ref _row, i+1);
+                // check array
+                if (_row != null && _row.GetUpperBound(0) >= i)  _row[i] = v;
                 i++;
             }
+            // add the row
             _rows.Add(_row);
-
         }
         /// <summary>
         /// exit the TEXT Token

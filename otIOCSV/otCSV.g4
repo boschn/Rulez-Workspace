@@ -29,7 +29,7 @@ field
 //Comments first and check if the '#' is really in the first column
 SINGLE_LINE_COMMENT 
   :   (
-     '#'  {isFirst()}? Input_character* NEW_LINE_CHARACTER+
+     '#'  {isNewLine(-2)}? Input_character* NEW_LINE_CHARACTER+
 	 ) -> channel(HIDDEN)
   ;
 
