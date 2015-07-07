@@ -11,6 +11,9 @@ using System.Diagnostics;
 
 namespace OnTrack.IO.CSV
 {
+    /// <summary>
+    /// lexer special functions
+    /// </summary>
     partial class otCSVLexer
     {
         private String _delimiter = ","; // DEFAULT Token
