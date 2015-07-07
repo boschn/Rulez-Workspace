@@ -39,23 +39,6 @@ namespace OnTrack.IO.CSV
             return false;
         }
 
-        bool tryDelimiter()
-        {
-            // See if `text` is ahead in the CharStream.
-            for (int i = 0; i < this.Delimiter.Length; i++)
-            {
-                if (_input.La(i + 1) != this.Delimiter[i])
-                {
-                    // Nope, we didn't find `text`.
-                    return false;
-                }
-            }
-
-            // Since we found the text, increase the CharStream's index.
-            // _input.Seek(_input.Index + this.Delimiter .Length );
-
-            return true;
-        }
         /// <summary>
         /// check if n-th la is new line character
         /// </summary>
