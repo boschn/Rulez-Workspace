@@ -185,6 +185,7 @@ namespace OnTrack.Rulez
                 Antlr4.Runtime.CommonTokenStream theTokens = new Antlr4.Runtime.CommonTokenStream(aLexer);
                 // create the aParser
                 RulezParser aParser = new RulezParser(theTokens);
+                aParser.Trace = true;
                 //aParser.RemoveErrorListeners();
                 //aParser.AddErrorListener(new ErrorListener());
                 RulezParser.RulezContext  aTree = aParser.rulez();
@@ -332,7 +333,7 @@ namespace OnTrack.Rulez
         /// <param name="engine"></param>
         public Context(Engine engine = null)
         {
-            if (_engine != null) _engine = engine;
+            if (engine != null) _engine = engine;
             else _engine = Rules.Engine;
         }
 

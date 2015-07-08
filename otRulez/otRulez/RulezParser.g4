@@ -14,19 +14,18 @@ options {
  */
 
 rulez
-	: SELECTION IDENTIFIER (LPAREN parameters RPAREN)? AS selection EOS?
-	| EOF
-	;
+    : SELECTION IDENTIFIER (LPAREN parameters RPAREN)? AS selection EOS
+    ;
 
 /* Parameterdefinition
  */
 parameters
-	: parameterdefinition (COLON parameterdefinition)*
-	;
+    : parameterdefinition (COLON parameterdefinition)*
+    ;
 
 parameterdefinition
-	: IDENTIFIER ( AS valuetype )?
-	;
+    : IDENTIFIER ( AS valuetype )?
+    ;
 
 /* Selection expression
  *
@@ -51,8 +50,8 @@ selectConditionExpression
  logicalOperator
     : AND
     | OR
-	| XOR
-	| NOT
+    | XOR
+    | NOT
     ;
 
 
@@ -60,20 +59,15 @@ selectConditionExpression
  */
 
 expression
-    : STRINGLITERAL
-    | NUMERICLITERAL
-    | DATELITERAL
-    | LONGLITERAL
-    | NOTHING
-    | FALSE
-    | TRUE
-	| parametername
+    : literal 
+    | parametername
     | dataObjectEntryName
-	| ( PLUS | MINUS ) expression
-	| expression logicalOperator expression
-	| expression arithmeticOperator expression
+    | ( PLUS | MINUS ) expression
+    | expression logicalOperator expression
+    | expression arithmeticOperator expression
     | LPAREN expression RPAREN
     ;
+
 
 arithmeticOperator
     : PLUS | MINUS | DIV | MULT | MODULO | POW
@@ -89,14 +83,14 @@ compareOperator
 /* Identifier 
  */
 valuetype
-	: LONG
-	| NUMERIC
-	| DATE
-	| TIMESTAMP
-	| TEXT
-	| MEMO
-	| LIST 
-	;
+    : LONG
+    | NUMERIC
+    | DATE
+    | TIMESTAMP
+    | TEXT
+    | MEMO
+    | LIST 
+    ;
 // Object Class
 dataObjectClass
     : IDENTIFIER
@@ -107,6 +101,17 @@ dataObjectEntryName
     ;
 // parametername
 parametername
-	: IDENTIFIER
-	;
+    : IDENTIFIER
+    ;
 
+/* Literals
+ */
+literal
+	: STRINGLITERAL
+    | DECIMALLITERAL
+    | DATELITERAL
+    | NUMBERLITERAL
+    | NOTHING
+    | FALSE
+    | TRUE
+	;

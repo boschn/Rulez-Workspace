@@ -10,7 +10,7 @@ namespace OnTrack.Testing
         private Rulez.Engine _engine = new Rulez.Engine();
         
         [TestMethod]
-        public void RulezParserTesting()
+        public void SelectionTesting()
         {
             try 
             { 

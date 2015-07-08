@@ -8,10 +8,18 @@
 
 lexer grammar RulezLexer;
 
-// End of Statement
-fragment EOS
-	:	';' | EOF
-	;
+
+// Comments
+BlockComment
+    :   '/*' .*? '*/'
+        -> channel(HIDDEN)
+    ;
+
+LineComment
+    :   '//' ~[\r\n]*
+        -> channel(HIDDEN)
+    ;
+
 
 // keywords
 SELECTION : S E L E C T I O N ;
@@ -26,26 +34,34 @@ DATE : D A T E;
 TIMESTAMP : T I M E S T A M P;
 LIST : L I S T;
 
+// literals
+STRINGLITERAL : '"' (~["\r\n] | '""')* '"';
+DATELITERAL : '#' (~[#\r\n])* '#';
+NUMBERLITERAL : ('+' | '-')? ('0'..'9')+ ;
+DECIMALLITERAL :  ('+' | '-')? ('0'..'9')* '.' ('0'..'9')+ ;
+TRUE : T R U E ;
+FALSE : F A L S E ;
+NOTHING : ( N O T H I N G | N U L L );
+
 // assignments
 ASSIGN : ':=';
 MINUS_EQ : '-=';
 PLUS_EQ : '+=';
 // others
-AMPERSAND : '&' ;
-COLON :	',' ;
-STROKE : '|' ;
-HASH : '#' ;
-DOT : '.' ;
+ COLON :	',' ;
+ STROKE : '|' ;
+ HASH : '#' ;
+ DOT : '.' ;
 // parenthesis
-LPAREN : '(';
-RPAREN : ')';
-L_SQUARE_BRACKET : '[';
-R_SQUARE_BRACKET : ']';
+ LPAREN : '(';
+ RPAREN : ')';
+ L_SQUARE_BRACKET : '[';
+ R_SQUARE_BRACKET : ']';
 // logical operators
-AND :	(A N D | COLON) ;
-OR :	(O R | STROKE) ;
-NOT:	(N O T | '!') ;
-XOR :	(X O R | '&');
+ AND :	(A N D | COLON) ;
+ OR :	(O R | STROKE) ;
+ NOT:	(N O T | '!') ;
+ XOR :	(X O R | '&');
 // compare operators
 EQ : '=';
 NEQ : '<>';
@@ -60,37 +76,13 @@ MULT : '*';
 PLUS : '+';
 POW : '^';
 MODULO: '%';
-// literals
-STRINGLITERAL : '"' (~["\r\n] | '""')* '"';
-DATELITERAL : '#' (~[#\r\n])* '#';
-//COLORLITERAL : '&H' [0-9A-F]+ '&'?;
-LONGLITERAL : (PLUS|MINUS)? ('0'..'9')+ ('#' | '&')?;
-NUMERICLITERAL : (PLUS|MINUS)? ('0'..'9')* '.' ('0'..'9')+ ('#' | '&')?;
-TRUE : T R U E ;
-FALSE : F A L S E ;
-NOTHING : N O T H I N G | N U L L ;
+
+
+// End of Statement
+EOS : ';' | EOF ;
+
 // identifier
 IDENTIFIER : LETTER (LETTERORDIGIT)*;
-
-// whitespace, line breaks, comments, ...
-Newline
-    :   (   '\r' '\n'?
-        |   '\n'
-        )
-        -> skip
-    ;
-
-WS : [ \t]+  -> skip;
-
-BlockComment
-    :   '/*' .*? '*/'
-        -> channel(HIDDEN)
-    ;
-
-LineComment
-    :   '//' ~[\r\n]*
-        -> channel(HIDDEN)
-    ;
 
 // letters
 fragment LETTER : [a-zA-Z_äöüÄÖÜ];
@@ -123,3 +115,15 @@ fragment W:('w'|'W');
 fragment X:('x'|'X');
 fragment Y:('y'|'Y');
 fragment Z:('z'|'Z');
+
+// whitespace, line breaks, comments, ...
+Newline
+    :   (   '\r' '\n'?
+        |   '\n'
+        )
+        -> skip
+    ;
+
+WS : [ \t]+  -> skip;
+
+
