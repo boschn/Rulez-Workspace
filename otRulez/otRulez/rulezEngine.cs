@@ -163,6 +163,44 @@ namespace OnTrack.Rulez
         }
 
         /// <summary>
+        /// generate from a source string a rule and store it
+        /// </summary>
+        /// <param name="source"></param>
+        /// <returns></returns>
+        public bool Generate(String source)
+        {
+            return(this.Generate(new Antlr4.Runtime.AntlrInputStream(source)));
+        }
+        /// <summary>
+        /// generate from a input string a rule by parsing and compiling and store it
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
+        private bool Generate(Antlr4.Runtime.ICharStream input)
+        {
+            try
+            {
+                RulezLexer aLexer = new RulezLexer(input);
+                // wrap a token-stream around the lexer
+                Antlr4.Runtime.CommonTokenStream theTokens = new Antlr4.Runtime.CommonTokenStream(aLexer);
+                // create the aParser
+                RulezParser aParser = new RulezParser(theTokens);
+                //aParser.RemoveErrorListeners();
+                //aParser.AddErrorListener(new ErrorListener());
+                RulezParser.RulezContext  aTree = aParser.rulez();
+                // walk the parse tree
+                //DataBuilder aListener = new DataBuilder(aParser);
+                //Antlr4.Runtime.Tree.ParseTreeWalker.Default.Walk(aListener, aTree);
+                // result
+                return true;
+
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+        /// <summary>
         /// Generate from a rule the intermediate Code and store it
         /// </summary>
         /// <param name="rule"></param>
