@@ -51,7 +51,7 @@ parameters
 
 // parameter definition with a default value 
 parameterdefinition
-    : IDENTIFIER AS valuetype ( EQ literal )? 
+    : IDENTIFIER AS valuetype ( DEFAULT literal )? 
     ;
 
 /* Selection expression

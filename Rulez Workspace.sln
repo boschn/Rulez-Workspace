@@ -7,13 +7,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rulez Workspace", "Rulez Wo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "otRulez", "otRulez\otRulez\otRulez.csproj", "{9178CCED-EA77-491D-ABEA-ECF6B692B0E3}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{E1473C6E-9E31-4AD2-BE33-3A38B335D093}"
-	ProjectSection(SolutionItems) = preProject
-		.nuget\NuGet.Config = .nuget\NuGet.Config
-		.nuget\NuGet.exe = .nuget\NuGet.exe
-		.nuget\NuGet.targets = .nuget\NuGet.targets
-	EndProjectSection
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "otIOCSV", "otIOCSV\otIOCSV.csproj", "{4208B73C-AC5F-489F-ABE2-E92A1B3DC871}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console", "ConsoleApplication1\Console.csproj", "{3454581B-A5C4-4633-97EB-739BCB1E54DA}"

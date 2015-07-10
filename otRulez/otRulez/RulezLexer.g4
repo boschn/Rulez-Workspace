@@ -24,6 +24,7 @@ LineComment
 // keywords
 SELECTION : S E L E C T I O N ;
 AS : A S ;
+DEFAULT: D E F A U L T;
 
 // datatypes
 NUMBER : N U M B E R ;
