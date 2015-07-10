@@ -21,7 +21,7 @@ using OnTrack.Rulez.eXPressionTree;
  */
 
 
-rulez
+rulezUnit
     : oneRulez ( EOS+ oneRulez )* EOS* EOF
     ;
 
@@ -30,6 +30,10 @@ oneRulez
     ;
 
 // Selection Rule with local rule -> in Context
+/*
+*	selection s (p1 as number default 100) as deliverables[p1];
+*	selection s as deliverables[.uid=p1 as number default 100]; -> implicit defines a parameter p1 
+*/
 selectionRulez 
     : SELECTION ruleid (LPAREN parameters RPAREN)? AS selection 
     ;
@@ -45,8 +49,9 @@ parameters
     : parameterdefinition (COLON parameterdefinition)*
     ;
 
+// parameter definition with a default value 
 parameterdefinition
-    : IDENTIFIER ( AS valuetype )?
+    : IDENTIFIER AS valuetype ( EQ literal )? 
     ;
 
 /* Selection expression
@@ -66,7 +71,7 @@ selectConditionExpression
     ;
 
  selectCondition
-    :	(dataObjectEntryName? compareOperator)? expression
+    :	(dataObjectEntryName? compareOperator)? selectExpression
     ;
 
  logicalOperator
@@ -80,14 +85,15 @@ selectConditionExpression
 /* Expressions
  */
 
-expression
+selectExpression
     : literal 
     | parametername
+	| parameterdefinition
     | dataObjectEntryName
-    | ( PLUS | MINUS ) expression
-    | expression logicalOperator expression
-    | expression arithmeticOperator expression
-    | LPAREN expression RPAREN
+    | ( PLUS | MINUS ) selectExpression
+    | selectExpression logicalOperator selectExpression
+    | selectExpression arithmeticOperator selectExpression
+    | LPAREN selectExpression RPAREN
     ;
 
 

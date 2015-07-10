@@ -188,12 +188,12 @@ namespace OnTrack.Rulez
                 aParser.Trace = true;
                 //aParser.RemoveErrorListeners();
                 //aParser.AddErrorListener(new ErrorListener());
-                RulezParser.RulezContext  aTree = aParser.rulez();
+                RulezParser.RulezUnitContext  aTree = aParser.rulezUnit();
                 // walk the parse tree -> get the result XPTree
-                XPTGenerator aListener = new XPTGenerator(aParser);
-                Antlr4.Runtime.Tree.ParseTreeWalker.Default.Walk(aListener, aTree);
-                // result
-                return Generate((IRule) aListener.XPTree);
+                XPTGenerator aGenerator = new XPTGenerator(aParser);
+                Antlr4.Runtime.Tree.ParseTreeWalker.Default.Walk(aGenerator, aTree);
+                // result -> Generate and store from the XPTree
+                return Generate((IRule) aGenerator.XPTree);
 
             }
             catch (Exception ex)
