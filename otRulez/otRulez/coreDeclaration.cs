@@ -114,7 +114,7 @@ namespace OnTrack.Core
             Memo = 10,
             Binary = 11,
             Timespan = 12,
-            Money = 13, // not yet implemented
+            DecimalUnit = 13, // -> Money, or decimal in other values not yet implemented
     }   
          
     /// <summary>
