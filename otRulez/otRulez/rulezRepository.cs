@@ -303,7 +303,7 @@ namespace OnTrack.Rulez
         private Dictionary<Token, Operator> _Operators = new Dictionary<Token, Operator>();
         // Dictionary of functions
         private Dictionary<Token, Function> _Functions = new Dictionary<Token, Function>();
-        // Dictionary of the selection rules
+        // Dictionary of the rule rules
         private Dictionary<String, SelectionRule> _selectionrules = new Dictionary<string, SelectionRule>();
         // Stack of dataObject Repositories
         private List<iDataObjectRepository> _dataobjectRepositories = new List<iDataObjectRepository> ();
@@ -328,11 +328,11 @@ namespace OnTrack.Rulez
         public string Id { get { return _id; } }
 
         /// <summary>
-        /// gets all the selection rules in the repository
+        /// gets all the rule rules in the repository
         /// </summary>
         public List<SelectionRule> SelectionRules { get { return _selectionrules.Values.ToList() ; } }
         /// <summary>
-        /// gets all selection rule IDs in the repository
+        /// gets all rule rule IDs in the repository
         /// </summary>
         public List<String> SelectionRuleIDs { get { return _selectionrules.Keys.ToList (); } }
 
@@ -397,7 +397,7 @@ namespace OnTrack.Rulez
         }
         
         /// <summary>
-        /// returns true if the repository has the selection rule
+        /// returns true if the repository has the rule rule
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
@@ -418,7 +418,7 @@ namespace OnTrack.Rulez
             throw new KeyNotFoundException(id + " was not found in repository");
         }
         /// <summary>
-        /// adds a selection rule to the repository by handle
+        /// adds a rule rule to the repository by handle
         /// </summary>
         /// <param name="handle"></param>
         /// <param name="rule"></param>
@@ -431,7 +431,7 @@ namespace OnTrack.Rulez
             return true;
         }
         /// <summary>
-        /// adds a selection rule to the repository by handle
+        /// adds a rule rule to the repository by handle
         /// </summary>
         /// <param name="handle"></param>
         /// <param name="rule"></param>
@@ -477,7 +477,7 @@ namespace OnTrack.Rulez
             return true;
         }
         /// <summary>
-        /// returns true if the repository has the selection rule
+        /// returns true if the repository has the rule rule
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
@@ -498,7 +498,7 @@ namespace OnTrack.Rulez
             throw new KeyNotFoundException(id + " was not found in repository");
         }
         /// <summary>
-        /// adds a selection rule to the repository by handle
+        /// adds a rule rule to the repository by handle
         /// </summary>
         /// <param name="handle"></param>
         /// <param name="rule"></param>
@@ -511,7 +511,7 @@ namespace OnTrack.Rulez
             return true;
         }
         /// <summary>
-        /// adds a selection rule to the repository by handle
+        /// adds a rule rule to the repository by handle
         /// </summary>
         /// <param name="handle"></param>
         /// <param name="rule"></param>

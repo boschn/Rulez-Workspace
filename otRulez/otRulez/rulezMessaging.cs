@@ -50,6 +50,7 @@ namespace OnTrack.Rulez
             HandleNotDefined,
             InvalidNumberOfArguments,
             InvalidCode,
+            DataTypeNotImplemented
         }
 
         private static string[] _messages = {
@@ -92,7 +93,9 @@ namespace OnTrack.Rulez
                                          // Invalid Number of Arguments
                                          "Rule '{1}' of type '{0}' is expecting {2} arguments - {3} supplied",
                                          // Invalid Code
-                                         "Code of handle '{1}' of Rule '{0}' is invalid"
+                                         "Code of handle '{1}' of Rule '{0}' is invalid",
+                                         // DataType not Implemented
+                                         "Data type with name '{0}' is not implemented in case condition of routine"
                                          };
         /// <summary>
         /// variables

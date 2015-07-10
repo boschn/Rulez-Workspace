@@ -102,18 +102,18 @@ namespace OnTrack.Core
     public enum otDataType
     {   
             @Void = 0,
-            Numeric = 1,
+            Decimal = 1,
             List = 2,
             Text = 3,
             Runtime = 4,
             Formula = 5,
             Date = 6,
-            Long = 7,
+            Number = 7,
             Timestamp = 8,
             Bool = 9,
             Memo = 10,
             Binary = 11,
-            Time = 12,
+            Timespan = 12,
             Money = 13, // not yet implemented
     }   
          

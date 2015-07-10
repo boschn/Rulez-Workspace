@@ -10,12 +10,34 @@ options {
     tokenVocab=RulezLexer;
 }
 
+// add the OnTrack eXpression Tree
+
+@header {
+// add the eXpression Tree
+using OnTrack.Rulez.eXPressionTree;
+}
+
 /* Rulez -> entry rule for parsing
  */
 
+
 rulez
-    : SELECTION IDENTIFIER (LPAREN parameters RPAREN)? AS selection EOS
+    : oneRulez ( EOS+ oneRulez )* EOS* EOF
     ;
+
+oneRulez
+    : selectionRulez
+    ;
+
+// Selection Rule with local rule -> in Context
+selectionRulez 
+    : SELECTION ruleid (LPAREN parameters RPAREN)? AS selection 
+    ;
+
+// rulename
+ruleid
+	: IDENTIFIER
+	;
 
 /* Parameterdefinition
  */
@@ -29,10 +51,10 @@ parameterdefinition
 
 /* Selection expression
  *
- * e.g. deliverables[109] = deliverables[uid=109] -> returns a list with one member which is primary key #1 (UID)
- *		deliverables[(109|110|120)] = deliverables[uid=109 OR uid=110 OR uid = 120] -> returns list with 
- *		deliverables[109, category = "DOC"] = deliverables[UID = 109 AND CATEGORY = "DOC"]
- *		deliverables[(109|110|120), created >= #10.12.2015#] = deliverables[(UID = 109 OR UID = 110 OR UID = 120) AND CREATED >= 10.12.2015]
+ * e.g. deliverables[109] = deliverables[.uid=109] -> returns a list with one member which is primary key #1 (UID)
+ *		deliverables[(109|110|120)] = deliverables[.uid=109 OR .uid=110 OR .uid = 120] -> returns list with 
+ *		deliverables[109, .category = "DOC"] = deliverables[.UID = 109 AND .CATEGORY = "DOC"]
+ *		deliverables[(109|110|120), .created >= #10.12.2015#] = deliverables[(.UID = 109 OR .UID = 110 OR .UID = 120) AND .CREATED >= 10.12.2015]
  */
 
 selection
@@ -83,8 +105,8 @@ compareOperator
 /* Identifier 
  */
 valuetype
-    : LONG
-    | NUMERIC
+    : NUMBER
+    | DECIMAL
     | DATE
     | TIMESTAMP
     | TEXT
@@ -97,7 +119,7 @@ dataObjectClass
     ;
 // Object Entry Name
 dataObjectEntryName
-    : (dataObjectClass DOT)? IDENTIFIER
+    : (dataObjectClass)? DOT IDENTIFIER
     ;
 // parametername
 parametername
@@ -107,11 +129,11 @@ parametername
 /* Literals
  */
 literal
-	: STRINGLITERAL
+    : STRINGLITERAL
     | DECIMALLITERAL
     | DATELITERAL
     | NUMBERLITERAL
     | NOTHING
     | FALSE
     | TRUE
-	;
+    ;

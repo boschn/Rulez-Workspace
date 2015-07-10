@@ -48,15 +48,15 @@ namespace OnTrack.Core
                     return typeof(bool);
                 case otDataType.List:
                     return typeof(List<string>);
-                case otDataType.Long:
+                case otDataType.Number:
                     return typeof(long);
                 case otDataType.Memo:
                     return typeof(string);
                 case otDataType.Text:
                     return typeof(string);
-                case otDataType.Time:
+                case otDataType.Timespan:
                     return typeof(TimeSpan);
-                case otDataType.Numeric:
+                case otDataType.Decimal:
                     return typeof(double);
                 case otDataType.Timestamp:
                     return typeof(DateTime);
@@ -83,15 +83,15 @@ namespace OnTrack.Core
                     /// or accept Object()
                     List<string> aValue = new List<string>();
                     return aValue.ToArray();
-                case otDataType.Long:
+                case otDataType.Number:
                     return (long) 0;
                 case otDataType.Memo:
                     return string.Empty;
-                case otDataType.Numeric:
+                case otDataType.Decimal:
                     return (double) 0;
                 case otDataType.Text:
                     return string.Empty;
-                case otDataType.Time:
+                case otDataType.Timespan:
                     return new TimeSpan();
                 case otDataType.Timestamp:
                     return DateTime.Parse(ConstNullTimestampString);
@@ -118,15 +118,15 @@ namespace OnTrack.Core
                     return IsDate(value);
                 case otDataType.List:
                     return IsList(value);
-                case otDataType.Long:
+                case otDataType.Number:
                     return IsLong(value);
                 case otDataType.Memo:
                     return IsMemo(value);
-                case otDataType.Numeric:
+                case otDataType.Decimal:
                     return IsNumeric(value);
                 case otDataType.Text:
                     return IsText(value);
-                case otDataType.Time:
+                case otDataType.Timespan:
                     return IsTime(value);
                 case otDataType.Timestamp:
                     return IsTimeStamp(value);
@@ -153,15 +153,15 @@ namespace OnTrack.Core
                     return ToDate(value);
                 case otDataType.List:
                    return ToList(value);
-                case otDataType.Long:
+                case otDataType.Number:
                     return ToLong(value);
                 case otDataType.Memo:
                     return ToMemo(value);
-                case otDataType.Numeric:
+                case otDataType.Decimal:
                     return ToNumeric(value);
                 case otDataType.Text:
                     return ToText(value);
-                case otDataType.Time:
+                case otDataType.Timespan:
                     return ToTime(value);
                 case otDataType.Timestamp:
                     return ToTimeStamp(value);
@@ -267,7 +267,7 @@ namespace OnTrack.Core
              throw new Rulez.RulezException(Rulez.RulezException.Types.ValueNotConvertible, arguments: new object[] { value, "date" });
          }
          /// <summary>
-         /// returns true if the value is of otDataType.Time
+         /// returns true if the value is of otDataType.Timespan
          /// </summary>
          /// <param name="value"></param>
          /// <returns></returns>
@@ -290,7 +290,7 @@ namespace OnTrack.Core
              return false; // not convertible
          }
          /// <summary>
-         /// convert a value to otDataType.Time and return the value
+         /// convert a value to otDataType.Timespan and return the value
          /// </summary>
          /// <param name="value"></param>
          /// <returns></returns>
@@ -363,7 +363,7 @@ namespace OnTrack.Core
              throw new Rulez.RulezException(Rulez.RulezException.Types.ValueNotConvertible, arguments: new object[] { value, "timestamp" });
          }
          /// <summary>
-         /// returns true if the value is of otDataType.Numeric
+         /// returns true if the value is of otDataType.Decimal
          /// </summary>
          /// <param name="value"></param>
          /// <returns></returns>
@@ -406,7 +406,7 @@ namespace OnTrack.Core
              throw new Rulez.RulezException(Rulez.RulezException.Types.ValueNotConvertible, arguments: new object[] { value, "numeric" });
          }
          /// <summary>
-         /// returns true if the value is of otDataType.Long
+         /// returns true if the value is of otDataType.Number
          /// </summary>
          /// <param name="value"></param>
          /// <returns></returns>
@@ -425,7 +425,7 @@ namespace OnTrack.Core
              return false; // not convertible
          }
          /// <summary>
-         /// convert a value to otDataType.Long and return the value
+         /// convert a value to otDataType.Number and return the value
          /// </summary>
          /// <param name="value"></param>
          /// <returns></returns>

@@ -239,7 +239,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// returns the theCode handle
         /// </summary>
-        public string Handle { get { return _handle; } }
+        public string Handle { get { return _handle; } set { _handle = value; } }
         /// <summary>
         /// returns the state of the rule
         /// </summary>
@@ -1099,7 +1099,7 @@ namespace OnTrack.Rulez.eXPressionTree
         }
     }
     /// <summary>
-    /// defines a logical selection expression
+    /// defines a logical rule expression
     /// </summary>
     public class SelectionRule : Rule
     {
@@ -1133,7 +1133,7 @@ namespace OnTrack.Rulez.eXPressionTree
         public IEnumerable<ISymbol> Parameters { get { return _parameters.Values.ToList(); } }
         
         /// <summary>
-        /// returns a List of objectnames retrieved with this selection
+        /// returns a List of objectnames retrieved with this rule
         /// </summary>
         /// <returns></returns>
         public List<String> ResultingObjectnames ()
@@ -1149,6 +1149,20 @@ namespace OnTrack.Rulez.eXPressionTree
 
             return aList;
         }
+        /// <summary>
+        /// returns true if the parameter is already defined
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public bool HasParameter(string id)
+        { return _parameters.ContainsKey(id); }
+        /// <summary>
+        /// gets the parameter by name
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public ISymbol GetParameter(string id)
+        { return _parameters[id]; }
         /// <summary>
         /// Adds a Parameter to the Selection Rule
         /// </summary>

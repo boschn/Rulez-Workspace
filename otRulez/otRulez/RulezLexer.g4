@@ -26,8 +26,8 @@ SELECTION : S E L E C T I O N ;
 AS : A S ;
 
 // datatypes
-LONG : L O N G ;
-NUMERIC : N U M E R I C ;
+NUMBER : N U M B E R ;
+DECIMAL : D E C I M A L ;
 TEXT : T E X T;
 MEMO : M E M O ;
 DATE : D A T E;
@@ -79,7 +79,7 @@ MODULO: '%';
 
 
 // End of Statement
-EOS : ';' | EOF ;
+EOS : ( ';' )  ;
 
 // identifier
 IDENTIFIER : LETTER (LETTERORDIGIT)*;

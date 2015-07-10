@@ -31,8 +31,8 @@ namespace OnTrack.Rulez
         private Repository _repository; // the repository
         private string _id; // handle of the engine
         private Context _context;
-        private Dictionary<String, ICodeBit> _Code; // Code Dicitionary
-        private List<iDataObjectEngine> _dataobjectEngines; // DataObject Engines for running data object against against
+        private Dictionary<String, ICodeBit> _Code; // Code Dictionary
+        private List<iDataObjectEngine> _dataobjectEngines; // DataObject Engines for running data object against 
         /// <summary>
         /// constructor of an engine
         /// </summary>
@@ -119,7 +119,7 @@ namespace OnTrack.Rulez
              return true;
         }
         /// <summary>
-        /// returns a selection rule from the repository or creates a new one and returns this
+        /// returns a rule rule from the repository or creates a new one and returns this
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
@@ -189,11 +189,11 @@ namespace OnTrack.Rulez
                 //aParser.RemoveErrorListeners();
                 //aParser.AddErrorListener(new ErrorListener());
                 RulezParser.RulezContext  aTree = aParser.rulez();
-                // walk the parse tree
-                //DataBuilder aListener = new DataBuilder(aParser);
-                //Antlr4.Runtime.Tree.ParseTreeWalker.Default.Walk(aListener, aTree);
+                // walk the parse tree -> get the result XPTree
+                XPTGenerator aListener = new XPTGenerator(aParser);
+                Antlr4.Runtime.Tree.ParseTreeWalker.Default.Walk(aListener, aTree);
                 // result
-                return true;
+                return Generate((IRule) aListener.XPTree);
 
             }
             catch (Exception ex)
@@ -206,7 +206,7 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="rule"></param>
         /// <returns></returns>
-        public bool Generate(eXPressionTree.Rule  rule)
+        public bool Generate(IRule  rule)
         {
             ICodeBit code=null;
             bool result;
@@ -214,7 +214,7 @@ namespace OnTrack.Rulez
             {
                 switch (rule.NodeTokenType)
                 {
-                    // selection rule
+                    // rule rule
                     case otXPTNodeType.SelectionRule:
                         result= Generate((rule as SelectionRule), out code);
                         break;
@@ -241,11 +241,11 @@ namespace OnTrack.Rulez
         }
 
         /// <summary>
-        /// generate theCode for a selection rule
+        /// generate theCode for a rule rule
         /// </summary>
-        /// <param name="selection"></param>
+        /// <param name="rule"></param>
         /// <returns></returns>
-        public bool Generate(SelectionRule selection, out ICodeBit code)
+        public bool Generate(SelectionRule rule, out ICodeBit code)
         {
             try
             {
@@ -253,18 +253,18 @@ namespace OnTrack.Rulez
                 code = null;
 
                 // check if the object to which data engine
-                foreach (iDataObjectEngine anEngine in _dataobjectEngines.Reverse <iDataObjectEngine > () )
+                foreach (iDataObjectEngine aDataEngine in _dataobjectEngines.Reverse <iDataObjectEngine > () )
                 {
-                    foreach (String aName in selection.ResultingObjectnames () ) result &= anEngine.Objects.HasObjectDefinition(id: aName);
+                    foreach (String aName in rule.ResultingObjectnames () ) result &= aDataEngine.Objects.HasObjectDefinition(id: aName);
                     if (result) {
-                        return anEngine.Generate((selection as eXPressionTree.Rule), out code);
+                        return aDataEngine.Generate((rule as eXPressionTree.IRule), out code);
                     }
                 }
 
                 // failure
                 if (!result)
                 {
-                    String theNames = DataType.ToString(selection.ResultingObjectnames());
+                    String theNames = DataType.ToString(rule.ResultingObjectnames());
                     throw new RulezException(RulezException.Types.NoDataEngineAvailable, arguments: new object[] { theNames });
                 }
                 
@@ -279,7 +279,7 @@ namespace OnTrack.Rulez
             }
         }
         /// <summary>
-        /// run a selection rule and return an ienumerable of IDataObjects
+        /// run a rule rule and return an ienumerable of IDataObjects
         /// </summary>
         /// <param name="ruleid"></param>
         /// <param name="parameters"></param>

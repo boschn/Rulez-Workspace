@@ -137,7 +137,12 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// returns the state of the rule
         /// </summary>
-        otRuleState RuleState { get; }
+        otRuleState RuleState { get; set; }
+
+        /// <summary>
+        ///  Code Handle
+        /// </summary>
+        string Handle { get; set; }
     }
     /// <summary>
     /// function calls
