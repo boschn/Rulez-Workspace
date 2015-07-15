@@ -24,13 +24,20 @@ using System.ComponentModel;
 
 namespace OnTrack.Core
 {
+    
     /// <summary>
     /// static class Datatype
     /// </summary>
-    public static class DataType
+    public class DataType
     {
         public const Char ConstDelimiter = '|';
         public const String ConstNullTimestampString = "1900-01-01T00:00:00";
+
+        // Instance data
+        private otDataType _type = otDataType.Void; // datatype
+        private object _defaultvalue;
+        
+#region "Static"
         /// <summary>
         /// returns the best fit System.Type for a OnTrack Datatype
         /// </summary>
@@ -119,11 +126,11 @@ namespace OnTrack.Core
                 case otDataType.List:
                     return IsList(value);
                 case otDataType.Number:
-                    return IsLong(value);
+                    return IsNumber(value);
                 case otDataType.Memo:
                     return IsMemo(value);
                 case otDataType.Decimal:
-                    return IsNumeric(value);
+                    return IsDecimal(value);
                 case otDataType.Text:
                     return IsText(value);
                 case otDataType.Timespan:
@@ -154,11 +161,11 @@ namespace OnTrack.Core
                 case otDataType.List:
                    return ToList(value);
                 case otDataType.Number:
-                    return ToLong(value);
+                    return ToNumber(value);
                 case otDataType.Memo:
                     return ToMemo(value);
                 case otDataType.Decimal:
-                    return ToNumeric(value);
+                    return ToDecimal(value);
                 case otDataType.Text:
                     return ToText(value);
                 case otDataType.Timespan:
@@ -367,7 +374,7 @@ namespace OnTrack.Core
          /// </summary>
          /// <param name="value"></param>
          /// <returns></returns>
-         public static bool IsNumeric(object value)
+         public static bool IsDecimal(object value)
          {
              // if it is a type anyway
              if (value != null && (value.GetType() == typeof(Double) || value.GetType() == typeof(float) || value.GetType()== typeof(Single) 
@@ -387,7 +394,7 @@ namespace OnTrack.Core
          /// </summary>
          /// <param name="value"></param>
          /// <returns></returns>
-         public static Double ToNumeric(object value)
+         public static Double ToDecimal(object value)
          {
              // if it is anyway the right type
              if (value != null && value.GetType() == typeof(Double)) return ((Double)value);
@@ -410,7 +417,7 @@ namespace OnTrack.Core
          /// </summary>
          /// <param name="value"></param>
          /// <returns></returns>
-         public static bool IsLong(object value)
+         public static bool IsNumber(object value)
          {
              // if it is a type anyway
              if (value != null && (value.GetType() == typeof(long) || value.GetType() == typeof(int))) return true;
@@ -429,10 +436,10 @@ namespace OnTrack.Core
          /// </summary>
          /// <param name="value"></param>
          /// <returns></returns>
-         public static Double ToLong(object value)
+         public static long ToNumber(object value)
          {
              // if it is anyway the right type
-             if (value != null && value.GetType() == typeof(Double)) return ((Double)value);
+             if (value != null && value.GetType() == typeof(long)) return ((long)value);
 
              // try to convert to datetime
              if (value != null)
@@ -611,6 +618,34 @@ namespace OnTrack.Core
             if (result != String.Empty + ConstDelimiter + ConstDelimiter) return result;
             return String.Empty;
         }
+#endregion
+
+        /// <summary>
+        /// constructor
+        /// </summary>
+        /// <param name="type"></param>
+        DataType(otDataType type, bool isNullable = false, object defaultvalue = null)
+        {
+            if (isNullable) _type = type | otDataType.isNullable;
+            else _type = type;
+            _defaultvalue = defaultvalue;
+        }
+        /// <summary>
+        /// return true if the type is Nullable
+        /// </summary>
+        bool IsNullable { 
+            get { 
+                    if ((_type & otDataType.isNullable) == otDataType.isNullable) return true; 
+                    return false; 
+            } 
+        }
+        /// <summary>
+        /// gets the default value
+        /// </summary>
+        Object DefaultValue { 
+            get { return _defaultvalue; }
+        }
+
     }
     /// <summary>
     /// ConverterHelpers

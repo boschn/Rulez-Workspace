@@ -115,7 +115,7 @@ namespace OnTrack.Rulez
             _id = id;
             _category = category;
             _Tag = Tag;
-            if (message == null) _message = message;
+            if (message != null) _message = message;
             else _message = _messages[(int)id];
             string.Format(_message, arguments);
             _innerException = inner;

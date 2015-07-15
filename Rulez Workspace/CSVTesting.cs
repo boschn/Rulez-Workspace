@@ -10,7 +10,7 @@ namespace OnTrack.Testing
     public class CSVTesting
     {
         [TestMethod]
-        public void MainTesting()
+        public void CSVTestFile()
         {
             /*
              *  Dim uri As System.Uri = New System.Uri(System.Reflection.Assembly.GetExecutingAssembly().CodeBase)

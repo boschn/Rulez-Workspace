@@ -14,7 +14,7 @@ namespace OnTrack.Testing
         /// <param name="args"></param>
         static void Main(String[] args)
         {
-            new CSVTesting().MainTesting();
+            new CSVTesting().CSVTestFile ();
 
         }
     }

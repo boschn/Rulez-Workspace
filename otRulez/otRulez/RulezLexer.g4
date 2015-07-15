@@ -25,6 +25,7 @@ LineComment
 SELECTION : S E L E C T I O N ;
 AS : A S ;
 DEFAULT: D E F A U L T;
+NULLABLE: N U L L A B L E;
 
 // datatypes
 NUMBER : N U M B E R ;
@@ -34,6 +35,7 @@ MEMO : M E M O ;
 DATE : D A T E;
 TIMESTAMP : T I M E S T A M P;
 LIST : L I S T;
+TIMESPAN: T I M E S P A N;
 
 // literals
 STRINGLITERAL : '"' (~["\r\n] | '""')* '"';
@@ -42,7 +44,7 @@ NUMBERLITERAL : ('+' | '-')? ('0'..'9')+ ;
 DECIMALLITERAL :  ('+' | '-')? ('0'..'9')* '.' ('0'..'9')+ ;
 TRUE : T R U E ;
 FALSE : F A L S E ;
-NOTHING : ( N O T H I N G | N U L L );
+NULL : ( N U L L );
 
 // assignments
 ASSIGN : ':=';
@@ -53,6 +55,7 @@ PLUS_EQ : '+=';
  STROKE : '|' ;
  HASH : '#' ;
  DOT : '.' ;
+ QUESTIONMARK : '?';
 // parenthesis
  LPAREN : '(';
  RPAREN : ')';

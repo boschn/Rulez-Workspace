@@ -72,7 +72,7 @@ namespace OnTrack.Rulez
         {
             Boolean result = false;
 
-            if  (_dataobjectEngines.Where (x => x.ID == engine.ID).FirstOrDefault () == null)
+            if  (_dataobjectEngines.Where (x => x.ID == engine.ID).FirstOrDefault () != null)
                 throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { engine.ID , "DataEngines"});
 
             _dataobjectEngines.Add(engine);

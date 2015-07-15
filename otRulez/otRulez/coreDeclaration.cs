@@ -93,7 +93,7 @@ namespace OnTrack.Core
         bool HasEntry(String entryname);
     }
 
-    /// <summary>
+ /// <summary>
 /// Data Types for OnTrack Database Fields
 /// </summary>
 /// <remarks></remarks>
@@ -115,8 +115,10 @@ namespace OnTrack.Core
             Binary = 11,
             Timespan = 12,
             DecimalUnit = 13, // -> Money, or decimal in other values not yet implemented
-    }   
-         
+            isNullable = 32 // -> OR PATTERN
+    }
+   
+
     /// <summary>
     /// Interface for Object Entries
     /// </summary>

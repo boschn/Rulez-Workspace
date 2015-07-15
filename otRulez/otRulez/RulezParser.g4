@@ -31,8 +31,8 @@ oneRulez
 
 // Selection Rule with local rule -> in Context
 /*
-*	selection s (p1 as number default 100) as deliverables[p1];
-*	selection s as deliverables[.uid=p1 as number default 100]; -> implicit defines a parameter p1 
+*	selection s (p1 as number ? default 100) as deliverables[p1];
+*	selection s as deliverables[.uid=p1 as number? default 100]; -> implicit defines a parameter p1 
 */
 selectionRulez 
     : SELECTION ruleid (LPAREN parameters RPAREN)? AS selection 
@@ -40,8 +40,8 @@ selectionRulez
 
 // rulename
 ruleid
-	: IDENTIFIER
-	;
+    : IDENTIFIER
+    ;
 
 /* Parameterdefinition
  */
@@ -51,9 +51,13 @@ parameters
 
 // parameter definition with a default value 
 parameterdefinition
-    : IDENTIFIER AS valuetype ( DEFAULT literal )? 
+    : IDENTIFIER AS valuetype ( isNullable )? ( DEFAULT literal )? 
     ;
 
+isNullable
+    : QUESTIONMARK
+    | I S N U L L A B L E
+    ;
 /* Selection expression
  *
  * e.g. deliverables[109] = deliverables[.uid=109] -> returns a list with one member which is primary key #1 (UID)
@@ -88,7 +92,7 @@ selectConditionExpression
 selectExpression
     : literal 
     | parametername
-	| parameterdefinition
+    | parameterdefinition
     | dataObjectEntryName
     | ( PLUS | MINUS ) selectExpression
     | selectExpression logicalOperator selectExpression
