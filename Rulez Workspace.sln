@@ -1,15 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2013
-VisualStudioVersion = 12.0.30723.0
-MinimumVisualStudioVersion = 10.0.40219.1
+# Visual Studio 2012
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rulez Workspace", "Rulez Workspace\Rulez Workspace.csproj", "{F2B2AF7D-468E-4305-BC55-4948C00282AC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "otRulez", "otRulez\otRulez\otRulez.csproj", "{9178CCED-EA77-491D-ABEA-ECF6B692B0E3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "otIOCSV", "otIOCSV\otIOCSV.csproj", "{4208B73C-AC5F-489F-ABE2-E92A1B3DC871}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console", "ConsoleApplication1\Console.csproj", "{3454581B-A5C4-4633-97EB-739BCB1E54DA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,10 +25,6 @@ Global
 		{4208B73C-AC5F-489F-ABE2-E92A1B3DC871}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4208B73C-AC5F-489F-ABE2-E92A1B3DC871}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4208B73C-AC5F-489F-ABE2-E92A1B3DC871}.Release|Any CPU.Build.0 = Release|Any CPU
-		{3454581B-A5C4-4633-97EB-739BCB1E54DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{3454581B-A5C4-4633-97EB-739BCB1E54DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{3454581B-A5C4-4633-97EB-739BCB1E54DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{3454581B-A5C4-4633-97EB-739BCB1E54DA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
