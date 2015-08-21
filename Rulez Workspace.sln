@@ -1,6 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
+# Visual Studio 2013
+VisualStudioVersion = 12.0.40629.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rulez Workspace", "Rulez Workspace\Rulez Workspace.csproj", "{F2B2AF7D-468E-4305-BC55-4948C00282AC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "otRulez", "otRulez\otRulez\otRulez.csproj", "{9178CCED-EA77-491D-ABEA-ECF6B692B0E3}"
