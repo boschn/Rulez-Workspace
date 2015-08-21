@@ -4,7 +4,7 @@
 
 grammar otCSV;
 
-tokens { TEXT } 
+
 
 /*
  * Parser Rules
