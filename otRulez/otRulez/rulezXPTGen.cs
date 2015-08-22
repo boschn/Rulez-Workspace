@@ -92,26 +92,7 @@ namespace OnTrack.Rulez
         /// <param name="context"></param>
         public override void ExitParameterdefinition(RulezParser.ParameterdefinitionContext context)
         {
-            if (_currentSelectionRule != null)
-            {
-                if (_currentSelectionRule.HasParameter(context.IDENTIFIER().GetText()))
-                {
-                    ;
-                }
-                otDataType aType = otDataType.Void;
-                // compare the sub-token
-                if (context.valuetype().NUMBER() != null) aType = otDataType.Number;
-                else if (context.valuetype().DECIMAL() != null) aType = otDataType.Decimal;
-                else if (context.valuetype().TEXT() != null) aType = otDataType.Text;
-                else if (context.valuetype().DATE() != null) aType = otDataType.Date;
-                else if (context.valuetype().TIMESTAMP() != null) aType = otDataType.Timestamp;
-                else if (context.valuetype().MEMO () != null) aType = otDataType.Memo;
-                else if (context.valuetype().LIST () != null) aType = otDataType.List;
-                else { throw new RulezException(RulezException.Types.DataTypeNotImplemented, arguments: new object[] { context.valuetype().GetText(), "XPTGenerator.ExitParameterdefinition" }); }
-               
-                // add the parameter
-                _currentSelectionRule.AddNewParameter(id: context.IDENTIFIER().GetText(), type: aType);
-            }
+          
         }
     }
 }

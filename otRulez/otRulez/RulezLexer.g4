@@ -26,6 +26,11 @@ SELECTION : S E L E C T I O N ;
 AS : A S ;
 DEFAULT: D E F A U L T;
 NULLABLE: N U L L A B L E;
+OF: O F;
+MATCH: M A T C H;
+WITH: W I T H;
+RETURN: R E T U R N;
+DO: D O;
 
 // datatypes
 NUMBER : N U M B E R ;
@@ -44,12 +49,13 @@ NUMBERLITERAL : ('+' | '-')? ('0'..'9')+ ;
 DECIMALLITERAL :  ('+' | '-')? ('0'..'9')* '.' ('0'..'9')+ ;
 TRUE : T R U E ;
 FALSE : F A L S E ;
-NULL : ( N U L L );
+NULL :  N U L L ;
 
 // assignments
 ASSIGN : ':=';
 MINUS_EQ : '-=';
 PLUS_EQ : '+=';
+
 // others
  COLON :	',' ;
  STROKE : '|' ;
@@ -61,6 +67,9 @@ PLUS_EQ : '+=';
  RPAREN : ')';
  L_SQUARE_BRACKET : '[';
  R_SQUARE_BRACKET : ']';
+ L_BRACKET: '{' ;
+ R_BRACKET: '}';
+
 // logical operators
  AND :	(A N D | COLON) ;
  OR :	(O R | STROKE) ;

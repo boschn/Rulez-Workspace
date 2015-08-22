@@ -15,6 +15,10 @@ options {
 @header {
 // add the eXpression Tree
 using OnTrack.Rulez.eXPressionTree;
+// add core for datatypes
+using OnTrack.Core;
+// add Dictionary
+using System.Collections.Generic;
 }
 
 /* Rulez -> entry rule for parsing
@@ -25,6 +29,8 @@ rulezUnit
     : oneRulez ( EOS+ oneRulez )* EOS* EOF
     ;
 
+/* One Rulez
+ */
 oneRulez
     : selectionRulez
     ;
@@ -32,10 +38,12 @@ oneRulez
 // Selection Rule with local rule -> in Context
 /*
 *	selection s (p1 as number ? default 100) as deliverables[p1];
-*	selection s as deliverables[.uid=p1 as number? default 100]; -> implicit defines a parameter p1 
+*	selection s as deliverables[uid=p1 as number? default 100]; -> implicit defines a parameter p1 
 */
 selectionRulez 
-    : SELECTION ruleid (LPAREN parameters RPAREN)? AS selection 
+locals [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode , 
+		 Dictionary<string,uint> names = new Dictionary<string,uint>() ]
+    : SELECTION ruleid (LPAREN parameters RPAREN)? AS ( selectStatementBlock | selection ) 
     ;
 
 // rulename
@@ -44,55 +52,123 @@ ruleid
     ;
 
 /* Parameterdefinition
+ * defines a position no for each paramterdefinition
  */
 parameters
-    : parameterdefinition (COLON parameterdefinition)*
+locals [ uint pos = 1 ]
+    : parameterdefinition [$pos] ( {$pos ++;} COLON parameterdefinition [$pos] )*
     ;
 
 // parameter definition with a default value 
-parameterdefinition
-    : IDENTIFIER AS valuetype ( isNullable )? ( DEFAULT literal )? 
+parameterdefinition  [uint pos]
+    : IDENTIFIER AS dataType ( DEFAULT literal )? 
+		{AddParameterName($ctx.IDENTIFIER().GetText(), $pos, $ctx);}
     ;
 
-isNullable
-    : QUESTIONMARK
-    | I S N U L L A B L E
-    ;
-/* Selection expression
+/* SelectStatementBlock
+ */
+selectStatementBlock
+locals [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode , 
+		 Dictionary<string,uint> names = new Dictionary<string,uint>() ]
+	: L_BRACKET selectStatement (EOS+ selectStatement)* R_BRACKET
+	;
+
+/* selectStatement in a Select Block
+ */
+selectStatement
+	: selection 
+	| variableDeclaration
+	| assignment 
+	| match 
+	| return 
+	;
+
+/* Assignment
+ */
+assignment
+	: variableName EQ selectExpression
+	| dataObjectEntryName EQ selectExpression
+	;
+
+/* Variable Declaration
+ */
+variableDeclaration
+	: IDENTIFIER AS dataType ( DEFAULT literal )? 
+		{AddVariableName($ctx.IDENTIFIER().GetText(), 0, $ctx);}
+	;
+	
+/* MATCH 
+ */
+match
+	: MATCH (variableName | parameterName | dataObjectEntryName ) WITH matchcase ( OR matchcase )* 
+	;
+
+matchcase
+	: selectExpression DO selectStatement
+	;
+
+/* return
+ */
+
+return
+	: RETURN selectExpression
+	;
+
+/* Selection of data objects
  *
- * e.g. deliverables[109] = deliverables[.uid=109] -> returns a list with one member which is primary key #1 (UID)
- *		deliverables[(109|110|120)] = deliverables[.uid=109 OR .uid=110 OR .uid = 120] -> returns list with 
- *		deliverables[109, .category = "DOC"] = deliverables[.UID = 109 AND .CATEGORY = "DOC"]
- *		deliverables[(109|110|120), .created >= #10.12.2015#] = deliverables[(.UID = 109 OR .UID = 110 OR .UID = 120) AND .CREATED >= 10.12.2015]
+ * e.g. deliverables[109] = deliverables[uid=109] -> returns a list with one member which is primary key #1 (UID)
+ *		deliverables[(109|110|120)] = deliverables[uid=109 OR uid=110 OR uid = 120] -> returns list with 
+ *		deliverables[109, category = "DOC"] = deliverables[UID = 109 AND CATEGORY = "DOC"]
+ *		deliverables[(109|110|120), created >= #10.12.2015#] = deliverables[(UID = 109 OR UID = 110 OR UID = 120) AND CREATED >= 10.12.2015]
  */
 
 selection
-    :   dataObjectClass L_SQUARE_BRACKET selectConditionExpression+ R_SQUARE_BRACKET 
+locals [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode,
+		 string ClassName ]
+    :   dataObjectClass {$ClassName = $ctx.dataObjectClass().GetText();} L_SQUARE_BRACKET selectConditions+ R_SQUARE_BRACKET 
     ;
 
-selectConditionExpression
-    :	selectCondition (logicalOperator selectCondition)*
+/* all selection conditions 
+ * e.g. 
+ * uid = 100, category = "test" 
+ *
+ * add position counting for keys
+ * to enable things like this
+ * 100, "test" -> uid = 100 AND category = "test" (uid, category keys)
+ * 100 | 101, "test" -> (uid = 100 OR uid = 101) AND category = "test"
+ */
+selectConditions
+locals [  uint pos = 1, OnTrack.Rulez.eXPressionTree.INode XPTreeNode  ]
+    :	selectCondition [$pos] (logicalOperator {if ($ctx.logicalOperator($ctx.logicalOperator().GetUpperBound(0)).AND() != null) $pos ++;} selectCondition [$pos] )*
     ;
 
- selectCondition
+
+/* selection condition with position 
+ *
+ */
+ selectCondition [uint pos]
+ locals [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
     :	(dataObjectEntryName? compareOperator)? selectExpression
     ;
 
  logicalOperator
-    : AND
-    | OR
-    | XOR
-    | NOT
+ locals [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode,
+		  OnTrack.Rulez.Operator Operator  ]
+    : AND { $ctx.Operator = Operator.GetOperator(new Token(Token.ANDALSO));}
+    | OR  { $ctx.Operator = Operator.GetOperator(new Token(Token.ORELSE));}
+  //| XOR { $ctx.Operator = Operator.GetOperator(new Token(Token.XOR));}
+    | NOT { $ctx.Operator = Operator.GetOperator(new Token(Token.NOT));}
     ;
 
 
-/* Expressions
+/* Select Expressions
  */
 
 selectExpression
+locals [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
     : literal 
-    | parametername
-    | parameterdefinition
+    | parameterName
+	| variableName
     | dataObjectEntryName
     | ( PLUS | MINUS ) selectExpression
     | selectExpression logicalOperator selectExpression
@@ -100,50 +176,105 @@ selectExpression
     | LPAREN selectExpression RPAREN
     ;
 
-
+/* Arithmetic Operators
+ */
 arithmeticOperator
-    : PLUS | MINUS | DIV | MULT | MODULO | POW
+locals [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ,
+		  OnTrack.Rulez.Operator Operator  ]
+    : PLUS { $ctx.Operator = Operator.GetOperator(new Token(Token.PLUS));}
+	| MINUS { $ctx.Operator = Operator.GetOperator(new Token(Token.MINUS));}
+	| DIV { $ctx.Operator = Operator.GetOperator(new Token(Token.DIV));}
+	| MULT { $ctx.Operator = Operator.GetOperator(new Token(Token.MULT));}
+	| MODULO { $ctx.Operator = Operator.GetOperator(new Token(Token.MOD));}
+	| CONCAT { $ctx.Operator = Operator.GetOperator(new Token(Token.CONCAT));}
     ;
 
-/* Words and so on
+/* Comparison Operators
  */
 
 compareOperator
-    : EQ | NEQ | GT | GE | LE | LT
+locals [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ,
+		  OnTrack.Rulez.Operator Operator  ]
+    : EQ { $ctx.Operator = Operator.GetOperator(new Token(Token.EQ));}
+	| NEQ { $ctx.Operator = Operator.GetOperator(new Token(Token.NEQ));}
+	| GT  { $ctx.Operator = Operator.GetOperator(new Token(Token.GT));}
+	| GE { $ctx.Operator = Operator.GetOperator(new Token(Token.GE));}
+	| LE  { $ctx.Operator = Operator.GetOperator(new Token(Token.LE));}
+	| LT  { $ctx.Operator = Operator.GetOperator(new Token(Token.LT));}
     ;
 
-/* Identifier 
+/* datatype definition
+ * 
  */
-valuetype
-    : NUMBER
-    | DECIMAL
-    | DATE
-    | TIMESTAMP
-    | TEXT
-    | MEMO
-    | LIST 
+dataType
+locals []
+	: valueType
+	| structuredType
+	| dataObjectClass
+	;
+
+/* structure types
+ */
+structuredType
+locals []
+	: LIST OF valueType
+	| LIST OF structuredType
+	;
+
+/* value types
+ */
+valueType
+locals [ otDataType type]
+    : ( NUMBER {$type = otDataType.Number;}
+    | DECIMAL {$type = otDataType.Decimal;}
+    | DATE {$type = otDataType.Date;}
+    | TIMESTAMP {$type = otDataType.Timestamp;}
+    | TEXT {$type = otDataType.Text;}
+    | MEMO {$type = otDataType.Memo;}
+	) (isNullable {$type ^= otDataType.isNullable;})?
     ;
+
+/* nullable
+ */
+isNullable
+    : QUESTIONMARK
+    | NULLABLE
+    ;
+
 // Object Class
 dataObjectClass
-    : IDENTIFIER
+locals [ string ClassName ]
+    : IDENTIFIER { $ClassName = $ctx.IDENTIFIER().GetText() ;}
     ;
+
 // Object Entry Name
 dataObjectEntryName
-    : (dataObjectClass)? DOT IDENTIFIER
+locals [ string entryname ]
+    : (dataObjectClass DOT)?  IDENTIFIER 
+	{ if ($ctx.dataObjectClass() == null) $entryname = GetDefaultClassName($ctx) + "." + $ctx.IDENTIFIER().GetText();
+	  else $entryname = $ctx.dataObjectClass().ClassName + "." + $ctx.IDENTIFIER().GetText();
+	}
     ;
-// parametername
-parametername
-    : IDENTIFIER
+
+// parameter name
+parameterName
+    : {IsParameterName($ctx.GetText(),$ctx)}? IDENTIFIER
+    ;
+
+// variable name
+variableName
+    : {IsVariableName($ctx.GetText(),$ctx)}? IDENTIFIER
     ;
 
 /* Literals
  */
 literal
-    : STRINGLITERAL
-    | DECIMALLITERAL
-    | DATELITERAL
-    | NUMBERLITERAL
-    | NOTHING
-    | FALSE
-    | TRUE
+locals [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
+    : STRINGLITERAL { $ctx.XPTreeNode = new OnTrack.Rulez.eXPressionTree.Literal($ctx.GetText(), otDataType.Text); }
+    | DECIMALLITERAL  { $ctx.XPTreeNode = new OnTrack.Rulez.eXPressionTree.Literal($ctx.GetText(), otDataType.Decimal); }
+    | DATELITERAL  { $ctx.XPTreeNode = new OnTrack.Rulez.eXPressionTree.Literal($ctx.GetText(), otDataType.Date); }
+    | NUMBERLITERAL  { $ctx.XPTreeNode = new OnTrack.Rulez.eXPressionTree.Literal($ctx.GetText(), otDataType.Number); }
+    | NOTHING  { $ctx.XPTreeNode = new OnTrack.Rulez.eXPressionTree.Literal(null, otDataType.Void); }
+    | FALSE  { $ctx.XPTreeNode = new OnTrack.Rulez.eXPressionTree.Literal(false, otDataType.Bool); }
+    | TRUE  { $ctx.XPTreeNode = new OnTrack.Rulez.eXPressionTree.Literal(true, otDataType.Bool); }
     ;
