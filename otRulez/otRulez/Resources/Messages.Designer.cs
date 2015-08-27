@@ -61,11 +61,200 @@ namespace OnTrack.Rulez.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Help.
+        ///   Looks up a localized string similar to invalid null argument.
         /// </summary>
-        internal static string T101 {
+        internal static string REM_1 {
             get {
-                return ResourceManager.GetString("T101", resourceCulture);
+                return ResourceManager.GetString("REM_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to value &apos;{0}&apos; is not convertible to {1}.
+        /// </summary>
+        internal static string REM_10 {
+            get {
+                return ResourceManager.GetString("REM_10", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to invalid type of node &apos;{0}&apos; - expected is {1}.
+        /// </summary>
+        internal static string REM_11 {
+            get {
+                return ResourceManager.GetString("REM_11", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Generating rule theCode failed - see inner exception.
+        /// </summary>
+        internal static string REM_12 {
+            get {
+                return ResourceManager.GetString("REM_12", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Running a rule failed - see inner exception.
+        /// </summary>
+        internal static string REM_13 {
+            get {
+                return ResourceManager.GetString("REM_13", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No data engine for object names &apos;{0}&apos; available.
+        /// </summary>
+        internal static string REM_14 {
+            get {
+                return ResourceManager.GetString("REM_14", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Context Stack Underflow Error - no of elements on Stack {0} but {1} elements to be popped off.
+        /// </summary>
+        internal static string REM_15 {
+            get {
+                return ResourceManager.GetString("REM_15", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Context Stack Overflow Error.
+        /// </summary>
+        internal static string REM_16 {
+            get {
+                return ResourceManager.GetString("REM_16", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Code handle for rule &apos;{0}&apos; is not existing in the engine or is null.
+        /// </summary>
+        internal static string REM_17 {
+            get {
+                return ResourceManager.GetString("REM_17", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rule &apos;{1}&apos; of type &apos;{0}&apos; is expecting {2} arguments - {3} supplied.
+        /// </summary>
+        internal static string REM_18 {
+            get {
+                return ResourceManager.GetString("REM_18", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Code of handle &apos;{1}&apos; of Rule &apos;{0}&apos; is invalid.
+        /// </summary>
+        internal static string REM_19 {
+            get {
+                return ResourceManager.GetString("REM_19", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to invalid type of operand &apos;{0}&apos; - should be implementing INode or IExpression.
+        /// </summary>
+        internal static string REM_2 {
+            get {
+                return ResourceManager.GetString("REM_2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Data type with name &apos;{0}&apos; is not implemented in case condition of routine.
+        /// </summary>
+        internal static string REM_20 {
+            get {
+                return ResourceManager.GetString("REM_20", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Messages resource file was not found.
+        /// </summary>
+        internal static string REM_21 {
+            get {
+                return ResourceManager.GetString("REM_21", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Data type with name &apos;{0}&apos; is not implemented by data type class &apos;{1}&apos;.
+        /// </summary>
+        internal static string REM_22 {
+            get {
+                return ResourceManager.GetString("REM_22", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to index &apos;{0}&apos; greater than array size of &apos;{1}&apos;.
+        /// </summary>
+        internal static string REM_3 {
+            get {
+                return ResourceManager.GetString("REM_3", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to operator &apos;{0}&apos; is not defined.
+        /// </summary>
+        internal static string REM_4 {
+            get {
+                return ResourceManager.GetString("REM_4", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to for operator &apos;{0}&apos; are &apos;{1}&apos; operands necessary - &apos;{2}&apos; are supplied.
+        /// </summary>
+        internal static string REM_5 {
+            get {
+                return ResourceManager.GetString("REM_5", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to for operator &apos;{0}&apos; {1} operand must not be null.
+        /// </summary>
+        internal static string REM_6 {
+            get {
+                return ResourceManager.GetString("REM_6", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to handle &apos;{0}&apos; was not found in context &apos;{1}&apos;.
+        /// </summary>
+        internal static string REM_7 {
+            get {
+                return ResourceManager.GetString("REM_7", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to handle &apos;{0}&apos; is already defined in context &apos;{1}&apos;.
+        /// </summary>
+        internal static string REM_8 {
+            get {
+                return ResourceManager.GetString("REM_8", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to operator &apos;{0}&apos; is not of expected type {1}.
+        /// </summary>
+        internal static string REM_9 {
+            get {
+                return ResourceManager.GetString("REM_9", resourceCulture);
             }
         }
     }

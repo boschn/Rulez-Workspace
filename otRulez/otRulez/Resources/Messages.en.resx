@@ -117,7 +117,70 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="T101" xml:space="preserve">
-    <value>Help</value>
+  <data name="REM_1" xml:space="preserve">
+    <value>invalid null argument</value>
+  </data>
+  <data name="REM_10" xml:space="preserve">
+    <value>value '{0}' is not convertible to {1}</value>
+  </data>
+  <data name="REM_11" xml:space="preserve">
+    <value>invalid type of node '{0}' - expected is {1}</value>
+  </data>
+  <data name="REM_12" xml:space="preserve">
+    <value>Generating rule theCode failed - see inner exception</value>
+  </data>
+  <data name="REM_13" xml:space="preserve">
+    <value>Running a rule failed - see inner exception</value>
+  </data>
+  <data name="REM_14" xml:space="preserve">
+    <value>No data engine for object names '{0}' available</value>
+  </data>
+  <data name="REM_15" xml:space="preserve">
+    <value>Context Stack Underflow Error - no of elements on Stack {0} but {1} elements to be popped off</value>
+  </data>
+  <data name="REM_16" xml:space="preserve">
+    <value>Context Stack Overflow Error</value>
+  </data>
+  <data name="REM_17" xml:space="preserve">
+    <value>Code handle for rule '{0}' is not existing in the engine or is null</value>
+  </data>
+  <data name="REM_18" xml:space="preserve">
+    <value>Rule '{1}' of type '{0}' is expecting {2} arguments - {3} supplied</value>
+  </data>
+  <data name="REM_19" xml:space="preserve">
+    <value>Code of handle '{1}' of Rule '{0}' is invalid</value>
+  </data>
+  <data name="REM_2" xml:space="preserve">
+    <value>invalid type of operand '{0}' - should be implementing INode or IExpression</value>
+  </data>
+  <data name="REM_20" xml:space="preserve">
+    <value>Data type with name '{0}' is not implemented in case condition of routine</value>
+  </data>
+  <data name="REM_21" xml:space="preserve">
+    <value>Messages resource file was not found</value>
+  </data>
+  <data name="REM_22" xml:space="preserve">
+    <value>Data type with name '{0}' is not implemented by data type class '{1}'</value>
+  </data>
+  <data name="REM_3" xml:space="preserve">
+    <value>index '{0}' greater than array size of '{1}'</value>
+  </data>
+  <data name="REM_4" xml:space="preserve">
+    <value>operator '{0}' is not defined</value>
+  </data>
+  <data name="REM_5" xml:space="preserve">
+    <value>for operator '{0}' are '{1}' operands necessary - '{2}' are supplied</value>
+  </data>
+  <data name="REM_6" xml:space="preserve">
+    <value>for operator '{0}' {1} operand must not be null</value>
+  </data>
+  <data name="REM_7" xml:space="preserve">
+    <value>handle '{0}' was not found in context '{1}'</value>
+  </data>
+  <data name="REM_8" xml:space="preserve">
+    <value>handle '{0}' is already defined in context '{1}'</value>
+  </data>
+  <data name="REM_9" xml:space="preserve">
+    <value>operator '{0}' is not of expected type {1}</value>
   </data>
 </root>

@@ -96,29 +96,50 @@ namespace OnTrack.Core
 [TypeConverter(typeof(long))]
     public enum otDataType
     {   
-            @Void = 0,
-            Decimal = 1,
-            List = 2,
-            Text = 3,
-            Runtime = 4,
-            Formula = 5,
-            Date = 6,
-            Number = 7,
-            Timestamp = 8,
-            Bool = 9,
-            Memo = 10,
-            Binary = 11,
-            Timespan = 12,
-            DecimalUnit = 13, // -> Money, or decimal in other values not yet implemented
-            isNullable = 32 // -> OR PATTERN
+        // Value Types
+        @Void = 0,
+        Decimal = 1,
+        // List = 2,
+        Text = 3,
+        // Runtime = 4, -> obsolete
+        // Formula = 5, -> obsolete
+        Date = 6,
+        Number = 7,
+        Timestamp = 8,
+        Bool = 9,
+        Memo = 10,
+        Binary = 11,
+        Timespan = 12,
+        Symbol=13, // an Enumerated Symbol
+        // Complex Types 16 and higher
+        DecimalUnit = 17, // -> Money, or decimal in other values not yet implemented
+        LanguageText = 18, // Text with a Language Cultural
+        // Structured Types 64 and higher
+        List = 65,
+        // IsNullable Flag    
+        IsNullable = 128, // -> OR Flag
+            
     }
-   
-
+    /// <summary>
+    /// Interface for an data type description
+    /// </summary>
+   public interface iDataType
+   {
+       /// <summary>
+       /// gets the name of the data type
+       /// </summary>
+       string Name { get; }
+       /// <summary>
+       /// gets the typeid of the DataType
+       /// </summary>
+       otDataType TypeId { get; }
+   }
     /// <summary>
     /// Interface for Object Entries
     /// </summary>
     /// <remarks></remarks>
-    public interface iObjectEntryDefinition {
+    public interface iObjectEntryDefinition 
+    {
         
         /// <summary>
         /// returns true if the Entry is mapped to a class member field
@@ -381,8 +402,47 @@ namespace OnTrack.Core
     /// <summary>
     /// describes a key data tuple
     /// </summary>
-    public interface iKey : IHashCodeProvider , IComparable 
+    public interface iKey : IHashCodeProvider, IEqualityComparer , IComparable 
     {
+        /// <summary>
+        /// Compares the current instance with another object of the same type and
+        /// returns an integer that indicates whether the current instance precedes, follows,
+        /// or occurs in the same position in the sort order as the other object.
+        /// </summary>
+        /// <param name="obj">An object to compare with this instance.</param>
+        /// <exception cref="T:System.ArgumentException">
+        /// <paramref name="obj" /> is not the same type as this instance. </exception>
+        /// <returns>
+        /// A value that indicates the relative order of the objects being compared.
+        /// The return value has these meanings: Value Meaning Less than zero This instance
+        /// precedes <paramref name="obj" /> in the sort order. Zero This instance occurs
+        /// in the same position in the sort order as <paramref name="obj" />. Greater than
+        /// zero This instance follows <paramref name="obj" /> in the sort order.
+        /// </returns>
+         int CompareTo(object obj);
+
+        /// <summary>
+        /// Determines whether the specified objects are equal.
+        /// </summary>
+        /// <param name="x">The first object to compare.</param>
+        /// <param name="y">The second object to compare.</param>
+        /// <exception cref="T:System.ArgumentException">
+        /// <paramref name="x" /> and <paramref name="y" /> are of different types and neither
+        /// one can handle comparisons with the other.</exception>
+        /// <returns>true if the specified objects are equal; otherwise, false.</returns>
+         bool Equals(object x, object y);
+
+        /// <summary>
+        /// Returns a hash code for the specified object.
+        /// </summary>
+        /// <param name="obj">The <see cref="T:System.Object" /> for which a hash code is
+        /// to be returned.</param>
+        /// <exception cref="T:System.ArgumentNullException">The type of <paramref name="obj" />
+        /// is a reference type and <paramref name="obj" /> is null.</exception>
+        /// <returns>A hash code for the specified object.</returns>
+         int GetHashCode(object obj);
+
+
         /// <summary>
         /// gets or sets the keys / entrynames
         /// </summary>

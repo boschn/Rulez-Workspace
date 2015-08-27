@@ -18,6 +18,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
+using OnTrack.Rulez.Resources;
+using System.Globalization;
+using System.Resources;
+
 namespace OnTrack.Rulez
 {
     /// <summary>
@@ -50,9 +54,13 @@ namespace OnTrack.Rulez
             HandleNotDefined,
             InvalidNumberOfArguments,
             InvalidCode,
-            DataTypeNotImplemented
+            DataTypeNotImplementedByCase,
+            MessagesNotFound,
+            DataTypeNotImplementedByClass,
         }
-
+        /// <summary>
+        /// fall back messages
+        /// </summary>
         private static string[] _messages = {
                                          // None
                                          String.Empty,
@@ -95,8 +103,13 @@ namespace OnTrack.Rulez
                                          // Invalid Code
                                          "Code of handle '{1}' of Rule '{0}' is invalid",
                                          // DataType not Implemented
-                                         "Data type with name '{0}' is not implemented in case condition of routine"
+                                         "Data type with name '{0}' is not implemented in case condition of routine",
+                                         // Message Resource file not found
+                                         "Messages resource file was not found",
+                                         // invalid data type of class
+                                         "Data type with name '{0}' cannot be implemented by class '{1}'"
                                          };
+
         /// <summary>
         /// variables
         /// </summary>
@@ -105,6 +118,23 @@ namespace OnTrack.Rulez
         private String _category;
         private String _Tag;
         private Exception _innerException;
+        // static
+        private static ResourceManager _ResourceMessages;
+        const string MessagePrefix = "REM_"; // prefix for Rulez Exception Messages
+        /// <summary>
+        /// static constructor
+        /// </summary>
+        static RulezException ()
+        {
+           try
+           {
+               _ResourceMessages = new ResourceManager("OnTrack.Rulez.Resources.Messages", typeof(Messages).Assembly);
+           }
+           catch (System.Exception ex)
+           {
+               throw new RulezException(Types.MessagesNotFound, "OnTrack.Rulez.Resources.Messages", inner: ex);
+           }
+        }
         /// <summary>
         /// constructor
         /// </summary>
@@ -116,8 +146,13 @@ namespace OnTrack.Rulez
             _category = category;
             _Tag = Tag;
             if (message != null) _message = message;
-            else _message = _messages[(int)id];
-            string.Format(_message, arguments);
+            else
+            {
+                _message = (_ResourceMessages != null) ? _ResourceMessages.GetString(MessagePrefix+id.ToString()) : _messages[(int)id];
+                // fall back
+                if (_message == null) _message = _messages[(int)id];
+            }
+            _message = (_message != null ) ? string.Format(_message, arguments) : OnTrack.Core.Converter.Array2StringList (arguments);
             _innerException = inner;
         }
 

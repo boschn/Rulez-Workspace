@@ -62,6 +62,7 @@
       <DependentUpon>Messages.resx</DependentUpon>
     </Compile>
     <Compile Include="rulez.cs" />
+    <Compile Include="rulezDataTypes.cs" />
     <Compile Include="rulezEngine.cs" />
     <Compile Include="RulezLexer.g4.cs">
       <DependentUpon>RulezLexer.g4</DependentUpon>

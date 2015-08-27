@@ -28,7 +28,7 @@ namespace OnTrack.Core
     /// <summary>
     /// static class Datatype
     /// </summary>
-    public class DataType
+    public class DataType : iDataType
     {
         public const Char ConstDelimiter = '|';
         public const String ConstNullTimestampString = "1900-01-01T00:00:00";
@@ -619,30 +619,54 @@ namespace OnTrack.Core
             return String.Empty;
         }
 #endregion
+        /// <summary>
+        /// static constructor
+        /// </summary>
+        static DataType()
+        {
 
+        }
         /// <summary>
         /// constructor
         /// </summary>
         /// <param name="type"></param>
-        DataType(otDataType type, bool isNullable = false, object defaultvalue = null)
+        protected DataType(otDataType type, bool isNullable = false, object defaultvalue = null)
         {
-            if (isNullable) _type = type | otDataType.isNullable;
+            if (isNullable) _type = type | otDataType.IsNullable;
             else _type = type;
             _defaultvalue = defaultvalue;
         }
         /// <summary>
+        /// returns the typeid of the DataType
+        /// </summary>
+        public otDataType TypeId
+        {
+            get { return _type; }
+        }
+        /// <summary>
+        /// gets the Name of the value Datatype
+        /// </summary>
+        public string Name
+        {
+            get;
+            set;
+        }
+        /// <summary>
         /// return true if the type is Nullable
         /// </summary>
-        bool IsNullable { 
-            get { 
-                    if ((_type & otDataType.isNullable) == otDataType.isNullable) return true; 
+        public bool IsNullable 
+        { 
+            get 
+            { 
+                    if ((_type & otDataType.IsNullable) == otDataType.IsNullable) return true; 
                     return false; 
             } 
         }
         /// <summary>
         /// gets the default value
         /// </summary>
-        Object DefaultValue { 
+        public Object DefaultValue 
+        { 
             get { return _defaultvalue; }
         }
 
@@ -652,50 +676,73 @@ namespace OnTrack.Core
     /// </summary>
     public class Converter
     {
-        public static string Array2StringList(object[] input, char delimiter = ',') {
-        int i;
-        // Warning!!! Optional parameters not supported
-        if (input != null) {
-            string aStrValue = String.Empty;
-            for (i =0; (i <= input.GetUpperBound (1)); i++) {
-                if ((i == 0)) {
-                    aStrValue = input[i].ToString();
+        /// <summary>
+        /// converts an array to an a listed string
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="delimiter"></param>
+        /// <returns></returns>
+        public static string Array2StringList(object[] input, char delimiter = ',') 
+        {
+            int i;
+            // Warning!!! Optional parameters not supported
+            if (input != null)
+            {
+                string aStrValue = String.Empty;
+                for (i = 0; (i <= input.GetUpperBound(1)); i++)
+                {
+                    if ((i == 0))
+                    {
+                        aStrValue = input[i].ToString();
+                    }
+                    else
+                    {
+                        aStrValue += delimiter + input[i].ToString();
+                    }
                 }
-                else {
-                    aStrValue += delimiter + input[i].ToString();
+                return aStrValue;
+            }
+            else
+            {
+                return String.Empty;
+            }
+        }
+
+        public static string Enumerable2StringList(IEnumerable input, char delimiter =',')
+        {
+            string aStrValue = String.Empty;
+            // Warning!!! Optional parameters not supported
+            if ((input == null))
+            {
+                return String.Empty;
+            }
+            foreach (var anElement in input)
+            {
+                string s;
+                if ((anElement == null))
+                {
+                    s = String.Empty;
+                }
+                else
+                {
+                    s = anElement.ToString();
+                }
+                if ((aStrValue == String.Empty))
+                {
+                    aStrValue = s;
+                }
+                else
+                {
+                    aStrValue += delimiter + s;
                 }
             }
             return aStrValue;
         }
-        else {
-            return String.Empty;
-        }
-    }
-
-         public static string Enumerable2StringList(IEnumerable input, char delimiter =',') {
-        string aStrValue = String.Empty;
-        // Warning!!! Optional parameters not supported
-        if ((input == null)) {
-            return String.Empty;
-        }
-        foreach (var anElement in input) {
-            string s;
-            if ((anElement == null)) {
-                s = String.Empty;
-            }
-            else {
-                s = anElement.ToString();
-            }
-            if ((aStrValue == String.Empty)) {
-                aStrValue = s;
-            }
-            else {
-                aStrValue += delimiter + s;
-            }
-        }
-        return aStrValue;
-    }
-
+        /// <summary>
+        /// converts to String - if an array then to a a listed string
+        /// </summary>
+        /// <param name="anObject"></param>
+        /// <returns></returns>
         public static String ToString(object anObject)
         {
             if (anObject == null) return String.Empty;
@@ -704,7 +751,7 @@ namespace OnTrack.Core
             if ((anObject.GetType().IsArray) || (anObject .GetType().IsAssignableFrom (typeof(IEnumerable ))))
             {
                 String aString = String.Empty + DataType.ConstDelimiter  ;
-                foreach (Object anItem in (anObject as IEnumerable ))            if (anItem != null) aString += anItem.ToString();
+                foreach (Object anItem in (anObject as IEnumerable )) if (anItem != null) aString += anItem.ToString();
                 aString += DataType.ConstDelimiter;
                 return aString;
             }
@@ -807,6 +854,5 @@ namespace OnTrack.Core
             red = color.R;
             return blue * Convert.ToUInt32 (Math.Pow(255, 2)) + green * 255 + red;
         }
-
     }
 }

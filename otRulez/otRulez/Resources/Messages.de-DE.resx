@@ -117,7 +117,70 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="T101" xml:space="preserve">
-    <value>Hilfe</value>
+  <data name="REM_1" xml:space="preserve">
+    <value>null argument ist invalid</value>
+  </data>
+  <data name="REM_10" xml:space="preserve">
+    <value>Wert '{0}' ist nicht nach {1} konvertierbar</value>
+  </data>
+  <data name="REM_11" xml:space="preserve">
+    <value>Falscher Knotentyp von '{0}' - erwartet wurde {1}</value>
+  </data>
+  <data name="REM_12" xml:space="preserve">
+    <value>Regelerzeugung ist fehlgeschlagen - Innere Ausnahme beachten</value>
+  </data>
+  <data name="REM_13" xml:space="preserve">
+    <value>Auführung der Regel fehlgeschlagen - Innere Ausnahme beachten</value>
+  </data>
+  <data name="REM_14" xml:space="preserve">
+    <value>Keine DataEngine für Datenobjekt der Klasse '{0}' verfügbar</value>
+  </data>
+  <data name="REM_15" xml:space="preserve">
+    <value>Kontext Stapel Fehler - Anzahl der Elemente auf dem Stapel ist {0} - {1} Elemente sollen entnommen werden</value>
+  </data>
+  <data name="REM_16" xml:space="preserve">
+    <value>Kontext Stapel Überlauf Fehler</value>
+  </data>
+  <data name="REM_17" xml:space="preserve">
+    <value>Code handle für Regel '{0}' existiert in der Engine nicht</value>
+  </data>
+  <data name="REM_18" xml:space="preserve">
+    <value>Die Regel  '{1}'  vom Typ '{0}' erwartet  {2} Argumente - {3} angegeben</value>
+  </data>
+  <data name="REM_19" xml:space="preserve">
+    <value>Code des Handle '{1}' der Rule '{0}' ist ungültig</value>
+  </data>
+  <data name="REM_2" xml:space="preserve">
+    <value>Falscher Typ des Operanden '{0}' -sollte Interface INode oder Iexpression implementieren</value>
+  </data>
+  <data name="REM_20" xml:space="preserve">
+    <value>Datentyp mit Name  '{0}' ist in der Case Anweisung der Routine nicht implementiert</value>
+  </data>
+  <data name="REM_21" xml:space="preserve">
+    <value>Messages resource file wurde nicht gefunden</value>
+  </data>
+  <data name="REM_22" xml:space="preserve">
+    <value>Datentyp des Namens '{0}' ist durch die Datentypklasse  '{1}' nicht implementiert</value>
+  </data>
+  <data name="REM_3" xml:space="preserve">
+    <value>Index '{0}' größer als die größe des array von '{1}'</value>
+  </data>
+  <data name="REM_4" xml:space="preserve">
+    <value>Operator '{0}' ist nicht definiert</value>
+  </data>
+  <data name="REM_5" xml:space="preserve">
+    <value>Für  operator '{0}'  sind  '{1}' Operanten notwendig - '{2}' wurden angegeben</value>
+  </data>
+  <data name="REM_6" xml:space="preserve">
+    <value>Für operator '{0}' {1}ter Operand darf nicht NULL sein</value>
+  </data>
+  <data name="REM_7" xml:space="preserve">
+    <value>Handle '{0}' wurde im Kontext '{1}' nicht gefunden</value>
+  </data>
+  <data name="REM_8" xml:space="preserve">
+    <value>Handle '{0}' ist im Kontext '{1}' bereits definiert</value>
+  </data>
+  <data name="REM_9" xml:space="preserve">
+    <value>Operator '{0}' entsprecht nicht dem erwartetenden Typ von {1}</value>
   </data>
 </root>
