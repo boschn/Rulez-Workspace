@@ -34,14 +34,10 @@ namespace OnTrack.Core
         /// gets the object name
         /// </summary>
         String Objectname { get; }
-
         /// <summary>
         /// gets the System.Type of the object implementation class
         /// </summary>
         System.Type ObjectType { get;  }
-
-       
-
         /// <summary>
         /// gets the module name space
         /// </summary>
@@ -66,7 +62,6 @@ namespace OnTrack.Core
         /// gets or sets the active / enabled flag
         /// </summary>
         bool IsActive { get; set; }
-
         /// <summary>
         /// gets or sets the unique key entry names
         /// </summary>

@@ -55,7 +55,7 @@ namespace OnTrack.Rulez.eXPressionTree
     /// </summary>
     public interface IVisitor
     {
-        /// <summary>
+        /// <summary>Rulez Workspace
         /// returns the whatever result
         /// </summary>
         Object Result { get; }

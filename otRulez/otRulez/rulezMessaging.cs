@@ -110,7 +110,7 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="handle"></param>
         /// <param name="message"></param>
-        public RulezException(Types id = 0, String message = null, String category = null, String Tag = null, Exception inner = null,  params object[] arguments)
+        public RulezException(Types id = 0, String message = null, string category = null, string Tag = null, Exception inner = null,  params object[] arguments)
         {
             _id = id;
             _category = category;
@@ -124,7 +124,7 @@ namespace OnTrack.Rulez
         /// <summary>
         /// gets the message string of the exception
         /// </summary>
-        public String Message { get { return _message; } }
+        public string Message { get { return _message; } }
 
         /// <summary>
         /// gets the exception handle
@@ -135,12 +135,12 @@ namespace OnTrack.Rulez
         /// <summary>
         /// gets the category of the exception
         /// </summary>
-        public String Category { get { return _category; } }
+        public string Category { get { return _category; } }
 
 
         /// <summary>
         /// gets the Tag string of the exception
         /// </summary>
-        public String Tag { get { return _Tag; } }
+        public string Tag { get { return _Tag; } }
     }
 }
