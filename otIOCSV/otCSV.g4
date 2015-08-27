@@ -4,8 +4,6 @@
 
 grammar otCSV;
 
-
-
 /*
  * Parser Rules
  */
