@@ -92,12 +92,11 @@ namespace OnTrack.Core
 /// Data Types for OnTrack Database Fields
 /// </summary>
 /// <remarks></remarks>
-
 [TypeConverter(typeof(long))]
-    public enum otDataType
+    public enum otDataType : uint
     {   
-        // Value Types
-        @Void = 0,
+        // base Types
+        @Null = 0,
         Decimal = 1,
         // List = 2,
         Text = 3,
@@ -110,10 +109,12 @@ namespace OnTrack.Core
         Memo = 10,
         Binary = 11,
         Timespan = 12,
-        Symbol=13, // an Enumerated Symbol
         // Complex Types 16 and higher
         DecimalUnit = 17, // -> Money, or decimal in other values not yet implemented
         LanguageText = 18, // Text with a Language Cultural
+        Symbol = 19, // an Enumerated Symbol
+        // dataObjectType
+        DataObject = 33,
         // Structured Types 64 and higher
         List = 65,
         // IsNullable Flag    
@@ -121,26 +122,49 @@ namespace OnTrack.Core
             
     }
     /// <summary>
+    /// Category of Datatypes
+    /// </summary>
+    public enum otDataTypeCategory : uint
+    {
+        Primitive = 1,
+        Complex ,
+        DataObject,
+        Structure
+    }
+
+    /// <summary>
     /// Interface for an data type description
     /// </summary>
-   public interface iDataType
-   {
-       /// <summary>
-       /// gets the name of the data type
-       /// </summary>
-       string Name { get; }
-       /// <summary>
-       /// gets the typeid of the DataType
-       /// </summary>
-       otDataType TypeId { get; }
-   }
+    public interface IDataType : IEqualityComparer<IDataType>, IEquatable<IDataType>
+    {
+        /// <summary>
+        /// gets the name of the data type
+        /// </summary>
+        string Name { get; }
+        /// <summary>
+        /// gets the signature of the data type
+        /// </summary>
+        string Signature { get; }
+        /// <summary>
+        /// gets the typeid of the DataType
+        /// </summary>
+        otDataType TypeId { get; }
+        /// <summary>
+        /// gets the category of the 
+        /// </summary>
+        otDataTypeCategory Category { get; }
+        /// <summary>
+        /// gets the aquivalent .NET type
+        /// </summary>
+        System.Type NativeType { get; }
+    }
+
     /// <summary>
     /// Interface for Object Entries
     /// </summary>
     /// <remarks></remarks>
     public interface iObjectEntryDefinition 
     {
-        
         /// <summary>
         /// returns true if the Entry is mapped to a class member field
         /// </summary>
@@ -194,7 +218,11 @@ namespace OnTrack.Core
         /// <value></value>
         /// <returns></returns>
         /// <remarks></remarks>
-        otDataType Datatype {get;set;}
+        otDataType TypeId {get;set;}
+        /// <summary>
+        /// returns the datatype
+        /// </summary>
+        IDataType DataType { get; set; }
         /// <summary>
         /// returns version
         /// </summary>
@@ -515,8 +543,8 @@ namespace OnTrack.Core
         /// <summary>
         /// creates a data object of a object handle with a key
         /// </summary>
-        /// <param name="objectid"></param>
-        /// <param name="key"></param>
+        /// <param signature="objectid"></param>
+        /// <param signature="key"></param>
         /// <returns></returns>
         iDataObject Create(string objectid, iKey key);
         /// <summary>

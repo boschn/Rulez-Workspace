@@ -117,6 +117,27 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="RCM_1" xml:space="preserve">
+    <value>Variablenname '{0}' ist im Kontext '{1}' bereits definiert</value>
+  </data>
+  <data name="RCM_2" xml:space="preserve">
+    <value>Keinen Variablen-Kontext '{0}' gefunden.</value>
+  </data>
+  <data name="RCM_3" xml:space="preserve">
+    <value>Parameter '{0}' ist im Kontext '{1}' bereits definiert</value>
+  </data>
+  <data name="RCM_4" xml:space="preserve">
+    <value>Keinen Parameter-Kontext '{0}' gefunden.</value>
+  </data>
+  <data name="RCM_5" xml:space="preserve">
+    <value>Variablenname '{0}' ist im Kontext '{1}' nicht definiert</value>
+  </data>
+  <data name="RCM_6" xml:space="preserve">
+    <value>Parameter '{0}' ist im Kontext '{1}' nicht definiert</value>
+  </data>
+  <data name="RCM_7" xml:space="preserve">
+    <value>Regel mit Id '{0}' ist bereits definiert.</value>
+  </data>
   <data name="REM_1" xml:space="preserve">
     <value>null argument ist invalid</value>
   </data>
@@ -161,6 +182,9 @@
   </data>
   <data name="REM_22" xml:space="preserve">
     <value>Datentyp des Namens '{0}' ist durch die Datentypklasse  '{1}' nicht implementiert</value>
+  </data>
+  <data name="REM_23" xml:space="preserve">
+    <value>Datentype mit Namen '{0}' wurde nicht gefunden</value>
   </data>
   <data name="REM_3" xml:space="preserve">
     <value>Index '{0}' größer als die größe des array von '{1}'</value>

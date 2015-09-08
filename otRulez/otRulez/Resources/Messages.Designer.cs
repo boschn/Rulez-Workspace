@@ -61,6 +61,69 @@ namespace OnTrack.Rulez.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to variable name &apos;{0}&apos; already defined in context &apos;{1}&apos;.
+        /// </summary>
+        internal static string RCM_1 {
+            get {
+                return ResourceManager.GetString("RCM_1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to no variable context &apos;{0}&apos; found.
+        /// </summary>
+        internal static string RCM_2 {
+            get {
+                return ResourceManager.GetString("RCM_2", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to parameter name &apos;{0}&apos; already defined in context &apos;{1}&apos;.
+        /// </summary>
+        internal static string RCM_3 {
+            get {
+                return ResourceManager.GetString("RCM_3", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to no parameter context &apos;{0}&apos; found.
+        /// </summary>
+        internal static string RCM_4 {
+            get {
+                return ResourceManager.GetString("RCM_4", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to variable name &apos;{0}&apos; not defined in context &apos;{1}&apos;.
+        /// </summary>
+        internal static string RCM_5 {
+            get {
+                return ResourceManager.GetString("RCM_5", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to parameter name &apos;{0}&apos; not defined in context &apos;{1}&apos;.
+        /// </summary>
+        internal static string RCM_6 {
+            get {
+                return ResourceManager.GetString("RCM_6", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to rule id &apos;{0}&apos; is already defined.
+        /// </summary>
+        internal static string RCM_7 {
+            get {
+                return ResourceManager.GetString("RCM_7", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to invalid null argument.
         /// </summary>
         internal static string REM_1 {
@@ -192,6 +255,15 @@ namespace OnTrack.Rulez.Resources {
         internal static string REM_22 {
             get {
                 return ResourceManager.GetString("REM_22", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Data type with name &apos;{0}&apos; not found.
+        /// </summary>
+        internal static string REM_23 {
+            get {
+                return ResourceManager.GetString("REM_23", resourceCulture);
             }
         }
         

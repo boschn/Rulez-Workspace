@@ -18,7 +18,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using System.Collections.ObjectModel;
 
 namespace OnTrack.Rulez.eXPressionTree
 {
@@ -40,6 +40,7 @@ namespace OnTrack.Rulez.eXPressionTree
         Variable,
         Operand,
         Operation,
+        CompareExpression,
         LogicalExpression,
         OperationExpression,
         FunctionCall,
@@ -47,7 +48,14 @@ namespace OnTrack.Rulez.eXPressionTree
         Rule,
         SelectionRule,
         Result,
-        ResultList
+        ResultList,
+        SelectionExpression,
+        StatementBlock,
+        Assignment,
+        SelectionStatementBlock,
+        IfThenElse,
+        Return,
+        
     }
 
     /// <summary>
@@ -73,18 +81,19 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// gets the type of the node
         /// </summary>
-        otXPTNodeType  NodeTokenType { get; }
-
+        otXPTNodeType  NodeType { get; }
         /// <summary>
         /// returns true if the node is a leaf
         /// </summary>
         bool HasSubNodes { get; }
-
+        /// <summary>
+        /// returns the parent of the node
+        /// </summary>
+        IXPTree Parent { get; set; }
         /// <summary>
         /// returns the engine
         /// </summary>
-        Engine Engine { get; }
-
+        Engine Engine { get; set; }
         /// <summary>
         /// accepts a visitor
         /// </summary>
@@ -94,40 +103,38 @@ namespace OnTrack.Rulez.eXPressionTree
     /// <summary>
     /// describes an abstract syntax tree
     /// </summary>
-    public interface IeXPressionTree: INode
+    public interface IXPTree: INode, System.ComponentModel.INotifyPropertyChanged 
     {
         /// <summary>
         /// gets and sets the list of nodes
         /// </summary>
-        List<INode> Nodes { get; set; }
+        ObservableCollection<INode> Nodes { get; set; }
     }
     /// <summary>
-    /// describes an abstract Selection 
+    /// executable rule statement(s)
     /// </summary>
-    public interface IExpression: IeXPressionTree
+    public interface IStatement: INode
+    {
+
+    }
+    /// <summary>
+    /// describes an Expression which returns a value
+    /// </summary>
+    public interface IExpression : INode
     {
         /// <summary>
-        /// gets or sets the operation of the LogicalExpression
+        /// gets or sets the type id of the variable
         /// </summary>
-        //Function Operator { get; }
-
+        Core.otDataType TypeId { get; set; }
         /// <summary>
-        /// gets or sets the left Operand
+        /// gets or sets the type 
         /// </summary>
-        //INode LeftOperand { get; set; }
-
-        /// <summary>
-        /// gets or sets the right operand
-        /// </summary>
-        //INode RightOperand { get; set; }
-
-       
-        
+        Core.IDataType DataType { get; set; }
     }
     /// <summary>
-    /// describes a rule
+    /// describes a rule which is the top level
     /// </summary>
-    public interface IRule : IeXPressionTree
+    public interface IRule : IXPTree
     {
         /// <summary>
         /// returns the ID of the rule
@@ -147,33 +154,26 @@ namespace OnTrack.Rulez.eXPressionTree
     /// <summary>
     /// function calls
     /// </summary>
-    public interface IFunction: IeXPressionTree
+    public interface IFunction: IXPTree, IStatement, IExpression
     {
         /// <summary>
-        /// gets or sets the ID of the variable
+        /// gets or sets the ID of the function
         /// </summary>
         String ID { get; set; }
-        /// <summary>
-        /// gets or sets the type of the variable
-        /// </summary>
-        Core.otDataType Type { get; set; }
     }
     /// <summary>
     /// describes a expression tree symbol 
     /// </summary>
-    public interface ISymbol : INode
+    public interface ISymbol : INode, IExpression
     {
         /// <summary>
         /// gets or sets the ID of the variable
         /// </summary>
         String ID { get; set; }
-        /// <summary>
-        /// gets or sets the type of the variable
-        /// </summary>
-        Core.otDataType Type { get; set; }
+        
         /// <summary>
         /// defines the IeXPressionTree scope of the symbol
         /// </summary>
-        IeXPressionTree Scope { get; set; }
+        IXPTree Scope { get; set; }
     }
 }

@@ -49,6 +49,7 @@ namespace OnTrack.Rulez
             Logical,
             Arithmetic,
             Assignement,
+            Compare
         }
         /// <summary>
         /// defines the Operator Token
@@ -58,28 +59,28 @@ namespace OnTrack.Rulez
             /// <summary>
             /// static - must be ascending and discrete ! (do not leave one out !!)
             /// </summary>
-            public static uint POS=0;
-            public static uint AND = 1;
-            public static uint ANDALSO = 2;
-            public static uint OR = 3;
-            public static uint ORELSE = 4;
-            public static uint NOT = 5;
+            public  const uint POS = 0;
+            public  const uint AND = 1;
+            public  const uint ANDALSO = 2;
+            public  const uint OR = 3;
+            public  const uint ORELSE = 4;
+            public  const uint NOT = 5;
 
-            public static uint EQ = 10;
-            public static uint NEQ = 11;
-            public static uint GT = 12;
-            public static uint GE = 13;
-            public static uint LT = 14;
-            public static uint LE = 15;
+            public  const uint EQ = 10;
+            public  const uint NEQ = 11;
+            public  const uint GT = 12;
+            public  const uint GE = 13;
+            public  const uint LT = 14;
+            public  const uint LE = 15;
 
-            public static uint PLUS = 16;
-            public static uint MINUS = 17;
-            public static uint MULT = 18;
-            public static uint DIV = 19;
-            public static uint MOD = 20;
-            public static uint CONCAT = 21; // Concat must be the last one for functions to be found
+            public  const uint PLUS = 16;
+            public  const uint MINUS = 17;
+            public  const uint MULT = 18;
+            public  const uint DIV = 19;
+            public  const uint MOD = 20;
+            public  const uint CONCAT = 21; // Concat must be the last one for functions to be found
 
-            public static uint BEEP = 22;
+            public  const uint BEEP = 22;
 
             /// <summary>
             /// variable
@@ -98,7 +99,7 @@ namespace OnTrack.Rulez
             /// <summary>
             /// returns the token
             /// </summary>
-            public int ToInt { get { return (int) _token; } }
+            public uint ToUint { get { return (uint) _token; } }
         }
    
     /// <summary>
@@ -110,24 +111,41 @@ namespace OnTrack.Rulez
         /// <summary>
         /// get the _BuildInFunctions -> must be in Order of the TokenID
         /// </summary>
-        private static Function[] _buildInFunctions = {
-
-                                                  // logical Operations
-                                                  new Function(Token.BEEP,  new otDataType  [] {} , otDataType .Bool   ) 
-        };
-
+        private static List<@Function> _buildInFunctions = new List<@Function>();
+        /// <summary>
+        /// static constructor
+        /// </summary>
+        static @Function()
+        {
+            // build the build-in functions
+             _buildInFunctions.Add(new @Function(Token.BEEP, CreateSignature(PrimitiveType.GetPrimitiveType(otDataType.Null)), PrimitiveType.GetPrimitiveType(otDataType.Bool)));
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="types"></param>
+        /// <returns></returns>
+        public static string CreateSignature(params IDataType[] types)
+        {
+            string signature = String.Empty;
+            foreach (IDataType aType in types)
+            {
+                if (!String.IsNullOrEmpty(signature)) signature += ",";
+                signature += aType.Signature;
+            }
+            return signature;
+        }
         /// <summary>
         /// inner variables
         /// </summary>
         private Token _token;
-        private otDataType[] _signature;
-        private otDataType? _returntype;
-
+        private string _signature;
+        private IDataType _returntype;
         /// <summary>
         /// returns a List of BuildInFunctions
         /// </summary>
         /// <returns></returns>
-        public static List<Function> BuildInFunctions()
+        public static List<@Function> BuildInFunctions()
         {
             return _buildInFunctions.ToList();
         }
@@ -136,49 +154,42 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="token"></param>
         /// <returns></returns>
-        public static OnTrack.Rulez.Function GetFunction(Token token)
+        public static OnTrack.Rulez.@Function GetFunction(Token token)
         {
-            if (token.ToInt < _buildInFunctions.Length) return _buildInFunctions[token.ToInt - Token.CONCAT];
-            throw new RulezException(RulezException.Types.OutOfArraySize, arguments: new object[] { token.ToInt, _buildInFunctions.Length });
+            if (token.ToUint < _buildInFunctions.Count) return _buildInFunctions.ToArray()[token.ToUint - Token.CONCAT];
+            throw new RulezException(RulezException.Types.OutOfArraySize, arguments: new object[] { token.ToUint, _buildInFunctions.Count });
         }
-       
         /// <summary>
         /// constructor
         /// </summary>
         /// <param name="Token"></param>
         /// <param name="arguments"></param>
         /// <param name="priority"></param>
-        public Function(Token token, otDataType[] signature, otDataType returnType)
+        public @Function(Token token, string signature, IDataType returnType)
         {
             _token = token;
             _signature  = signature;
             _returntype = returnType;
         }
-        public Function(uint tokenID, otDataType[] signature, otDataType returnType)
+        public @Function(uint tokenID, string signature, IDataType returnType)
         {
             _token = new Token(tokenID);
             _signature  = signature;
             _returntype = returnType;
-            
         }
-
-
         #region "Properties"
         /// <summary>
         /// gets the Token
         /// </summary>
         public Token TokenID { get { return _token; } }
-
         /// <summary>
         /// gets the signature
         /// </summary>
-        public otDataType [] Signature { get { return _signature; } }
-
+        public string Signature { get { return _signature; } }
         /// <summary>
         /// gets or sets the return type of the operation
         /// </summary>
-        public otDataType? ReturnType { get { return _returntype; } set { _returntype = value; } }
-       
+        public IDataType ReturnType { get { return _returntype; } set { _returntype = value; } }
         #endregion
     }
 
@@ -194,18 +205,18 @@ namespace OnTrack.Rulez
         private static Operator[] _buildInOperators = {
 
                                                   // logical Operations
-                                                  new Operator(Token.POS,1,3,otDataType .Bool ,  otOperatorType.Logical  ) ,
+                                                  new Operator(Token.POS,1,7,otDataType .Bool ,  otOperatorType.Logical  ) ,
                                                   new Operator(Token.AND,2,5,  otDataType .Bool , otOperatorType.Logical ) ,
                                                   new Operator(Token.ANDALSO,2,5 ,  otDataType .Bool, otOperatorType.Logical ) ,
                                                   new Operator(Token.OR,2,6,  otDataType .Bool , otOperatorType.Logical ) ,
                                                   new Operator(Token.ORELSE,2,6,  otDataType .Bool , otOperatorType.Logical ) ,
-                                                  new Operator(Token.NOT,1,3, otDataType .Bool, otOperatorType.Logical   ) ,
-                                                  new Operator(Token.EQ,2,4,  otDataType .Bool , otOperatorType.Logical ) ,
-                                                  new Operator(Token.NEQ,2,4,  otDataType .Bool , otOperatorType.Logical ) ,
-                                                  new Operator(Token.GT,2,4,  otDataType .Bool , otOperatorType.Logical ) ,
-                                                  new Operator(Token.GE,2,4,  otDataType .Bool, otOperatorType.Logical  ) ,
-                                                  new Operator(Token.LT,2,4,  otDataType .Bool , otOperatorType.Logical ) ,
-                                                  new Operator(Token.LE,2,4,  otDataType .Bool , otOperatorType.Logical ) ,
+                                                  new Operator(Token.NOT,1,7, otDataType .Bool, otOperatorType.Logical   ) ,
+                                                  new Operator(Token.EQ,2,4,  otDataType .Bool , otOperatorType.Compare ) ,
+                                                  new Operator(Token.NEQ,2,4,  otDataType .Bool , otOperatorType.Compare ) ,
+                                                  new Operator(Token.GT,2,4,  otDataType .Bool , otOperatorType.Compare ) ,
+                                                  new Operator(Token.GE,2,4,  otDataType .Bool, otOperatorType.Compare  ) ,
+                                                  new Operator(Token.LT,2,4,  otDataType .Bool , otOperatorType.Compare ) ,
+                                                  new Operator(Token.LE,2,4,  otDataType .Bool , otOperatorType.Compare ) ,
 
                                                   // Arithmetic - null means return type is determined by the operands
                                                   new Operator(Token.PLUS,2,2,  null , otOperatorType.Arithmetic ) ,
@@ -241,8 +252,18 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public static Operator GetOperator(Token token)
         {
-            if (token.ToInt < _buildInOperators.Length) return _buildInOperators[token.ToInt];
-            throw new RulezException(RulezException.Types.OutOfArraySize, arguments: new object[] { token.ToInt, _buildInOperators.Length });
+            if (token.ToUint < _buildInOperators.Length) return _buildInOperators[token.ToUint];
+            throw new RulezException(RulezException.Types.OutOfArraySize, arguments: new object[] { token.ToUint, _buildInOperators.Length });
+        }
+        /// <summary>
+        /// return the Operator Definition
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        public static Operator GetOperator(uint tokenid)
+        {
+            if (tokenid < _buildInOperators.Length) return _buildInOperators[tokenid];
+            throw new RulezException(RulezException.Types.OutOfArraySize, arguments: new object[] { tokenid, _buildInOperators.Length });
         }
         /// <summary>
         /// constructor
@@ -271,7 +292,7 @@ namespace OnTrack.Rulez
         /// <summary>
         /// gets the Token
         /// </summary>
-        public Token TokenID { get { return _token; } }
+        public Token Token { get { return _token; } }
 
         /// <summary>
         /// gets the Number of Arguments
@@ -299,14 +320,18 @@ namespace OnTrack.Rulez
     public class Repository
     {
         private string _id; // ID of the Repository
+        private Engine _engine; // my engine
         // Dictionary of operators
         private Dictionary<Token, Operator> _Operators = new Dictionary<Token, Operator>();
         // Dictionary of functions
-        private Dictionary<Token, Function> _Functions = new Dictionary<Token, Function>();
+        private Dictionary<Token, @Function> _Functions = new Dictionary<Token, @Function>();
         // Dictionary of the rule rules
         private Dictionary<String, SelectionRule> _selectionrules = new Dictionary<string, SelectionRule>();
         // Stack of dataObject Repositories
         private List<iDataObjectRepository> _dataobjectRepositories = new List<iDataObjectRepository> ();
+        // dictionary of types
+        private Dictionary<string, IDataType> _datatypes = new Dictionary<string, IDataType>();
+        private Dictionary<string, List<IDataType>> _datatypesSignature = new Dictionary<string, List<IDataType>>();
 
         // initialize Flag
         private bool _IsInitialized = false;
@@ -314,10 +339,11 @@ namespace OnTrack.Rulez
         /// <summary>
         /// constructor of an engine
         /// </summary>
-        public Repository(string id = null)
+        public Repository(Engine engine, string id = null)
         {
             if (id == null) _id = new Guid().ToString();
             else _id = id;
+            _engine = engine;
         }
 
 
@@ -326,7 +352,10 @@ namespace OnTrack.Rulez
         /// gets the unique handle of the engine
         /// </summary>
         public string Id { get { return _id; } }
-
+        /// <summary>
+        /// returns the Engine
+        /// </summary>
+        public Engine Engine { get { return _engine;  } }
         /// <summary>
         /// gets all the rule rules in the repository
         /// </summary>
@@ -378,19 +407,26 @@ namespace OnTrack.Rulez
         private bool Initialize()
         {
             if (_IsInitialized) return false;
-
+            // Register with Data types
+            DataType.OnCreation += Repository_DataTypeOnCreation;
+            DataType.OnRemoval += Repository_DataTypeOnRemoval;
             // operator
             foreach (Operator anOperator in Operator.BuildInOperators())
             {
-                if (! _Operators.ContainsKey(anOperator.TokenID)) 
-                    _Operators.Add(anOperator.TokenID, anOperator);
+                if (! _Operators.ContainsKey(anOperator.Token)) 
+                    _Operators.Add(anOperator.Token, anOperator);
             }
 
             // Functions
-            foreach (Function aFunction in Function.BuildInFunctions())
+            foreach (@Function aFunction in @Function.BuildInFunctions())
             {
                 if (!_Functions.ContainsKey(aFunction.TokenID))
                     _Functions.Add(aFunction.TokenID, aFunction);
+            }
+            // primitve Datatypes
+            foreach (IDataType aDatatype in PrimitiveType.DataTypes)
+            {
+                if (!HasDataType(aDatatype)) AddDataType(aDatatype);
             }
             _IsInitialized = true;
             return _IsInitialized;
@@ -457,7 +493,7 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
-        public Function GetFunction(Token id)
+        public @Function GetFunction(Token id)
         {
             Initialize();
             if (this.HasFunction(id)) return _Functions[id];
@@ -469,7 +505,7 @@ namespace OnTrack.Rulez
         /// <param name="handle"></param>
         /// <param name="rule"></param>
         /// <returns></returns>
-        public bool AddFunction(Function function)
+        public bool AddFunction(@Function function)
         {
             Initialize();
             if (this.HasFunction(function.TokenID)) _Functions.Remove(function.TokenID);
@@ -506,8 +542,8 @@ namespace OnTrack.Rulez
         public bool AddOperator(Operator Operator)
         {
             Initialize();
-            if (this.HasOperator(Operator.TokenID)) _Operators.Remove(Operator.TokenID);
-            _Operators.Add(Operator.TokenID, Operator);
+            if (this.HasOperator(Operator.Token)) _Operators.Remove(Operator.Token);
+            _Operators.Add(Operator.Token, Operator);
             return true;
         }
         /// <summary>
@@ -522,11 +558,97 @@ namespace OnTrack.Rulez
             if (this.HasOperator(id)) return _Operators.Remove(id);
             return false;
         }
-
         /// <summary>
-        /// returns true if the repository has the data object definition
+        /// returns true if the repository has the function
         /// </summary>
         /// <param name="handle"></param>
+        /// <returns></returns>
+        public bool HasDataType(string name)
+        {
+            Initialize();
+            return _datatypes.ContainsKey(name.ToUpper() );
+        }
+        /// <summary>
+        /// returns true if the repository has the function
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <returns></returns>
+        public bool HasDataType(IDataType datatype)
+        {
+            return HasDataType(datatype.Name);
+        }
+        /// <summary>
+        /// returns true if the repository has the function
+        /// </summary>
+        /// <param signature="handle"></param>
+        /// <returns></returns>
+        public bool HasDataTypeSignature(string signature)
+        {
+            Initialize();
+            return _datatypesSignature.ContainsKey(signature.ToUpper());
+        }
+        /// <summary>
+        /// returns the datatype by name
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <returns></returns>
+        public IDataType GetDatatype(string Name)
+        {
+            Initialize();
+            if (this.HasDataType(Name)) return _datatypes[Name.ToUpper()];
+            throw new RulezException(RulezException.Types.DataTypeNotFound, arguments: new object[] { Name.ToUpper() });
+        }
+        /// <summary>
+        /// returns the datatype by name
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <returns></returns>
+        public List<IDataType> GetDatatypeBySignature(string signature)
+        {
+            Initialize();
+            if (this.HasDataTypeSignature(signature)) return _datatypesSignature[signature.ToUpper()];
+            throw new RulezException(RulezException.Types.DataTypeNotFound, arguments: new object[] { signature.ToUpper() });
+        }
+        /// <summary>
+        /// adds a datatype to the repository by handle
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <param name="rule"></param>
+        /// <returns></returns>
+        public bool AddDataType(IDataType datatype)
+        {
+            Initialize();
+            if (this.HasDataType(datatype.Name)) _datatypes.Remove(datatype.Name);
+            _datatypes.Add(datatype.Name, datatype);
+            if (!this.HasDataTypeSignature(datatype.Signature)) _datatypesSignature.Add(datatype.Signature.ToUpper(), new List<IDataType>());
+            List<IDataType> aList = _datatypesSignature[datatype.Signature.ToUpper()];
+            // remove all existing
+            aList.RemoveAll(x => x.Name == datatype.Name);
+            aList.Add(datatype);
+            return true;
+        }
+        /// <summary>
+        /// adds a datatype to the repository by handle
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <param name="rule"></param>
+        /// <returns></returns>
+        public bool RemoveDataType(IDataType datatype)
+        {
+            Initialize();
+            if (this.HasDataType(datatype.Name)) _datatypes.Remove(datatype.Name);
+            if (this.HasDataTypeSignature(datatype.Signature))
+            {
+                List<IDataType> aList = _datatypesSignature[datatype.Signature.ToUpper()];
+                // remove all existing
+                aList.RemoveAll(x => x.Name == datatype.Name);
+            }
+            return true;
+        }
+        /// <summary>
+        /// returns true if the id exists in the Repository
+        /// </summary>
+        /// <param name="id"></param>
         /// <returns></returns>
         public bool HasDataObjectDefinition(string id)
         {
@@ -551,6 +673,24 @@ namespace OnTrack.Rulez
                 if (aDefinition != null) return aDefinition;
             }
             throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[] { id, "DataObjectEntrySymbol Repositories" });
+        }
+        /// <summary>
+        /// event Handling routine of Datatype On Creation Event
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
+        private void Repository_DataTypeOnCreation(object sender, Core.DataType.EventArgs args)
+        {
+            if (( args.Engine == null || args.Engine == this.Engine) && !this.HasDataType (args.DataType)) this.AddDataType(args.DataType);
+        }
+        /// <summary>
+        ///  event Handling routine of Datatype On Removal Event
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
+        private void Repository_DataTypeOnRemoval(object sender, Core.DataType.EventArgs args)
+        {
+            if ((args.Engine == null || args.Engine == this.Engine) && this.HasDataType(args.DataType)) this.RemoveDataType(args.DataType);
         }
     }
 }

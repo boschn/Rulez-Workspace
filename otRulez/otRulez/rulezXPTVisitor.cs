@@ -168,7 +168,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <param name="expression"></param>
         public void Visit(IExpression expression)
         {
-            switch (expression.NodeTokenType)
+            switch (expression.NodeType)
             {
                     // check the expression nodes
                 case otXPTNodeType.OperationExpression :
@@ -217,7 +217,7 @@ namespace OnTrack.Rulez.eXPressionTree
        /// <param name="node"></param>
         public void Visit(INode node)
         {
-            switch (node.NodeTokenType )
+            switch (node.NodeType )
             {
                     // check on the leaves
                 case otXPTNodeType.Literal :

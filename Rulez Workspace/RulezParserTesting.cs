@@ -24,7 +24,7 @@ namespace OnTrack.Testing
         {
             this.Objectname = objectdefinition.Objectname;
             this.Entryname = entryname;
-            this.Datatype = datatype ;
+            this.TypeId = datatype ;
             this.IsNullable = isNull;
             this.ObjectDefinition = objectdefinition ;
         }
@@ -45,7 +45,7 @@ namespace OnTrack.Testing
 
         public string Entryname { get ; set; }
 
-        public otDataType Datatype { get ; set; }
+        public otDataType TypeId { get ; set; }
 
         public long Version { get ; set; }
        

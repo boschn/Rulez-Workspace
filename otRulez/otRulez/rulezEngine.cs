@@ -40,7 +40,7 @@ namespace OnTrack.Rulez
         {
             if (id == null) _id = System.Environment.MachineName  + "_" + DateTime.Now.ToString();
             else _id = id;
-            _repository = new Repository ();
+            _repository = new Repository (engine:this);
             _context = new Context(this);
             _dataobjectEngines = new List<iDataObjectEngine>();
             _Code = new Dictionary<string, ICodeBit>();
@@ -49,7 +49,7 @@ namespace OnTrack.Rulez
         ///
         /// Properties
         /// 
-        #region "Properties"
+#region "Properties"
 
         /// <summary>
         /// gets the unique handle of the engine
@@ -146,7 +146,7 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
-        public Function GetFunction(Token id)
+        public @Function GetFunction(Token id)
         {
             if (_repository.HasFunction(id)) return _repository.GetFunction(id);
             return null;
@@ -186,6 +186,7 @@ namespace OnTrack.Rulez
                 // create the aParser
                 RulezParser aParser = new RulezParser(theTokens);
                 aParser.Trace = true;
+                aParser.Engine = this;
                 //aParser.RemoveErrorListeners();
                 //aParser.AddErrorListener(new ErrorListener());
                 RulezParser.RulezUnitContext  aTree = aParser.rulezUnit();
@@ -212,7 +213,7 @@ namespace OnTrack.Rulez
             bool result;
             try
             {
-                switch (rule.NodeTokenType)
+                switch (rule.NodeType)
                 {
                     // rule rule
                     case otXPTNodeType.SelectionRule:
@@ -220,7 +221,7 @@ namespace OnTrack.Rulez
                         break;
                     // no theCode
                     default:
-                        throw new RulezException(RulezException.Types.InvalidNodeType, arguments: new object[] { rule.NodeTokenType.ToString(), "IRULE" });
+                        throw new RulezException(RulezException.Types.InvalidNodeType, arguments: new object[] { rule.NodeType.ToString(), "IRULE" });
                 }
 
                 // if successfull

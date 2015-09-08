@@ -57,6 +57,7 @@ namespace OnTrack.Rulez
             DataTypeNotImplementedByCase,
             MessagesNotFound,
             DataTypeNotImplementedByClass,
+            DataTypeNotFound,
         }
         /// <summary>
         /// fall back messages
@@ -107,7 +108,9 @@ namespace OnTrack.Rulez
                                          // Message Resource file not found
                                          "Messages resource file was not found",
                                          // invalid data type of class
-                                         "Data type with name '{0}' cannot be implemented by class '{1}'"
+                                         "Data type with name '{0}' cannot be implemented by class '{1}'",
+                                          // Datatype not found
+                                         "Data type with name '{0}' not found'"
                                          };
 
         /// <summary>
@@ -155,24 +158,18 @@ namespace OnTrack.Rulez
             _message = (_message != null ) ? string.Format(_message, arguments) : OnTrack.Core.Converter.Array2StringList (arguments);
             _innerException = inner;
         }
-
         /// <summary>
         /// gets the message string of the exception
         /// </summary>
-        public string Message { get { return _message; } }
-
+        public override string Message { get { return _message; } }
         /// <summary>
         /// gets the exception handle
         /// </summary>
         public Types ID { get { return _id; } }
-
-
         /// <summary>
         /// gets the category of the exception
         /// </summary>
         public string Category { get { return _category; } }
-
-
         /// <summary>
         /// gets the Tag string of the exception
         /// </summary>

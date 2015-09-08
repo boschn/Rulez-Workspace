@@ -32,42 +32,50 @@ namespace OnTrack.Rulez
     public class XPTGenerator : RulezParserBaseListener 
     {
         private RulezParser _parser;
-        private eXPressionTree.IeXPressionTree _xptree; // the output tree
-
-        private eXPressionTree.SelectionRule _currentSelectionRule; // the output tree
+        private eXPressionTree.XPTree _xptree; // the output tree
+        private Engine _engine;
 
         /// <summary>
         /// constructor
         /// </summary>
         /// <param name="parser"></param>
-        public XPTGenerator(RulezParser parser)
+        public XPTGenerator(RulezParser parser, Engine engine = null)
         {
             _parser = parser;
+            if (engine == null) _engine = parser.Engine;
+            else { _engine = engine; }
         }
-
+       
         /// <summary>
         /// gets the resulted tree
         /// </summary>
-        public IeXPressionTree XPTree
+        public XPTree XPTree
         {
             get
             {
                 return _xptree;
             }
+            private set { _xptree = value; }
         }
-
+        /// <summary>
+        /// gets the associated Engine
+        /// </summary>
+        public Engine Engine
+        {
+            get
+            {
+                return _engine;
+            }
+        }
         /// <summary>
         /// enter a rule rule
         /// </summary>
         /// <param name="context"></param>
         public override void EnterSelectionRulez(RulezParser.SelectionRulezContext context)
         {
-            _currentSelectionRule = new SelectionRule();
+            if (context.XPTreeNode == null) context.XPTreeNode = new SelectionRule(engine: this.Engine);
             // set the _xptree by a new SelectionRule xPTree
-            if (_xptree == null)
-            {
-                _xptree = _currentSelectionRule;
-            }
+            if (this.XPTree == null) this.XPTree = (XPTree)context.XPTreeNode;
         }
 
         /// <summary>
@@ -76,14 +84,7 @@ namespace OnTrack.Rulez
         /// <param name="context"></param>
         public override void ExitSelectionRulez(RulezParser.SelectionRulezContext context)
         {
-            foreach (Antlr4.Runtime.Tree.IParseTree child in context.children)
-            {
-                if (child.GetType() == typeof(RulezParser.RuleidContext))
-                    _currentSelectionRule.ID = child.GetText();
-            }
-
-            // reset -> hopefully the rule rule is included in the _xptree
-            _currentSelectionRule = null;
+            
         }
 
         /// <summary>

@@ -28,86 +28,164 @@ namespace OnTrack.Core
     /// <summary>
     /// static class Datatype
     /// </summary>
-    public class DataType : iDataType
+    public abstract class DataType : IDataType
     {
         public const Char ConstDelimiter = '|';
         public const String ConstNullTimestampString = "1900-01-01T00:00:00";
-
-        // Instance data
-        private otDataType _type = otDataType.Void; // datatype
-        private object _defaultvalue;
         
-#region "Static"
+        // magic numbers
+        protected const uint PrimitiveTypeMaxRange = 15; // magic number as the maximum of the otDataType Enumeration for Value Types
+        // Instance data
+        private otDataType _type = otDataType.@Null; // datatype
+        private Rulez.Engine _engine;
+        private object _defaultvalue;
+        private string _name;
+        /// <summary>
+        /// DataType Event Args
+        /// </summary>
+        public class EventArgs : System.EventArgs
+        {
+            public EventArgs(IDataType datatype, OnTrack.Rulez.Engine engine)
+            {
+               this.DataType = datatype;
+               this.Engine = engine;
+            }
+            /// <summary>
+            /// get or sets the Datatype
+            /// </summary>
+            public IDataType DataType
+            {
+                get;
+                private set;
+            }
+            /// <summary>
+            /// get or sets the Engine
+            /// </summary>
+            public OnTrack.Rulez.Engine Engine
+            {
+                get;
+                private set;
+            }
+        }
+        //////////////////////////////////////////////////////////////////////////
+        // Static
+        //////////////////////////////////////////////////////////////////////////
+        #region "Static"
+
+        public static EventHandler<EventArgs> OnCreation;
+        public static EventHandler<EventArgs> OnRemoval;
+
+        /// <summary>
+        /// static constructor
+        /// </summary>
+        static DataType()
+        {
+
+        }
+        
+        /// <summary>
+        /// return the category for a otDataType ID
+        /// </summary>
+        /// <param name="typeId"></param>
+        /// <returns></returns>
+        public static otDataTypeCategory GetCategory(otDataType typeId)
+        {
+            // extract nullable
+            typeId ^= otDataType.IsNullable ;
+            
+            switch (typeId)
+            {
+                // primitives
+                case otDataType.Bool:
+                case otDataType.Binary:
+                case otDataType.Date:
+                case otDataType.Decimal:
+                case otDataType.Memo:
+                case otDataType.Number:
+                case otDataType.Null:
+                case otDataType.Text:
+                case otDataType.Timespan:
+                case otDataType.Timestamp:
+                    return otDataTypeCategory.Primitive;
+                // complex
+                case otDataType.DecimalUnit:
+                case otDataType.LanguageText:
+                case otDataType.Symbol:
+                    return otDataTypeCategory.Complex;
+                // data object
+                case otDataType.DataObject:
+                    return otDataTypeCategory.DataObject;
+                // structure
+                case otDataType.List:
+                    return otDataTypeCategory.Structure;
+                // not found
+                default:
+                    throw new Rulez.RulezException(Rulez.RulezException.Types.DataTypeNotImplementedByCase, arguments: new object[] { typeId.ToString(), "DataType.GetCategory" });
+            }
+        }
+        /// <summary>
+        /// returns a data type object for a typeid
+        /// </summary>
+        /// <param name="typeId"></param>
+        /// <returns></returns>
+        public static IDataType GetDataType(otDataType typeId)
+        {
+            switch (GetCategory(typeId))
+            {
+                case otDataTypeCategory.Primitive:
+                    return (IDataType) Rulez.PrimitiveType.GetPrimitiveType(typeId);
+                case otDataTypeCategory.Complex:
+                    return (IDataType) Rulez.ComplexType.GetComplexType(typeId);
+                case otDataTypeCategory.DataObject:
+                    return (IDataType) Rulez.DataObjectType.GetDataType(typeId);
+                case otDataTypeCategory.Structure:
+                    return (IDataType) Rulez.StructuredType.GetStructuredType(typeId);
+                default:
+                    throw new Rulez.RulezException(Rulez.RulezException.Types.DataTypeNotImplementedByClass, arguments: new object[] { typeId.ToString(), "DataType.GetDataType" });
+            }
+        }
         /// <summary>
         /// returns the best fit System.Type for a OnTrack Datatype
         /// </summary>
-        /// <param name="datatype"></param>
+        /// <param name="typeId"></param>
         /// <returns></returns>
-        public static System.Type GetTypeFor(otDataType datatype)
+        public static System.Type GetNativeType(otDataType typeId)
         {
-            switch (datatype)
+            switch(GetCategory(typeId))
             {
-                case otDataType.Void:
-                    return typeof(void);
-                case otDataType.Date:
-                    return typeof(DateTime);
-                case otDataType.Bool:
-                    return typeof(bool);
-                case otDataType.List:
-                    return typeof(List<string>);
-                case otDataType.Number:
-                    return typeof(long);
-                case otDataType.Memo:
-                    return typeof(string);
-                case otDataType.Text:
-                    return typeof(string);
-                case otDataType.Timespan:
-                    return typeof(TimeSpan);
-                case otDataType.Decimal:
-                    return typeof(double);
-                case otDataType.Timestamp:
-                    return typeof(DateTime);
+                case otDataTypeCategory.Primitive:
+                     return Rulez.PrimitiveType.GetNativeType(typeId);
+                case otDataTypeCategory.Complex:
+                     return Rulez.ComplexType.GetNativeType(typeId);
+                case otDataTypeCategory.DataObject:
+                     return Rulez.DataObjectType.GetNativeType(typeId);
+                case otDataTypeCategory.Structure:
+                     return Rulez.StructuredType.GetNativeType(typeId);
                 default:
-                    throw new NotImplementedException("mapping for '" + datatype.ToString() + "' is not implemented");
+                     throw new Rulez.RulezException(Rulez.RulezException.Types.DataTypeNotImplementedByClass, arguments: new object[] { typeId.ToString(), "DataType.GetNativeType" });
             }
         }
         /// <summary>
         /// returns a default value for the OnTrack Datatypes
         /// </summary>
-        /// <param name="datatype"></param>
+        /// <param name="typeId"></param>
         /// <returns></returns>
-        public static object GetDefaultValue(otDataType datatype)
+        public static object GetDefaultValue(otDataType typeId)
         {
-
-            switch (datatype)
+            switch (GetCategory(typeId))
             {
-                case otDataType.Bool:
-                    return false;
-                case otDataType.Date:
-                    return  DateTime.Parse(ConstNullTimestampString ).Date ;
-                case otDataType.List:
-                    /// To do implement inner Type
-                    /// or accept Object()
-                    List<string> aValue = new List<string>();
-                    return aValue.ToArray();
-                case otDataType.Number:
-                    return (long) 0;
-                case otDataType.Memo:
-                    return string.Empty;
-                case otDataType.Decimal:
-                    return (double) 0;
-                case otDataType.Text:
-                    return string.Empty;
-                case otDataType.Timespan:
-                    return new TimeSpan();
-                case otDataType.Timestamp:
-                    return DateTime.Parse(ConstNullTimestampString);
+                case otDataTypeCategory.Primitive:
+                    return Rulez.PrimitiveType.GetDefaultValue(typeId);
+                case otDataTypeCategory.Complex:
+                    return Rulez.ComplexType.GetDefaultValue(typeId);
+                case otDataTypeCategory.DataObject:
+                    return Rulez.DataObjectType.GetDefaultValue(typeId);
+                case otDataTypeCategory.Structure:
+                    return Rulez.StructuredType.GetDefaultValue(typeId);
                 default:
-                    throw new NotImplementedException("default value for '" + datatype.ToString() + "' is not implemented");
-                    return null;
+                    throw new Rulez.RulezException(Rulez.RulezException.Types.DataTypeNotImplementedByClass, arguments: new object[] { typeId.ToString(), "DataType.GetDefaultValue" });
             }
-
-        }
+         }
         /// <summary>
         /// returns true if the value is convertible to the datatype
         /// </summary>
@@ -115,66 +193,58 @@ namespace OnTrack.Core
         /// <param name="outvalue"></param>
         /// <param name="datatype"></param>
         /// <returns></returns>
-        public static bool Is(object value, otDataType datatype)
+        public static bool Is(object value, otDataType typeId)
         {
-            switch (datatype)
+            switch (GetCategory(typeId))
             {
-                case otDataType.Bool:
-                    return IsBool(value);
-                case otDataType.Date:
-                    return IsDate(value);
-                case otDataType.List:
-                    return IsList(value);
-                case otDataType.Number:
-                    return IsNumber(value);
-                case otDataType.Memo:
-                    return IsMemo(value);
-                case otDataType.Decimal:
-                    return IsDecimal(value);
-                case otDataType.Text:
-                    return IsText(value);
-                case otDataType.Timespan:
-                    return IsTime(value);
-                case otDataType.Timestamp:
-                    return IsTimeStamp(value);
+                case otDataTypeCategory.Primitive:
+                    return Rulez.PrimitiveType.Is(value,typeId);
                 default:
-                    throw new NotImplementedException("convert value for '" + datatype.ToString() + "' is not implemented");
-                    return false;
+                    throw new Rulez.RulezException(Rulez.RulezException.Types.DataTypeNotImplementedByClass, arguments: new object[] { typeId.ToString(), "DataType.Is" });
             }
         }
-       
+        public static bool Is(object value, IDataType datatype)
+        {
+            switch (datatype.Category)
+            {
+                case otDataTypeCategory.Primitive:
+                    return Rulez.PrimitiveType.Is(value, datatype);
+                default:
+                    throw new Rulez.RulezException(Rulez.RulezException.Types.DataTypeNotImplementedByClass, arguments: new object[] { datatype.ToString(), "DataType.Is" });
+            }
+        }
         /// <summary>
         /// converts a value to an representing value of the outvalue
         /// </summary>
         /// <param name="value"></param>
         /// <param name="outvalue"></param>
-        /// <param name="datatype"></param>
+        /// <param name="typeId"></param>
         /// <returns></returns>
-        public static object To(ref object value, otDataType datatype)
+        public static object To(object value, otDataType typeId)
         {
-            switch (datatype)
+            switch (GetCategory(typeId))
             {
-                case otDataType.Bool:
-                    return ToBool (value);
-                case otDataType.Date:
-                    return ToDate(value);
-                case otDataType.List:
-                   return ToList(value);
-                case otDataType.Number:
-                    return ToNumber(value);
-                case otDataType.Memo:
-                    return ToMemo(value);
-                case otDataType.Decimal:
-                    return ToDecimal(value);
-                case otDataType.Text:
-                    return ToText(value);
-                case otDataType.Timespan:
-                    return ToTime(value);
-                case otDataType.Timestamp:
-                    return ToTimeStamp(value);
+                case otDataTypeCategory.Primitive:
+                    return Rulez.PrimitiveType.To(value, typeId);
                 default:
-                    throw new NotImplementedException("convert value for '" + datatype.ToString() + "' is not implemented");
-                    return false;
+                    throw new Rulez.RulezException(Rulez.RulezException.Types.DataTypeNotImplementedByClass, arguments: new object[] { typeId.ToString(), "DataType.To" });
+            }
+        }
+        /// <summary>
+        /// converts a value to an representing value of the outvalue
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="outvalue"></param>
+        /// <param name="typeId"></param>
+        /// <returns></returns>
+        public static object To(object value, IDataType datatype)
+        {
+            switch (datatype.Category)
+            {
+                case otDataTypeCategory.Primitive:
+                    return Rulez.PrimitiveType.To(value, datatype);
+                default:
+                    throw new Rulez.RulezException(Rulez.RulezException.Types.DataTypeNotImplementedByClass, arguments: new object[] { datatype.ToString(), "DataType.To" });
             }
         }
          /// <summary>
@@ -184,19 +254,7 @@ namespace OnTrack.Core
          /// <returns></returns>
          public static bool IsBool(object value)
          {
-             // if it is a bool anyway
-             if (value != null && (value.GetType() == typeof(bool) || value.GetType() == typeof(Boolean))) return true;
-
-             // try to convert to number if that works -> convertible
-             if (value != null)
-             {
-                 bool bvalue;
-                 if (bool.TryParse(value.ToString(), out bvalue)) return true;
-                 float fvalue;
-                 if (float.TryParse(value.ToString(), out fvalue)) return true;
-             }
-
-             return false; // not convertible
+             return Rulez.PrimitiveType.IsBool(value);
          }
          /// <summary>
          /// convert a value to otDataType.Bool and return the value
@@ -205,27 +263,7 @@ namespace OnTrack.Core
          /// <returns></returns>
          public static bool ToBool(object value)
          {
-             // if it is a bool anyway
-             if (value != null && (value.GetType() == typeof(bool) || value.GetType() == typeof(Boolean))) return (bool)value;
-
-             // try to convert to number if that works -> convertible
-             if (value != null)
-             {
-                 // convert True, False to bool
-                 bool bvalue;
-                 if (bool.TryParse(value.ToString(), out bvalue)) return bvalue;
-                 // every numeric value except 0 is regarded as true
-                 float fvalue;
-                 if (float.TryParse(value.ToString(), out fvalue))
-                 {
-                     if (fvalue == 0) return false;
-                     else return true;
-                 }
-             }
-
-             if (value == null) value = "(null)";
-             // throw exception
-             throw new Rulez.RulezException(Rulez.RulezException.Types.ValueNotConvertible, arguments: new object[] { value, "bool" });
+             return Rulez.PrimitiveType.ToBool(value);
          }
          /// <summary>
          /// returns true if the value is of otDataType.Date
@@ -234,19 +272,7 @@ namespace OnTrack.Core
          /// <returns></returns>
          public static bool IsDate(object value)
          {
-             // if it is a type anyway
-             if (value != null && value.GetType() == typeof(DateTime)) return true;
-
-             // try to convert to number if that works -> convertible
-             if (value != null)
-             {
-                 DateTime dtvalue;
-                 // if this is time (no date -> converted to today) then check with second expression
-                 // 21.05.2015 10:00 -> is Timestamp not a date !
-                 if ((DateTime.TryParse(value.ToString(), out dtvalue)) && (dtvalue.TimeOfDay == dtvalue.Date.TimeOfDay ))  return true;
-             }
-
-             return false; // not convertible
+             return Rulez.PrimitiveType.IsDate(value);
          }
          /// <summary>
          /// convert a value to otDataType.Date and return the value
@@ -255,74 +281,25 @@ namespace OnTrack.Core
          /// <returns></returns>
          public static DateTime ToDate(object value)
          {
-             // if it is a type anyway
-             if (value != null && value.GetType() == typeof(DateTime)) return (DateTime)value;
-
-             // try to convert to datetime
-             if (value != null)
-             {
-                 // convert just the date component of the value
-                 DateTime dtvalue;
-                 if (DateTime.TryParse(value.ToString(), out dtvalue)) 
-                 {
-                     return dtvalue.Date;
-                 }
-             }
-
-             if (value == null) value = "(null)";
-             // throw exception
-             throw new Rulez.RulezException(Rulez.RulezException.Types.ValueNotConvertible, arguments: new object[] { value, "date" });
+             return Rulez.PrimitiveType.ToDate(value);
          }
          /// <summary>
          /// returns true if the value is of otDataType.Timespan
          /// </summary>
          /// <param name="value"></param>
          /// <returns></returns>
-         public static bool IsTime(object value)
+         public static bool IsTimespan(object value)
          {
-             // if it is a type anyway
-             if (value != null && value.GetType() == typeof(DateTime) || value.GetType() == typeof(TimeSpan)) return true;
-
-             // try to convert to number if that works -> convertible
-             if (value != null)
-             {
-                 TimeSpan tsvalue;
-                 if (TimeSpan.TryParse(value.ToString(), out tsvalue)) return true;
-                 DateTime dtvalue;
-                 // if this is time (no date -> converted to today) then check with second expression
-                 // 21.05.2015 10:00 -> is Timestamp not a timespan !
-                 if ((DateTime.TryParse(value.ToString(), out dtvalue)) && (dtvalue.TimeOfDay != dtvalue.Date.TimeOfDay)) return true;
-             }
-
-             return false; // not convertible
+             return Rulez.PrimitiveType.IsTimespan(value);
          }
          /// <summary>
          /// convert a value to otDataType.Timespan and return the value
          /// </summary>
          /// <param name="value"></param>
          /// <returns></returns>
-         public static TimeSpan ToTime(object value)
+         public static TimeSpan ToTimespan(object value)
          {
-             // if it is anyway the right type
-             if (value != null && value.GetType() == typeof(TimeSpan)) return ((TimeSpan)value);
-             if (value.GetType() == typeof(DateTime)) return ((DateTime)value).TimeOfDay ;
-
-             // try to convert to datetime
-             if (value != null)
-             {
-                 // convert just the timespan
-                 TimeSpan tsvalue;
-                 if (TimeSpan.TryParse(value.ToString(), out tsvalue)) return tsvalue;
-                
-                 // if this is time (no date -> converted to today) then check with second expression
-                 // 21.05.2015 10:00 -> is Timestamp not a timespan !
-                 DateTime dtvalue;
-                 if ((DateTime.TryParse(value.ToString(), out dtvalue)) && (dtvalue.TimeOfDay != dtvalue.Date.TimeOfDay)) return dtvalue.TimeOfDay ;
-             }
-
-             if (value == null) value = "(null)";
-             // throw exception
-             throw new Rulez.RulezException(Rulez.RulezException.Types.ValueNotConvertible, arguments: new object[] { value, "time" });
+             return Rulez.PrimitiveType.ToTimespan(value);
          }
          /// <summary>
          /// returns true if the value is of otDataType.TimeStamp
@@ -331,19 +308,7 @@ namespace OnTrack.Core
          /// <returns></returns>
          public static bool IsTimeStamp(object value)
          {
-             // if it is a type anyway
-             if (value != null && value.GetType() == typeof(DateTime)) return true;
-
-             // try to convert to number if that works -> convertible
-             if (value != null)
-             {
-                 DateTime dtvalue;
-                 // if this is time (no date -> converted to today) then check with second expression
-                 // 21.05.2015 10:00 -> is Timestamp not a timespan !
-                 if ((DateTime.TryParse(value.ToString(), out dtvalue))) return true;
-             }
-
-             return false; // not convertible
+             return Rulez.PrimitiveType.IsTimeStamp(value);
          }
          /// <summary>
          /// convert a value to otDataType.Timestamp and return the value
@@ -352,22 +317,7 @@ namespace OnTrack.Core
          /// <returns></returns>
          public static DateTime ToTimeStamp(object value)
          {
-             // if it is anyway the right type
-             if (value != null && value.GetType() == typeof(DateTime)) return ((DateTime)value);
-
-             // try to convert to datetime
-             if (value != null)
-             {
-
-                 // if this is time (no date -> converted to today) then check with second expression
-                 // 21.05.2015 10:00 -> is Timestamp not a timespan !
-                 DateTime dtvalue;
-                 if ((DateTime.TryParse(value.ToString(), out dtvalue))) return dtvalue;
-             }
-
-             if (value == null) value = "(null)";
-             // throw exception
-             throw new Rulez.RulezException(Rulez.RulezException.Types.ValueNotConvertible, arguments: new object[] { value, "timestamp" });
+            return Rulez.PrimitiveType.ToTimeStamp(value);
          }
          /// <summary>
          /// returns true if the value is of otDataType.Decimal
@@ -376,18 +326,7 @@ namespace OnTrack.Core
          /// <returns></returns>
          public static bool IsDecimal(object value)
          {
-             // if it is a type anyway
-             if (value != null && (value.GetType() == typeof(Double) || value.GetType() == typeof(float) || value.GetType()== typeof(Single) 
-                 || value.GetType() == typeof(long) || value.GetType() == typeof(int))) return true;
-
-             // try to convert to number if that works -> convertible
-             if (value != null)
-             {
-                 Double dvalue;
-                 if (Double.TryParse (value.ToString(), out dvalue))  return true;
-             }
-
-             return false; // not convertible
+             return Rulez.PrimitiveType.IsDecimal(value);
          }
          /// <summary>
          /// convert a value to otDataType.Double and return the value
@@ -396,21 +335,7 @@ namespace OnTrack.Core
          /// <returns></returns>
          public static Double ToDecimal(object value)
          {
-             // if it is anyway the right type
-             if (value != null && value.GetType() == typeof(Double)) return ((Double)value);
-             if (value != null && value.GetType() == typeof(Single)) return ((Double)value);
-             if (value != null && value.GetType() == typeof(Decimal)) return ((Double)value);
-
-             // try to convert to datetime
-             if (value != null)
-             {
-                 Double dvalue;
-                 if (Double.TryParse(value.ToString(), out dvalue)) return dvalue;
-             }
-
-             if (value == null) value = "(null)";
-             // throw exception
-             throw new Rulez.RulezException(Rulez.RulezException.Types.ValueNotConvertible, arguments: new object[] { value, "numeric" });
+             return Rulez.PrimitiveType.ToDecimal(value);
          }
          /// <summary>
          /// returns true if the value is of otDataType.Number
@@ -419,17 +344,7 @@ namespace OnTrack.Core
          /// <returns></returns>
          public static bool IsNumber(object value)
          {
-             // if it is a type anyway
-             if (value != null && (value.GetType() == typeof(long) || value.GetType() == typeof(int))) return true;
-
-             // try to convert to number if that works -> convertible
-             if (value != null)
-             {
-                 long lvalue;
-                 if (long.TryParse(value.ToString(), out lvalue)) return true;
-             }
-
-             return false; // not convertible
+             return Rulez.PrimitiveType.IsNumber(value);
          }
          /// <summary>
          /// convert a value to otDataType.Number and return the value
@@ -438,26 +353,7 @@ namespace OnTrack.Core
          /// <returns></returns>
          public static long ToNumber(object value)
          {
-             // if it is anyway the right type
-             if (value != null && value.GetType() == typeof(long)) return ((long)value);
-
-             // try to convert to datetime
-             if (value != null)
-             {
-                 // convert to long
-                 long lvalue;
-                 if (long.TryParse(value.ToString(), out lvalue)) return lvalue;
-                 // loose
-                 decimal dvalue;
-                 if (decimal.TryParse(value.ToString(), out dvalue))
-                 {
-                     return (long) Math.Round (dvalue);
-                 }
-             }
-
-             if (value == null) value = "(null)";
-             // throw exception
-             throw new Rulez.RulezException(Rulez.RulezException.Types.ValueNotConvertible, arguments: new object[] { value, "long" });
+             return Rulez.PrimitiveType.ToNumber(value);
          }
          /// <summary>
          /// returns true if the value is of otDataType.Text
@@ -466,14 +362,7 @@ namespace OnTrack.Core
          /// <returns></returns>
          public static bool IsText(object value)
          {
-             // if it is a type anyway
-             if (value != null && value.GetType() == typeof(String)) return true;
-
-             // toString
-             if (value != null) return true;
-            
-
-             return false; // not convertible
+             return Rulez.PrimitiveType.IsText(value);
          }
          /// <summary>
          /// convert a value to otDataType.Text and return the value
@@ -482,19 +371,7 @@ namespace OnTrack.Core
          /// <returns></returns>
          public static String ToText(object value)
          {
-             // if it is anyway the right type
-             if (value != null && value.GetType() == typeof(String)) return ((String)value);
-
-             // try to convert 
-             if (value != null)
-             {
-                 // convert to long
-                 return value.ToString();
-             }
-
-             if (value == null) value = "(null)";
-             // throw exception
-             throw new Rulez.RulezException(Rulez.RulezException.Types.ValueNotConvertible, arguments: new object[] { value, "text" });
+             return Rulez.PrimitiveType.ToText(value);
          }
          /// <summary>
          /// returns true if the value is of otDataType.Text
@@ -503,14 +380,7 @@ namespace OnTrack.Core
          /// <returns></returns>
          public static bool IsMemo(object value)
          {
-             // if it is a type anyway
-             if (value != null && value.GetType() == typeof(String)) return true;
-
-             // toString
-             if (value != null) return true;
-
-
-             return false; // not convertible
+             return Rulez.PrimitiveType.IsMemo(value);
          }
          /// <summary>
          /// convert a value to otDataType.Text and return the value
@@ -519,19 +389,7 @@ namespace OnTrack.Core
          /// <returns></returns>
          public static String ToMemo(object value)
          {
-             // if it is anyway the right type
-             if (value != null && value is String) return ((String)value);
-
-             // try to convert 
-             if (value != null)
-             {
-                 // convert to long
-                 return value.ToString();
-             }
-
-             if (value == null) value = "(null)";
-             // throw exception
-             throw new Rulez.RulezException(Rulez.RulezException.Types.ValueNotConvertible, arguments: new object[] { value, "text" });
+             return Rulez.PrimitiveType.ToMemo(value);
          }
          /// <summary>
          /// returns true if the value is of otDataType.Text
@@ -618,24 +476,19 @@ namespace OnTrack.Core
             if (result != String.Empty + ConstDelimiter + ConstDelimiter) return result;
             return String.Empty;
         }
-#endregion
-        /// <summary>
-        /// static constructor
-        /// </summary>
-        static DataType()
-        {
-
-        }
+        #endregion
         /// <summary>
         /// constructor
         /// </summary>
-        /// <param name="type"></param>
-        protected DataType(otDataType type, bool isNullable = false, object defaultvalue = null)
+        /// <param name="typeId"></param>
+        protected DataType(otDataType typeId, bool isNullable = false, object defaultvalue = null, string name = null, Rulez.Engine engine = null)
         {
-            if (isNullable) _type = type | otDataType.IsNullable;
-            else _type = type;
+            _type = isNullable ? typeId | otDataType.IsNullable : typeId;
+            _name = (String.IsNullOrWhiteSpace(name)) ? this.Signature : name;
+            _engine = engine;
             _defaultvalue = defaultvalue;
         }
+        #region "Properties"
         /// <summary>
         /// returns the typeid of the DataType
         /// </summary>
@@ -644,12 +497,26 @@ namespace OnTrack.Core
             get { return _type; }
         }
         /// <summary>
-        /// gets the Name of the value Datatype
+        /// returns the engine or null for all
+        /// </summary>
+        public Rulez.Engine Engine
+        {
+            get { return _engine; }
+        }
+        /// <summary>
+        /// gets the Name of the  Datatype
         /// </summary>
         public string Name
         {
+            get { return _name; }
+            protected set { _name = value!= null ? value.ToUpper () : System.Guid.NewGuid().ToString ();}
+        }
+        /// <summary>
+        /// gets the Signature of the  Datatype
+        /// </summary>
+        public abstract string Signature
+        {
             get;
-            set;
         }
         /// <summary>
         /// return true if the type is Nullable
@@ -668,8 +535,114 @@ namespace OnTrack.Core
         public Object DefaultValue 
         { 
             get { return _defaultvalue; }
+            protected set { _defaultvalue = value;}
         }
+        /// <summary>
+        /// gets the Category
+        /// </summary>
+        public abstract otDataTypeCategory Category { get; }
+        /// <summary>
+        /// gets the native Type
+        /// </summary>
+        public abstract System.Type NativeType { get; }
+        #endregion
+        #region "Events"
+        /// <summary>
+        /// raise the event on Creation
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="datatype"></param>
+        protected void RaiseOnCreation(object sender, IDataType datatype, Rulez.Engine engine = null)
+        {
+            if (engine == null) engine = this.Engine;
+            OnCreation(sender, new EventArgs(datatype: datatype, engine: engine));
+        }
+        /// <summary>
+        /// raise the event on Removal
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="datatype"></param>
+        protected void RaiseOnRemoval(object sender, IDataType datatype, Rulez.Engine engine = null)
+        {
+            if (engine == null) engine = this.Engine;
+            OnRemoval(sender, new EventArgs(datatype: datatype, engine: engine));
+        }
+        #endregion
+        #region "IEqualComparer"
+        /// <summary>
+        /// Equality Comparer
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+         public  bool  Equals(IDataType y)
+        {
+            return Equals(this, y);
+        }
+         /// <summary>
+         /// Equality Comparer
+         /// </summary>
+         /// <param name="x"></param>
+         /// <param name="y"></param>
+         /// <returns></returns>
+           bool Equals(object y)
+         {
+             if (! y.GetType().IsAssignableFrom (typeof(IDataType))) return false;
+             return Equals(this, (IDataType) y);
+         }
+        /// <summary>
+         /// compares 2 types by name 
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+         bool System.Collections.Generic.IEqualityComparer<IDataType>.Equals(IDataType x,IDataType y)
+         {
+             return String.Compare(x.Signature, y.Signature, ignoreCase: true) == 0;
+         }
+         /// <summary>
+         /// Gets the hash code.
+         /// </summary>
+         /// <param name="obj">The obj.</param>
+         /// <returns></returns>
+          int System.Collections.Generic.IEqualityComparer<IDataType>.GetHashCode(IDataType obj)
+         {
+             return this.Name.GetHashCode();
+         }
+          /// <summary>
+          /// == comparerer on datatypes
+          /// </summary>
+          /// <param name="a"></param>
+          /// <param name="b"></param>
+          /// <returns></returns>
+          public static bool operator ==(DataType a, DataType b)
+          {
+              // If both are null, or both are same instance, return true.
+              if (System.Object.ReferenceEquals(a, b))
+              {
+                  return true;
+              }
 
+              // If one is null, but not both, return false.
+              if (((object)a == null) || ((object)b == null))
+              {
+                  return false;
+              }
+
+              // Return true if the fields match:
+              return String.Compare(a.Signature, b.Signature, ignoreCase: true) == 0;
+          }
+          /// <summary>
+          /// != comparer
+          /// </summary>
+          /// <param name="a"></param>
+          /// <param name="b"></param>
+          /// <returns></returns>
+          public static bool operator !=(DataType a, DataType b)
+          {
+              return !(a == b);
+          }
+        #endregion
     }
     /// <summary>
     /// ConverterHelpers

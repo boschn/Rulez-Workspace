@@ -22,6 +22,7 @@ LineComment
 
 
 // keywords
+TYPE : T Y P E;
 SELECTION : S E L E C T I O N ;
 AS : A S ;
 DEFAULT: D E F A U L T;
@@ -41,12 +42,22 @@ DATE : D A T E;
 TIMESTAMP : T I M E S T A M P;
 LIST : L I S T;
 TIMESPAN: T I M E S P A N;
+DECIMALUNIT: D E C I M A L U N I T;
+LANGUAGETEXT: L A N G U A G E T E X T;
+SYMBOL: S Y M B O L;
 
 // literals
-STRINGLITERAL : '"' (~["\r\n] | '""')* '"';
+TEXTLITERAL : '"' (~["\r\n] | '""')* '"'  '#' LETTER (LETTERORDIGIT)*;
+// #ORANGE
+SYMBOLLITERAL : '#' LETTER (LETTERORDIGIT)*;
+// #10.12.2014#
 DATELITERAL : '#' (~[#\r\n])* '#';
+// + 100
 NUMBERLITERAL : ('+' | '-')? ('0'..'9')+ ;
+// 100.00
 DECIMALLITERAL :  ('+' | '-')? ('0'..'9')* '.' ('0'..'9')+ ;
+// 100#h
+DECIMALUNITLITERAL :  ('+' | '-')? ('0'..'9')* '.' ('0'..'9')+ '#' LETTER (LETTERORDIGIT)*;
 TRUE : T R U E ;
 FALSE : F A L S E ;
 NULL :  N U L L ;
