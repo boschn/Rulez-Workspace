@@ -91,7 +91,7 @@ namespace OnTrack.Core
         public static otDataTypeCategory GetCategory(otDataType typeId)
         {
             // extract nullable
-            typeId ^= otDataType.IsNullable ;
+            if ((typeId & otDataType.IsNullable) ==  otDataType.IsNullable) typeId ^= otDataType.IsNullable ;
             
             switch (typeId)
             {
@@ -264,6 +264,24 @@ namespace OnTrack.Core
          public static bool ToBool(object value)
          {
              return Rulez.PrimitiveType.ToBool(value);
+         }
+         /// <summary>
+         /// returns true if the value is of otDataType.Date
+         /// </summary>
+         /// <param name="value"></param>
+         /// <returns></returns>
+         public static bool IsBinary(object value)
+         {
+             return Rulez.PrimitiveType.IsBinary(value);
+         }
+         /// <summary>
+         /// convert a value to otDataType.Date and return the value
+         /// </summary>
+         /// <param name="value"></param>
+         /// <returns></returns>
+         public static byte[] ToBinary(object value)
+         {
+             return Rulez.PrimitiveType.ToBinary(value);
          }
          /// <summary>
          /// returns true if the value is of otDataType.Date
@@ -643,6 +661,14 @@ namespace OnTrack.Core
               return !(a == b);
           }
         #endregion
+        /// <summary>
+        /// to String Method
+        /// </summary>
+        /// <returns></returns>
+        public override string  ToString()
+        {
+            return this.Signature ;
+        }
     }
     /// <summary>
     /// ConverterHelpers

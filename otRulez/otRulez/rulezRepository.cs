@@ -54,7 +54,7 @@ namespace OnTrack.Rulez
         /// <summary>
         /// defines the Operator Token
         /// </summary>
-        public class Token
+        public class Token : IComparable<Token>
         {
             /// <summary>
             /// static - must be ascending and discrete ! (do not leave one out !!)
@@ -82,6 +82,7 @@ namespace OnTrack.Rulez
 
             public  const uint BEEP = 22;
 
+            private static string[] _ids = {"POS", "AND", "ANDALSO", "OR", "ORELSE", "NOT", "=", "!=", "GT", "GE", "LT", "LE", "+", "-", "*", "/", "MOD", "CONCAT", "BEEP"};
             /// <summary>
             /// variable
             /// </summary>
@@ -100,12 +101,56 @@ namespace OnTrack.Rulez
             /// returns the token
             /// </summary>
             public uint ToUint { get { return (uint) _token; } }
+
+            /// <summary>
+            /// implementation of comparable
+            /// </summary>
+            /// <param name="obj"></param>
+            /// <returns></returns>
+            public int CompareTo(Token obj)
+            {
+                if (obj.ToUint < this.ToUint) return -1;
+                if (obj.ToUint == this.ToUint) return 0;
+                if (obj.ToUint > this.ToUint) return 1;
+
+                throw new NotImplementedException();
+            }
+            /// <summary>
+            /// Equals
+            /// </summary>
+            /// <param name="obj"></param>
+            /// <returns></returns>
+            public override bool Equals(Object obj)
+            {
+                if (obj == null || !(obj is Token))
+                    return false;
+                else
+                    return this.CompareTo ((Token) obj) == 0;
+            }      
+
+
+            /// <summary>
+            /// override Hashcode
+            /// </summary>
+            /// <returns></returns>
+            public override int GetHashCode()
+            {
+                return (int) this.ToUint;
+            }
+            /// <summary>
+            /// To string
+            /// </summary>
+            /// <returns></returns>
+            public override string ToString()
+            {
+                return this.ToUint.ToString()+ ":'" + _ids[this.ToUint ]+"'";
+            }
         }
    
     /// <summary>
     /// defines the function
     /// </summary>
-    public class @Function
+    public class @Function : IComparable<@Function>
     {
 
         /// <summary>
@@ -181,7 +226,7 @@ namespace OnTrack.Rulez
         /// <summary>
         /// gets the Token
         /// </summary>
-        public Token TokenID { get { return _token; } }
+        public Token Token { get { return _token; } }
         /// <summary>
         /// gets the signature
         /// </summary>
@@ -191,12 +236,49 @@ namespace OnTrack.Rulez
         /// </summary>
         public IDataType ReturnType { get { return _returntype; } set { _returntype = value; } }
         #endregion
+        /// <summary>
+        /// implementation of comparable
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public int CompareTo(@Function obj)
+        {
+            return this.Token.CompareTo(obj.Token);
+        }
+        /// <summary>
+        /// override Hashcode
+        /// </summary>
+        /// <returns></returns>
+        public override int GetHashCode()
+        {
+            return (int)this.Token.GetHashCode();
+        }
+        /// <summary>
+        /// To string
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return this.Token.ToString()+"<" + this.Signature + ">";
+        }
+        /// <summary>
+        /// Equals
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public override bool Equals(Object obj)
+        {
+            if (obj == null || !(obj is @Function))
+                return false;
+            else
+                return this.CompareTo((@Function)obj) == 0;
+        }      
     }
 
     /// <summary>
     /// defines the operators
     /// </summary>
-    public class Operator
+    public class Operator : IComparable<Operator>
     {
 
         /// <summary>
@@ -234,7 +316,7 @@ namespace OnTrack.Rulez
         private Token _token;
         private UInt16 _arguments;
         private UInt16 _priority;
-        private otDataType? _returntype;
+        private IDataType  _returntype;
         private otOperatorType _type;
 
         /// <summary>
@@ -266,25 +348,34 @@ namespace OnTrack.Rulez
             throw new RulezException(RulezException.Types.OutOfArraySize, arguments: new object[] { tokenid, _buildInOperators.Length });
         }
         /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="types"></param>
+        /// <returns></returns>
+        public static string CreateSignature(Token token, UInt16 arguments, UInt16 priority, IDataType returnType)
+        {
+            return token.ToString() + "<" + arguments.ToString() + "," + priority.ToString() + "," + (returnType == null ? returnType.ToString() :"*") + ">";
+        }
+        /// <summary>
         /// constructor
         /// </summary>
         /// <param name="Token"></param>
         /// <param name="arguments"></param>
         /// <param name="priority"></param>
-        public Operator(Token token, UInt16 arguments, UInt16 priority, otDataType? returnType, otOperatorType type)
+        public Operator(Token token, UInt16 arguments, UInt16 priority, otDataType? returnTypeId, otOperatorType type)
         {
             _token = token;
             _arguments = arguments;
             _priority = priority;
-            _returntype = returnType;
+            if (returnTypeId.HasValue ) _returntype = DataType.GetDataType (returnTypeId.Value);
             _type = type;
         }
-        public Operator(uint tokenID, UInt16 arguments, UInt16 priority, otDataType? returnType, otOperatorType type)
+        public Operator(uint tokenID, UInt16 arguments, UInt16 priority, otDataType? returnTypeId, otOperatorType type)
         {
             _token = new Token(tokenID);
             _arguments = arguments;
             _priority = priority;
-            _returntype = returnType;
+            if (returnTypeId.HasValue)  _returntype = DataType.GetDataType(returnTypeId.Value); ;
             _type = type;
 
         }
@@ -307,17 +398,56 @@ namespace OnTrack.Rulez
         /// <summary>
         /// gets or sets the return type of the operation
         /// </summary>
-        public otDataType? ReturnType { get { return _returntype; } set { _returntype = value; } }
+        public otDataType? ReturnTypeId { get { return _returntype != null ? _returntype.TypeId : new otDataType? () ; } 
+            set { if (value.HasValue )_returntype = DataType.GetDataType(value.Value); } }
+        public IDataType ReturnType { get { return _returntype; } set { _returntype = value; } }
         /// <summary>
         /// gets the type of operator
         /// </summary>
         public otOperatorType Type { get { return _type; } }
         #endregion
+        /// <summary>
+        /// implementation of comparable
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public int CompareTo(Operator obj)
+        {
+            return this.Token.CompareTo(obj.Token);
+        }
+        /// <summary>
+        /// override Hashcode
+        /// </summary>
+        /// <returns></returns>
+        public override int GetHashCode()
+        {
+            return (int)this.Token.GetHashCode();
+        }
+        /// <summary>
+        /// Equals
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public override bool Equals(Object obj)
+        {
+            if (obj == null || !(obj is Operator))
+                return false;
+            else
+                return this.CompareTo((Operator)obj) == 0;
+        }      
+        /// <summary>
+        /// To string
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return CreateSignature(this.Token, this.Arguments, this.Priority, this.ReturnType);
+        }
     }
     /// <summary>
     /// a repository for the rulez engine
     /// </summary>
-    public class Repository
+    public class Repository 
     {
         private string _id; // ID of the Repository
         private Engine _engine; // my engine
@@ -341,7 +471,7 @@ namespace OnTrack.Rulez
         /// </summary>
         public Repository(Engine engine, string id = null)
         {
-            if (id == null) _id = new Guid().ToString();
+            if (id == null) _id = Guid.NewGuid().ToString();
             else _id = id;
             _engine = engine;
         }
@@ -420,13 +550,21 @@ namespace OnTrack.Rulez
             // Functions
             foreach (@Function aFunction in @Function.BuildInFunctions())
             {
-                if (!_Functions.ContainsKey(aFunction.TokenID))
-                    _Functions.Add(aFunction.TokenID, aFunction);
+                if (!_Functions.ContainsKey(aFunction.Token))
+                    _Functions.Add(aFunction.Token, aFunction);
             }
             // primitve Datatypes
             foreach (IDataType aDatatype in PrimitiveType.DataTypes)
             {
-                if (!HasDataType(aDatatype)) AddDataType(aDatatype);
+                if (!_datatypes.ContainsKey(aDatatype.Name.ToUpper()))
+                {
+                    _datatypes.Add(aDatatype.Name.ToUpper(), aDatatype);
+                    if (! _datatypesSignature.ContainsKey(aDatatype.Signature.ToUpper())) _datatypesSignature.Add(aDatatype.Signature.ToUpper(), new List<IDataType>());
+                    List<IDataType> aList = _datatypesSignature[aDatatype.Signature.ToUpper()];
+                    // remove all existing
+                    aList.RemoveAll(x => x.Name == aDatatype.Name);
+                    aList.Add(aDatatype);
+                }
             }
             _IsInitialized = true;
             return _IsInitialized;
@@ -508,8 +646,8 @@ namespace OnTrack.Rulez
         public bool AddFunction(@Function function)
         {
             Initialize();
-            if (this.HasFunction(function.TokenID)) _Functions.Remove(function.TokenID);
-            _Functions.Add(function.TokenID, function);
+            if (this.HasFunction(function.Token)) _Functions.Remove(function.Token);
+            _Functions.Add(function.Token, function);
             return true;
         }
         /// <summary>
@@ -531,7 +669,7 @@ namespace OnTrack.Rulez
         {
             Initialize();
             if (this.HasOperator(id)) return _Operators[id];
-            throw new KeyNotFoundException(id + " was not found in repository");
+            throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[]{id.ToString (), "Operator"});
         }
         /// <summary>
         /// adds a rule rule to the repository by handle

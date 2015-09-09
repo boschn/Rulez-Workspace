@@ -238,7 +238,7 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 @after { BuildXPTNode ($ctx) ; }
 
 	: variableName EQ selectExpression
-	| dataObjectEntryName EQ selectExpression
+	| dataObjectEntryName  EQ selectExpression
 	
 	;
 
@@ -304,24 +304,24 @@ locals [ string ClassName, uint keypos = 1 ]
  * 100 | category = "Test",  created >= #10.09.2015#
  * ( 100 | category = "Test" ),  created >= #10.09.2015#
  */
-selectConditions[string ClassName, uint keypos]
+selectConditions[string DefaultClassName, uint keypos]
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 @after { BuildXPTNode ($ctx) ; }
 
     :	
-	    ( NOT )? RPAREN selectConditions [$ClassName, $keypos] LPAREN
-	|	( NOT )? selectCondition [$ClassName, $keypos] (logicalOperator_2 { incIncreaseKeyNo($ctx);} ( NOT )? selectCondition [$ClassName, $keypos])* 
+	    ( NOT )? RPAREN selectConditions [$DefaultClassName, $keypos] LPAREN
+	|	( NOT )? selectCondition [$DefaultClassName, $keypos] (logicalOperator_2 { incIncreaseKeyNo($ctx);} ( NOT )? selectCondition [$DefaultClassName, $keypos])* 
 	
 	    ;
 
 /* selection condition with position 
  *
  */
- selectCondition [string ClassName, uint keypos]
+ selectCondition [string DefaultClassName, uint keypos]
  returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
  @after { BuildXPTNode ($ctx) ; }
 
-    :	(dataObjectEntryName? compareOperator)? selectExpression
+    :	(dataObjectEntryName compareOperator)? selectExpression
 
     ;
 
@@ -332,6 +332,7 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
  returns [ OnTrack.Rulez.Operator Operator  ]
     : NOT { $ctx.Operator = Operator.GetOperator(new Token(Token.NOT));}
     ;
+
  logicalOperator_2
  returns [ OnTrack.Rulez.Operator Operator  ]
     : AND { $ctx.Operator = Operator.GetOperator(new Token(Token.ANDALSO));}
@@ -344,16 +345,17 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 /* Select Expressions
  */
 
-selectExpression
+selectExpression 
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
+locals [ string defaultClassName ]
 @after { BuildXPTNode ($ctx) ; }
 
     : literal 
     | parameterName
 	| variableName
-    | dataObjectEntryName
-    | ( PLUS | MINUS ) selectExpression
-	| logicalOperator_1 selectExpression
+    | dataObjectEntryName 
+    | ( PLUS | MINUS ) selectExpression 
+	| logicalOperator_1 selectExpression 
 	| LPAREN selectExpression RPAREN
     | selectExpression (arithmeticOperator selectExpression)+
     ;
@@ -387,11 +389,11 @@ returns [ OnTrack.Rulez.Operator Operator  ]
 // Object Class
 dataObjectClass
 returns [ string ClassName ]
-    : {this.Engine.Repository.HasDataObjectDefinition($ctx.GetText())}? IDENTIFIER { $ClassName = $ctx.IDENTIFIER().GetText() ;}
+    : IDENTIFIER  {this.Engine.Repository.HasDataObjectDefinition($ctx.IDENTIFIER().GetText())}? { $ClassName = $ctx.IDENTIFIER().GetText() ;}
     ;
 
 // Object Entry Name
-dataObjectEntryName
+dataObjectEntryName 
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 locals [ string entryname ]
 @after { BuildXPTNode ($ctx) ; }
@@ -405,7 +407,7 @@ parameterName
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 @after { BuildXPTNode ($ctx) ; }
 
-    : {IsParameterName($ctx.GetText(),$ctx)}? IDENTIFIER
+    :  IDENTIFIER {IsParameterName($ctx.IDENTIFIER().GetText(),$ctx)}?
 	
     ;
 
@@ -414,7 +416,7 @@ variableName
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 @after { BuildXPTNode ($ctx) ; }
 
-    : {IsVariableName($ctx.GetText(),$ctx)}? IDENTIFIER
+    :  IDENTIFIER {IsVariableName($ctx.IDENTIFIER().GetText(),$ctx)}?
 	
     ;
 

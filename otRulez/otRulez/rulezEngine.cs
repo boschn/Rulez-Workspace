@@ -38,7 +38,7 @@ namespace OnTrack.Rulez
         /// </summary>
         public Engine (string id = null)
         {
-            if (id == null) _id = System.Environment.MachineName  + "_" + DateTime.Now.ToString();
+            if (id == null) _id = System.Environment.MachineName  + "_" + DateTime.Now.ToString("o");
             else _id = id;
             _repository = new Repository (engine:this);
             _context = new Context(this);

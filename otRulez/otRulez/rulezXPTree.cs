@@ -48,7 +48,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// gets the node type
         /// </summary>
-        public otXPTNodeType NodeType { get { return this.NodeType; } protected set { this.NodeType = value; } }
+        public otXPTNodeType NodeType { get { return _nodeType; } protected set { _nodeType = value; } }
         /// <summary>
         /// returns 
         /// </summary>
@@ -89,7 +89,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <param name="property"></param>
         protected void RaiseOnPropertyChanged(object sender, string property)
         {
-            PropertyChanged(sender, new PropertyChangedEventArgs(property));
+            if (PropertyChanged != null) PropertyChanged(sender, new PropertyChangedEventArgs(property));
         }
      }
 
@@ -121,7 +121,7 @@ namespace OnTrack.Rulez.eXPressionTree
         {
             this.NodeType = otXPTNodeType.Literal;
             _datatype = datatype;
-            _value = Core.DataType.To(value, datatype);
+            if (value != null) this.Value = value;
         }
 
         /// <summary>
@@ -135,7 +135,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// gets or sets the constant value
         /// </summary>
-        public object Value { get { return _value; } set { _value = value; _hasValue = true; RaiseOnPropertyChanged(this, "Value"); } }
+        public object Value { get { return _value; } set { _value = Core.DataType.To(value, _datatype ); _hasValue = true; RaiseOnPropertyChanged(this, "Value"); } }
         /// <summary>
         /// returns the datatype of the literal
         /// </summary>
@@ -193,11 +193,11 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// return the node type
         /// </summary>
-        public otXPTNodeType NodeType { get { return this.NodeType; } protected set { this.NodeType = value; } }
+        public otXPTNodeType NodeType { get { return _nodeType; } protected set { _nodeType = value; } }
         /// <summary>
         /// return all the leaves
         /// </summary>
-        public ObservableCollection<INode> Nodes { get { return this.Nodes; } set { this.Nodes = value; this.Nodes.CollectionChanged += _Nodes_CollectionChanged; } }
+        public ObservableCollection<INode> Nodes { get { return _nodes; } set { _nodes = value; _nodes.CollectionChanged += _Nodes_CollectionChanged; } }
         /// <summary>
         /// returns true if node is a leaf
         /// </summary>
@@ -205,7 +205,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// gets the Parent of the Node
         /// </summary>
-        public IXPTree Parent { get { return _parent; } set { _parent = value; if (PropertyChanged != null) PropertyChanged(this, new PropertyChangedEventArgs("Parent")); } }
+        public IXPTree Parent { get { return _parent; } set { _parent = value; RaiseOnPropertyChanged(this,"Parent"); } }
         /// <summary>
         /// returns the engine
         /// </summary>
@@ -218,7 +218,7 @@ namespace OnTrack.Rulez.eXPressionTree
             set
             {
                 _engine = value;
-                if (PropertyChanged != null) PropertyChanged(this, new PropertyChangedEventArgs("Engine"));
+                RaiseOnPropertyChanged(this, "Engine");
             }
         }
         /// <summary>
@@ -268,7 +268,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <param name="property"></param>
         protected void RaiseOnPropertyChanged(object sender, string property)
         {
-            PropertyChanged(sender, new PropertyChangedEventArgs(property));
+            if (PropertyChanged != null ) PropertyChanged(sender, new PropertyChangedEventArgs(property));
         }
     }
 
@@ -972,6 +972,7 @@ namespace OnTrack.Rulez.eXPressionTree
     public class OperationExpression: XPTree , IExpression
     {
         protected Token _op; // operation Token
+        protected uint? _prio; // overwrite priority of the operator
 
         #region "Properties"
     
@@ -984,6 +985,22 @@ namespace OnTrack.Rulez.eXPressionTree
         /// gets the Operator definition
         /// </summary>
         public Operator Operator { get { return OnTrack.Rules.Engine.GetOperator(_op); } }
+        /// <summary>
+        /// get or sets the Priority of the Expression's Operator
+        /// </summary>
+        public uint Priority
+        {
+            get
+            {
+                if (_prio.HasValue) return _prio.Value;
+                // return Operators Priority
+                return Operator.Priority;
+            }
+            set
+            {
+                _prio = value;
+            }
+        }
 
         /// <summary>
         /// returns the left operand
@@ -1067,7 +1084,7 @@ namespace OnTrack.Rulez.eXPressionTree
             if (OnTrack.Rules.Engine.GetOperator(op) == null) throw new RulezException(RulezException.Types.OperatorNotDefined, arguments: new object[] { op.ToString() });
             _op = op;
             if (this.Operator.Arguments != 1) throw new RulezException(RulezException.Types.OperandsNotEqualOperatorDefinition, arguments: new object[] { op.ToString(), this.Operator.Arguments, 1 });
-            if (operand != null) this.Nodes[0] = operand;
+            if (operand != null) this.Nodes.Add(operand);
             else throw new RulezException(RulezException.Types.OperandNull, arguments: new object[] { op.ToString(), "" });
 
             _engine = engine;
@@ -1078,7 +1095,7 @@ namespace OnTrack.Rulez.eXPressionTree
             _op = op.Token;
             if (op == null) throw new RulezException(RulezException.Types.OperatorNotDefined, arguments: new object[] { "(null)" });
             if (this.Operator.Arguments != 1) throw new RulezException(RulezException.Types.OperandsNotEqualOperatorDefinition, arguments: new object[] { op.Token.ToString(), op.Arguments, 1 });
-            if (operand != null) this.Nodes[0] = operand;
+            if (operand != null) this.Nodes.Add(operand);
             else throw new RulezException(RulezException.Types.OperandNull, arguments: new object[] { op.Token.ToString(), "" });
             _engine = engine;
             this.NodeType = otXPTNodeType.OperationExpression;     
@@ -1097,10 +1114,10 @@ namespace OnTrack.Rulez.eXPressionTree
             if (OnTrack.Rules.Engine.GetOperator(op) == null ) throw new RulezException(RulezException.Types.OperatorNotDefined,arguments:new object[]{ op.ToString() });
             _op = op;
             if (this.Operator.Arguments != 2) throw new RulezException(RulezException.Types.OperandsNotEqualOperatorDefinition, arguments: new object[] { op.ToString(), this.Operator.Arguments, 2 });
-            if (leftoperand != null) this.Nodes[0] = leftoperand;
+            if (leftoperand != null) this.Nodes.Add(leftoperand);
             else throw new RulezException(RulezException.Types.OperandNull, arguments: new object[] { op.ToString(), "left" });
 
-            if (rightoperand != null) this.Nodes[1] = rightoperand;
+            if (rightoperand != null) this.Nodes.Add(rightoperand);
             else throw new RulezException(RulezException.Types.OperandNull, arguments: new object[] { op.ToString(), "right" });
             _engine = engine;
             this.NodeType = otXPTNodeType.OperationExpression;     
@@ -1110,13 +1127,12 @@ namespace OnTrack.Rulez.eXPressionTree
         {
             // default engine
             if (engine == null) engine = OnTrack.Rules.Engine;
-
             _op = op.Token;
             if (op.Arguments != 2) throw new RulezException(RulezException.Types.OperandsNotEqualOperatorDefinition, arguments: new object[] { op.Token.ToString(), op.Arguments, 2 });
-            if (leftoperand != null) this.Nodes[0] = leftoperand;
+            if (leftoperand != null) this.Nodes.Add(leftoperand);
             else throw new RulezException(RulezException.Types.OperandNull, arguments: new object[] { op.Token.ToString(), "left" });
 
-            if (rightoperand != null) this.Nodes[1] = rightoperand;
+            if (rightoperand != null) this.Nodes.Add(rightoperand);
             else throw new RulezException(RulezException.Types.OperandNull, arguments: new object[] { op.Token.ToString(), "right" });
             _engine = engine;
             this.NodeType = otXPTNodeType.OperationExpression;

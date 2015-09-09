@@ -439,6 +439,8 @@ namespace OnTrack.Rulez
             {
                 if (ctx.NOT().Count() == 0) ctx.XPTreeNode = ctx.selectConditions().XPTreeNode;
                 else ctx.XPTreeNode = LogicalExpression.NOT((IExpression)ctx.selectConditions().XPTreeNode);
+                // set the max priority for disabling reshuffle
+                ((OperationExpression)ctx.XPTreeNode).Priority = uint.MaxValue ;
                 return true;
             }
             // if we have more than this 
@@ -451,7 +453,7 @@ namespace OnTrack.Rulez
                    Operator anOperator = ctx.logicalOperator_2()[i].Operator;
                   
                     // x or y and z ->  ( x or  y) and z )
-                   if (theLogical.Operator.Priority > anOperator.Priority)
+                   if (theLogical.Priority > anOperator.Priority)
                    {
                        theLogical = new LogicalExpression(anOperator, theLogical, (LogicalExpression)ctx.selectCondition()[i + 1].XPTreeNode);
                        // negate
@@ -498,13 +500,13 @@ namespace OnTrack.Rulez
              //
              if (ctx.dataObjectEntryName() == null)
              {
-                 iObjectDefinition aObjectDefinition = this.Engine.GetDataObjectDefinition(ctx.ClassName);
+                 iObjectDefinition aObjectDefinition = this.Engine.GetDataObjectDefinition(ctx.DefaultClassName);
                  entryName = aObjectDefinition.Keys[ctx.keypos - 1];
              }
              else entryName = ctx.dataObjectEntryName().GetText();
 
              // get the symbol
-             DataObjectEntrySymbol aSymbol = new DataObjectEntrySymbol(ctx.ClassName + "." + entryName, engine: this.Engine);
+             DataObjectEntrySymbol aSymbol = new DataObjectEntrySymbol(ctx.DefaultClassName + "." + entryName, engine: this.Engine);
 
              // Operator
              Operator anOperator ;
@@ -553,6 +555,8 @@ namespace OnTrack.Rulez
              if (ctx.LPAREN() != null && ctx.selectExpression().Count() == 1)
              {
                  ctx.XPTreeNode =  (IExpression)ctx.selectExpression()[0].XPTreeNode;
+                 // set the max priority for disabling reshuffle
+                 ((OperationExpression)ctx.XPTreeNode).Priority = uint.MaxValue;
                  return true;
              }
              //| ( PLUS | MINUS ) selectExpression
@@ -580,7 +584,7 @@ namespace OnTrack.Rulez
                    Operator anOperator = ctx.arithmeticOperator()[i].Operator;
                   
                     // x * y + z ->  ( x *  y) + z )
-                   if (theExpression.Operator.Priority > anOperator.Priority)
+                   if (theExpression.Priority > anOperator.Priority)
                    {
                        theExpression = new OperationExpression(anOperator, theExpression, (OperationExpression)ctx.selectExpression()[i + 1].XPTreeNode);
                    }

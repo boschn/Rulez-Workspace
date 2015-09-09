@@ -54,8 +54,8 @@ namespace OnTrack.Rulez
                     {
                         // add the non-nullable value type
                         _primitives.Add(value, new PrimitiveType((otDataType)Enum.ToObject(typeof(otDataType), value), isNullable: false));
-                        // add nullable value type
-                        _primitives.Add(value, new PrimitiveType((otDataType)Enum.ToObject(typeof(otDataType), value), isNullable: true));
+                        // add nullable value type (but not for Null itself)
+                        if (value != 0) _primitives.Add((value | (uint) otDataType.IsNullable), new PrimitiveType((otDataType)Enum.ToObject(typeof(otDataType), value), isNullable: true));
                     }
             }
         }
@@ -109,7 +109,8 @@ namespace OnTrack.Rulez
                     return typeof(double);
                 case otDataType.Timestamp:
                     return typeof(DateTime);
-                
+                case otDataType.Binary:
+                    return typeof(byte[]);
                 default:
                     if ((uint)typeId < PrimitiveTypeMaxRange)
                         throw new Rulez.RulezException(Rulez.RulezException.Types.DataTypeNotImplementedByCase, arguments: new object[] { typeId.ToString(), "Core.DataType.GetTypeFor" });
@@ -126,8 +127,7 @@ namespace OnTrack.Rulez
         {
             // if nullable than return the null
             if ((typeId & otDataType.IsNullable ) == otDataType.IsNullable) return null;
-            // strip off the nullable
-            typeId = (typeId ^ otDataType.IsNullable);
+           
             // make a case
             switch (typeId)
             {
@@ -153,10 +153,13 @@ namespace OnTrack.Rulez
                     return new TimeSpan();
                 case otDataType.Timestamp:
                     return DateTime.Parse(DataType.ConstNullTimestampString);
+                case otDataType.Binary:
+                    return new byte[]{0x00};
+                
                 default:
                     if ((uint)typeId < PrimitiveTypeMaxRange)
                         throw new Rulez.RulezException(Rulez.RulezException.Types.DataTypeNotImplementedByCase, arguments: new object[] { typeId.ToString(), "Core.DataType.GetTypeFor" });
-                    else throw new RulezException(RulezException.Types.DataTypeNotImplementedByClass, arguments: new object[] { typeId.ToString(), "ValueType" });
+                    else throw new RulezException(RulezException.Types.DataTypeNotImplementedByClass, arguments: new object[] { typeId.ToString(), "PrimitiveType" });
    
             }
 
@@ -190,6 +193,8 @@ namespace OnTrack.Rulez
                     return IsTimespan(value);
                 case otDataType.Timestamp:
                     return IsTimeStamp(value);
+                case otDataType.Binary:
+                    return IsBinary(value);
                 default:
                     throw new Rulez.RulezException(Rulez.RulezException.Types.DataTypeNotImplementedByCase, arguments: new object[] { typeId.ToString(), "PrimitiveType.Is" });
             }
@@ -236,6 +241,8 @@ namespace OnTrack.Rulez
                     return ToTimespan(value);
                 case otDataType.Timestamp:
                     return ToTimeStamp(value);
+                case otDataType.Binary:
+                    return ToBinary(value);
                 default:
                     throw new Rulez.RulezException(Rulez.RulezException.Types.DataTypeNotImplementedByCase, arguments: new object[] { typeId.ToString(), "PrimitiveType.To" });
             }
@@ -298,6 +305,46 @@ namespace OnTrack.Rulez
             }
 
             if (value == null) value = "(null)";
+            // throw exception
+            throw new Rulez.RulezException(Rulez.RulezException.Types.ValueNotConvertible, arguments: new object[] { value, "bool" });
+        }
+        /// <summary>
+        /// returns true if the value is of otDataType.Binary
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public new static bool IsBinary(object value)
+        {
+            // if it is a bool anyway
+            if (value != null && (value.GetType() == typeof(byte) || value.GetType() == typeof(Byte )) && value.GetType().IsArray) return true;
+
+            return false; // not convertible
+        }
+        /// <summary>
+        /// convert a value to otDataType.Binary and return the value
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public new static byte[] ToBinary(object value)
+        {
+            // if it is a bool anyway
+            if (IsBinary(value)) return (byte[]) value;
+
+            // try to convert
+            if (value is Int16) return BitConverter.GetBytes((Int16) value);
+            if (value is Int32) return BitConverter.GetBytes((Int32) value);
+            if (value is Int64) return BitConverter.GetBytes((Int64) value);
+            if (value is bool) return BitConverter.GetBytes((bool)value);
+            if (value is Decimal || value is Double) return BitConverter.GetBytes((Double)value);
+            if (value is long) return BitConverter.GetBytes((long)value);
+            if (value is DateTime) return BitConverter.GetBytes(((DateTime)value).ToBinary());
+            if (value is TimeSpan) return BitConverter.GetBytes(((TimeSpan)value).Ticks);
+            if (value is string)
+            {
+                System.Text.Encoding en = System.Text.Encoding.UTF8;
+                return en.GetBytes(value.ToString());
+            }
+
             // throw exception
             throw new Rulez.RulezException(Rulez.RulezException.Types.ValueNotConvertible, arguments: new object[] { value, "bool" });
         }
@@ -626,7 +673,15 @@ namespace OnTrack.Rulez
         /// <summary>
         /// gets the Signature
         /// </summary>
-        public override string Signature { get { return this.TypeId.ToString ().ToUpper (); } }
+        public override string Signature
+        {
+            get
+            {
+                if ((this.TypeId & otDataType.IsNullable) == otDataType.IsNullable) { return (this.TypeId ^ otDataType.IsNullable).ToString().ToUpper() + "?";}
+                return this.TypeId.ToString().ToUpper();
+            }
+        }
+
         /// <summary>
         /// gets the native Type
         /// </summary>

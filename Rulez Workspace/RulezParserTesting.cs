@@ -18,35 +18,26 @@ namespace OnTrack.Testing
         /// </summary>
         /// <param name="objectdefinition"></param>
         /// <param name="entryname"></param>
-        /// <param name="datatype"></param>
+        /// <param name="typeId"></param>
         /// <param name="isNull"></param>
-        public ObjectEntryDefinition (iObjectDefinition objectdefinition, String entryname, otDataType datatype, bool isNull )
+        public ObjectEntryDefinition (iObjectDefinition objectdefinition, String entryname, otDataType typeid, bool isNull )
         {
             this.Objectname = objectdefinition.Objectname;
             this.Entryname = entryname;
-            this.TypeId = datatype ;
+            this.DataType = Core.DataType.GetDataType(typeid) ;
             this.IsNullable = isNull;
             this.ObjectDefinition = objectdefinition ;
         }
         public bool IsMapped { get ; set; }
 
         public long? LowerRangeValue { get ; set; }
-       
-
+        public IDataType DataType { get; set; }
         public long? UpperRangeValue { get ; set; }
-      
         public List<string> PossibleValues { get ; set; }
-        
-
         public string Description{ get ; set; }
-        
-
         public string Objectname { get ; set; }
-
         public string Entryname { get ; set; }
-
-        public otDataType TypeId { get ; set; }
-
+        public otDataType TypeId { get { return DataType.TypeId; } set { DataType = Core.DataType.GetDataType(value); } }
         public long Version { get ; set; }
        
         public string Title { get ; set; }
@@ -81,6 +72,7 @@ namespace OnTrack.Testing
     {
         private String _id;
         private Dictionary <String, iObjectEntryDefinition> _entries = new Dictionary<String, iObjectEntryDefinition>();
+        private List<string> _keynames = new List<string>();
         /// <summary>
         /// constructor
         /// </summary>
@@ -202,13 +194,11 @@ namespace OnTrack.Testing
         {
             get
             {
-                // TODO: Implement this property getter
-                throw new NotImplementedException();
+                return _keynames.ToArray();
             }
             set
             {
-                // TODO: Implement this property setter
-                throw new NotImplementedException();
+                _keynames = new List<string>(value);
             }
         }
 
@@ -256,11 +246,19 @@ namespace OnTrack.Testing
         /// <returns></returns>
         public DataObjectRepository()
         {
-            ObjectDefinition aDefinition = new ObjectDefinition("deliverables");
-            aDefinition.AddEntry(new ObjectEntryDefinition(aDefinition, "uid", otDataType.Number, false));
-            _objects.Add(aDefinition.Objectname, aDefinition);
-
-            _providers.Add(new DataObjectProvider());
+            ObjectDefinition theDeliverables = new ObjectDefinition("deliverables");
+            theDeliverables.AddEntry(new ObjectEntryDefinition(theDeliverables, "uid", otDataType.Number, false));
+            theDeliverables.Keys = new string[] {"uid"};
+            _objects.Add(theDeliverables.Objectname, theDeliverables);
+            // testobject1 class
+            ObjectDefinition aTestObject = new ObjectDefinition("testobject1");
+            aTestObject.AddEntry(new ObjectEntryDefinition(aTestObject, "uid", otDataType.Number, false));
+            aTestObject.AddEntry(new ObjectEntryDefinition(aTestObject, "ver", otDataType.Number, false));
+            aTestObject.AddEntry(new ObjectEntryDefinition(aTestObject, "date", otDataType.Date, true));
+            aTestObject.AddEntry(new ObjectEntryDefinition(aTestObject, "desc", otDataType.Text, true));
+            aTestObject.Keys = new string[] { "uid", "ver" };
+            _objects.Add(aTestObject.Objectname, aTestObject);
+            
         }
 
         /// <summary>
@@ -444,7 +442,7 @@ namespace OnTrack.Testing
 
         public DataObjectEngine (string id = null)
         {
-            if (id == null) id = (new Guid()).ToString();
+            if (id == null) id = Guid.NewGuid().ToString();
             this.ID = id;
            
         }
@@ -485,8 +483,9 @@ namespace OnTrack.Testing
         {
             "selection s1 as deliverables[100];",
             "selection s2 (p1 as number) as deliverables[p1];",
-            "selection s3 (p1 as number ? default 100 ) as deliverables[.uid=p1];",
-            "selection s4 as deliverables[.uid=p1 as number];"
+            "selection s3 (p1 as number? default 100 ) as deliverables[uid=p1];",
+            "selection s4 as testobject1[100,1, date > #10.09.2015#];",
+            "selection s4 as testobject1[(100, 1) | date > #10.09.2015#];",
         };
 
         [TestMethod]
