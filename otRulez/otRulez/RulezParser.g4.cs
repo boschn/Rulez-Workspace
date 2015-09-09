@@ -286,6 +286,17 @@ namespace OnTrack.Rulez
             return false;
         }
         /// <summary>
+        /// define nodes
+        /// </summary>
+        /// <param name="ctx"></param>
+        /// <returns></returns>
+        public bool BuildXPTNode(TypeDeclarationContext ctx)
+        {
+            // selection Rulez
+            
+            return false;
+        }
+        /// <summary>
         /// builds the XPT node of this
         /// </summary>
         /// <param name="ctx"></param>

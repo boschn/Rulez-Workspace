@@ -27,24 +27,29 @@ using System.Collections.Generic;
 
 rulezUnit
 returns [ List<OnTrack.Rulez.eXPressionTree.INode> XPTree ]
+@after { BuildXPTNode ($ctx) ; }
+
     : oneRulez ( EOS+ oneRulez )* EOS* EOF
-	{ BuildXPTNode ($ctx) ; }
     ;
 
 /* One Rulez
  */
 oneRulez
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
+@after { BuildXPTNode ($ctx) ; }
     : selectionRulez
-	| typeDeclaration
-	{ BuildXPTNode ($ctx) ; }
+	| typeDeclaration 
+	
     ;
 
 /*
  * type Definition
  */
 typeDeclaration
+returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
+@after { BuildXPTNode ($ctx) ; }
 	: TYPE typeid AS typeDefinition [$ctx.typeid().GetText()]
+	
 	;
 
 typeid
@@ -175,10 +180,11 @@ selectionRulez
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 locals [ // parameteres
 		 Dictionary<string,ParameterDefinition> names = new Dictionary<string,ParameterDefinition>() ]
-		 @init{ $XPTreeNode = new SelectionRule();}
+@init{ $XPTreeNode = new SelectionRule();}
+@after { BuildXPTNode ($ctx) ; }
+
     : SELECTION ruleid {((SelectionRule)$XPTreeNode).ID = $ctx.ruleid().GetText();} (LPAREN parameters RPAREN)? AS ( selectStatementBlock | selection ) 
-	 { BuildXPTNode($ctx); // build the node 
-	 }
+	
     ;
 // rulename
 ruleid
@@ -206,30 +212,33 @@ locals [
 		 // local variables
 		Dictionary<string,VariableDefinition> names = new Dictionary<string,VariableDefinition>() 
 		]
+@after { BuildXPTNode ($ctx) ; }
 
 	: L_BRACKET selectStatement (EOS+ selectStatement)* R_BRACKET
-	 { BuildXPTNode($ctx); }
+	
 	;
 
 /* selectStatement in a Select Block
  */
 selectStatement
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
-	: selection {$XPTreeNode = $ctx.selection().XPTreeNode;}
+@after { BuildXPTNode ($ctx) ; }
+	: selection 
 	| variableDeclaration
-	| assignment  {$XPTreeNode = $ctx.assignment().XPTreeNode;}
+	| assignment  
 	| match 
 	| return 
-	{ BuildXPTNode ($ctx) ; }
 	;
 
 /* Assignment
  */
 assignment
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
+@after { BuildXPTNode ($ctx) ; }
+
 	: variableName EQ selectExpression
 	| dataObjectEntryName EQ selectExpression
-	{ BuildXPTNode ($ctx) ; }
+	
 	;
 
 /* Variable Declaration
@@ -243,8 +252,10 @@ variableDeclaration
  */
 match
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
+@after { BuildXPTNode ($ctx) ; }
+
 	: MATCH (variableName | parameterName | dataObjectEntryName ) WITH matchcase ( OR matchcase )* 
-	{ BuildXPTNode ($ctx) ; }
+	
 	;
 
 matchcase
@@ -256,8 +267,10 @@ matchcase
 
 return
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
+@after { BuildXPTNode ($ctx) ; }
+
 	: RETURN selectExpression
-	{ BuildXPTNode ($ctx) ; }
+	
 	;
 
 /* Selection of data objects
@@ -271,9 +284,10 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 selection
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 locals [ string ClassName, uint keypos = 1 ]
+@after { BuildXPTNode ($ctx) ; }
+
     :   dataObjectClass {$ClassName = $ctx.dataObjectClass().GetText();} L_SQUARE_BRACKET selectConditions[$ClassName, $keypos] R_SQUARE_BRACKET 
-	{ BuildXPTNode ($ctx) ; }
-    ;
+	;
 
 /* all selection conditions 
  * e.g. 
@@ -288,10 +302,12 @@ locals [ string ClassName, uint keypos = 1 ]
  */
 selectConditions[string ClassName, uint keypos]
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
+@after { BuildXPTNode ($ctx) ; }
+
     :	
 	    ( NOT )? RPAREN selectConditions [$ClassName, $keypos] LPAREN
 	|	( NOT )? selectCondition [$ClassName, $keypos] (logicalOperator_2 { incIncreaseKeyNo($ctx);} ( NOT )? selectCondition [$ClassName, $keypos])* 
-	{ BuildXPTNode ($ctx) ; }
+	
 	    ;
 
 /* selection condition with position 
@@ -299,9 +315,10 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
  */
  selectCondition [string ClassName, uint keypos]
  returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
+ @after { BuildXPTNode ($ctx) ; }
+
     :	(dataObjectEntryName? compareOperator)? selectExpression
-	{ BuildXPTNode ($ctx) ; 
-	}
+
     ;
 
 /*
@@ -325,6 +342,8 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 
 selectExpression
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
+@after { BuildXPTNode ($ctx) ; }
+
     : literal 
     | parameterName
 	| variableName
@@ -333,7 +352,7 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 	| logicalOperator_1 selectExpression
     | selectExpression (arithmeticOperator selectExpression)+
     | LPAREN selectExpression RPAREN
-	{ BuildXPTNode ($ctx); }
+	
     ;
 
 /* Arithmetic Operators
@@ -372,22 +391,28 @@ returns [ string ClassName ]
 dataObjectEntryName
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 locals [ string entryname ]
+@after { BuildXPTNode ($ctx) ; }
+
     : (dataObjectClass DOT)?  IDENTIFIER 
-	{ BuildXPTNode($ctx);}
+	
     ;
 
 // parameter name
 parameterName
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
+@after { BuildXPTNode ($ctx) ; }
+
     : {IsParameterName($ctx.GetText(),$ctx)}? IDENTIFIER
-	 { BuildXPTNode($ctx); }
+	
     ;
 
 // variable name
 variableName
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
+@after { BuildXPTNode ($ctx) ; }
+
     : {IsVariableName($ctx.GetText(),$ctx)}? IDENTIFIER
-	 { BuildXPTNode($ctx); }
+	
     ;
 
 /* Literals
