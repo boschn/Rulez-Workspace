@@ -376,7 +376,12 @@ namespace OnTrack.Rulez
         public bool BuildXPTNode(MatchContext ctx)
         {
 
-            return true;
+            return false;
+        }
+        public bool BuildXPTNode(MatchcaseContext ctx)
+        {
+
+            return false;
         }
         /// <summary>
         /// build the XPTNode of a return statement

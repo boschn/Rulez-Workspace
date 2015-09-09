@@ -74,6 +74,7 @@ returns [ Core.IDataType datatype]
 	: primitiveType { $datatype = Rulez.PrimitiveType.GetPrimitiveType($ctx.primitiveType().typeId);}
 	| structuredType [$name] {$datatype = $ctx.structuredType().datatype;}
 	| complexType [$name] {$datatype = $ctx.complexType().datatype;}
+
 	// defined data types by name such as data objects, if the save name is null
 	|  {$name == null && IsDataTypeName($ctx.GetText())}? IDENTIFIER { $datatype = this.Engine.Repository.GetDatatype($ctx.IDENTIFIER().GetText());}
 	;
@@ -259,6 +260,9 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 	;
 
 matchcase
+returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
+@after { BuildXPTNode ($ctx) ; }
+
 	: selectExpression DO selectStatement
 	;
 
@@ -350,9 +354,8 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
     | dataObjectEntryName
     | ( PLUS | MINUS ) selectExpression
 	| logicalOperator_1 selectExpression
+	| LPAREN selectExpression RPAREN
     | selectExpression (arithmeticOperator selectExpression)+
-    | LPAREN selectExpression RPAREN
-	
     ;
 
 /* Arithmetic Operators
