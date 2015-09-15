@@ -113,13 +113,14 @@ namespace OnTrack.Core
         DecimalUnit = 17, // -> Money, or decimal in other values not yet implemented
         LanguageText = 18, // Text with a Language Cultural
         Symbol = 19, // an Enumerated Symbol
+        Tuple = 20, // a Data Structure
         // dataObjectType
         DataObject = 33,
-        // Structured Types 64 and higher
+        // DataStructure Types 64 and higher
         List = 65,
         // IsNullable Flag    
         IsNullable = 128, // -> OR Flag
-            
+        
     }
     /// <summary>
     /// Category of Datatypes
@@ -127,9 +128,9 @@ namespace OnTrack.Core
     public enum otDataTypeCategory : uint
     {
         Primitive = 1,
-        Complex ,
+        Composite ,
         DataObject,
-        Structure
+        DataStructure
     }
 
     /// <summary>

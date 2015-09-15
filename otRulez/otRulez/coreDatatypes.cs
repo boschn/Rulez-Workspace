@@ -111,13 +111,13 @@ namespace OnTrack.Core
                 case otDataType.DecimalUnit:
                 case otDataType.LanguageText:
                 case otDataType.Symbol:
-                    return otDataTypeCategory.Complex;
+                    return otDataTypeCategory.Composite;
                 // data object
                 case otDataType.DataObject:
                     return otDataTypeCategory.DataObject;
                 // structure
                 case otDataType.List:
-                    return otDataTypeCategory.Structure;
+                    return otDataTypeCategory.DataStructure;
                 // not found
                 default:
                     throw new Rulez.RulezException(Rulez.RulezException.Types.DataTypeNotImplementedByCase, arguments: new object[] { typeId.ToString(), "DataType.GetCategory" });
@@ -134,12 +134,12 @@ namespace OnTrack.Core
             {
                 case otDataTypeCategory.Primitive:
                     return (IDataType) Rulez.PrimitiveType.GetPrimitiveType(typeId);
-                case otDataTypeCategory.Complex:
-                    return (IDataType) Rulez.ComplexType.GetComplexType(typeId);
+                case otDataTypeCategory.Composite:
+                    return (IDataType) Rulez.CompositeType.GetCompositeType(typeId);
                 case otDataTypeCategory.DataObject:
                     return (IDataType) Rulez.DataObjectType.GetDataType(typeId);
-                case otDataTypeCategory.Structure:
-                    return (IDataType) Rulez.StructuredType.GetStructuredType(typeId);
+                case otDataTypeCategory.DataStructure:
+                    return (IDataType) Rulez.DataStructureType.GetStructuredType(typeId);
                 default:
                     throw new Rulez.RulezException(Rulez.RulezException.Types.DataTypeNotImplementedByClass, arguments: new object[] { typeId.ToString(), "DataType.GetDataType" });
             }
@@ -155,12 +155,12 @@ namespace OnTrack.Core
             {
                 case otDataTypeCategory.Primitive:
                      return Rulez.PrimitiveType.GetNativeType(typeId);
-                case otDataTypeCategory.Complex:
-                     return Rulez.ComplexType.GetNativeType(typeId);
+                case otDataTypeCategory.Composite:
+                     return Rulez.CompositeType.GetNativeType(typeId);
                 case otDataTypeCategory.DataObject:
                      return Rulez.DataObjectType.GetNativeType(typeId);
-                case otDataTypeCategory.Structure:
-                     return Rulez.StructuredType.GetNativeType(typeId);
+                case otDataTypeCategory.DataStructure:
+                     return Rulez.DataStructureType.GetNativeType(typeId);
                 default:
                      throw new Rulez.RulezException(Rulez.RulezException.Types.DataTypeNotImplementedByClass, arguments: new object[] { typeId.ToString(), "DataType.GetNativeType" });
             }
@@ -176,12 +176,12 @@ namespace OnTrack.Core
             {
                 case otDataTypeCategory.Primitive:
                     return Rulez.PrimitiveType.GetDefaultValue(typeId);
-                case otDataTypeCategory.Complex:
-                    return Rulez.ComplexType.GetDefaultValue(typeId);
+                case otDataTypeCategory.Composite:
+                    return Rulez.CompositeType.GetDefaultValue(typeId);
                 case otDataTypeCategory.DataObject:
                     return Rulez.DataObjectType.GetDefaultValue(typeId);
-                case otDataTypeCategory.Structure:
-                    return Rulez.StructuredType.GetDefaultValue(typeId);
+                case otDataTypeCategory.DataStructure:
+                    return Rulez.DataStructureType.GetDefaultValue(typeId);
                 default:
                     throw new Rulez.RulezException(Rulez.RulezException.Types.DataTypeNotImplementedByClass, arguments: new object[] { typeId.ToString(), "DataType.GetDefaultValue" });
             }
@@ -605,7 +605,7 @@ namespace OnTrack.Core
          /// <returns></returns>
            bool Equals(object y)
          {
-             if (! y.GetType().IsAssignableFrom (typeof(IDataType))) return false;
+             if (y.GetType().GetInterface(typeof(IDataType).Name, false) == null) return false;
              return Equals(this, (IDataType) y);
          }
         /// <summary>
@@ -747,7 +747,7 @@ namespace OnTrack.Core
             if (anObject == null) return String.Empty;
 
             // convert inenumerables and arrays
-            if ((anObject.GetType().IsArray) || (anObject .GetType().IsAssignableFrom (typeof(IEnumerable ))))
+            if ((anObject.GetType().IsArray) || (anObject.GetType().GetInterface(typeof(IEnumerable).Name, false) != null))
             {
                 String aString = String.Empty + DataType.ConstDelimiter  ;
                 foreach (Object anItem in (anObject as IEnumerable )) if (anItem != null) aString += anItem.ToString();

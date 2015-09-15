@@ -21,6 +21,7 @@ using System.Text;
 using OnTrack.Rulez.Resources;
 using System.Globalization;
 using System.Resources;
+using System.Diagnostics;
 
 namespace OnTrack.Rulez
 {
@@ -157,6 +158,9 @@ namespace OnTrack.Rulez
             }
             _message = (_message != null ) ? string.Format(_message, arguments) : OnTrack.Core.Converter.Array2StringList (arguments);
             _innerException = inner;
+
+            // log it 
+            System.Diagnostics.Debug.Print("Exception " + DateTime.Now.ToString("u") + ":" + ID.ToString() + " " + _message);
         }
         /// <summary>
         /// gets the message string of the exception

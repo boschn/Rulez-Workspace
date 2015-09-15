@@ -690,7 +690,7 @@ namespace OnTrack.Rulez
     /// <summary>
     /// defines a complex data type such as decimal unit or
     /// </summary>
-    public abstract class ComplexType : DataType
+    public abstract class CompositeType : DataType
     {
         // additional combined data types
         protected Dictionary<string, IDataType> _structure = new Dictionary<string, IDataType>();
@@ -709,6 +709,8 @@ namespace OnTrack.Rulez
                     return typeof(DecimalUnitType.DecimalUnit);
                 case otDataType.LanguageText:
                     return typeof(LanguageTextType.LanguageText);
+                case otDataType.Tuple:
+                    return typeof(TupleType.Tuple);
                 default:
                     throw new Rulez.RulezException(Rulez.RulezException.Types.DataTypeNotImplementedByCase, arguments: new object[] { typeId.ToString(), "Core.DataType.GetNativeType" });
 
@@ -733,6 +735,8 @@ namespace OnTrack.Rulez
                     return new DecimalUnitType.DecimalUnit ();
              case otDataType.LanguageText:
                     return new LanguageTextType.LanguageText();
+                case otDataType.Tuple:
+                    return new TupleType.Tuple();
              default:
                     throw new Rulez.RulezException(Rulez.RulezException.Types.DataTypeNotImplementedByCase, arguments: new object[] { typeId.ToString(), "Core.DataType.GetDefaultValue" });
 
@@ -758,11 +762,11 @@ namespace OnTrack.Rulez
             return (!String.IsNullOrWhiteSpace(typename) ? typename.ToUpper() : "COMPLEX") + (isNullable ?  "?" : String.Empty ) + "<" + sig + ">";
         }
         /// <summary>
-        /// returns a complex type of typeId if possible to make one
+        /// returns a composite type of typeId if possible to make one
         /// </summary>
         /// <param name="typeId"></param>
         /// <returns></returns>
-        public new static IDataType GetComplexType(otDataType typeId)
+        public new static IDataType GetCompositeType(otDataType typeId)
         {
             switch (typeId)
             {
@@ -771,9 +775,11 @@ namespace OnTrack.Rulez
                 case otDataType.DecimalUnit:
                     // return DecimalUnitType.GetDataType(unit: unit,engine: Rules.Engine);
                 case otDataType.LanguageText:
-                    // return LanguageTextType.GetDataType (cultural: cultural, engine: Rules.Engine);
+                // return LanguageTextType.GetDataType (cultural: cultural, engine: Rules.Engine);
+                case otDataType.Tuple:
+                    // not possible without a name
                 default:
-                   throw new Rulez.RulezException(Rulez.RulezException.Types.DataTypeNotImplementedByCase, arguments: new object[] { typeId.ToString(), "Core.ComplexType.GetComplexType" });
+                   throw new Rulez.RulezException(Rulez.RulezException.Types.DataTypeNotImplementedByCase, arguments: new object[] { typeId.ToString(), "Core.CompositeType.GetCompositeType" });
                     
 
             }
@@ -781,7 +787,7 @@ namespace OnTrack.Rulez
         /// <summary>
         /// constructor
         /// </summary
-        public ComplexType(string name, otDataType typeId, Boolean isNullable, Engine engine = null, object defaultvalue = null)
+        public CompositeType(string name, otDataType typeId, Boolean isNullable, Engine engine = null, object defaultvalue = null)
             : base(typeId, isNullable:isNullable, defaultvalue: null, engine: engine, name: name)
         {
             
@@ -789,7 +795,7 @@ namespace OnTrack.Rulez
         /// <summary>
         /// gets the Category
         /// </summary>
-        public override otDataTypeCategory Category { get { return otDataTypeCategory.Complex; } }
+        public override otDataTypeCategory Category { get { return otDataTypeCategory.Composite; } }
         /// <summary>
         /// gets or sets the subtype name
         /// </summary>
@@ -807,7 +813,7 @@ namespace OnTrack.Rulez
         /// <summary>
         /// gets the native Type
         /// </summary>
-        public override System.Type NativeType { get { return ComplexType.GetNativeType(this.TypeId); } }
+        public override System.Type NativeType { get { return CompositeType.GetNativeType(this.TypeId); } }
         /// <summary>
         /// returns true if the member by id is part of the structure
         /// </summary>
@@ -843,7 +849,7 @@ namespace OnTrack.Rulez
     /// <summary>
     /// defines a decimal with an unit
     /// </summary>
-    public class SymbolType : ComplexType
+    public class SymbolType : CompositeType
     {
         public const string ConstValue = "VALUE";
         public const string ConstSYMBOL = "SYMBOL";
@@ -941,7 +947,7 @@ namespace OnTrack.Rulez
     /// <summary>
     /// defines a decimal with an unit
     /// </summary>
-    public class DecimalUnitType : ComplexType
+    public class DecimalUnitType : CompositeType
     {
         public const string ConstValue = "VALUE";
         public const string ConstUnit = "UNIT";
@@ -1001,9 +1007,64 @@ namespace OnTrack.Rulez
         }
     }
     /// <summary>
+    /// defines a structure - a defined tuple
+    /// </summary>
+    public class TupleType : CompositeType
+    {
+        public const string ConstTypeName = "TUPLE";
+        /// <summary>
+        /// structure to hold native a TupleType Value
+        /// </summary>
+        public struct Tuple
+        {
+            object[] _values;
+        }
+
+        #region "Static"
+        /// <summary>
+        /// returns or creates a type from the engine
+        /// </summary>
+        public static TupleType GetDataType(IDataType[] structure, Engine engine, string[] memberNames = null, string name = null, bool isNullable = false)
+        {
+            string sig = CreateSignature(structure: structure, isNullable: isNullable);
+            if (!String.IsNullOrEmpty(name) && engine.Repository.HasDataType(name))
+            {
+                IDataType aDatatype = engine.Repository.GetDatatype(name);
+                if (aDatatype.TypeId == otDataType.Tuple) return (TupleType)aDatatype;
+                throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { name, aDatatype.Name });
+            }
+
+            if (engine.Repository.HasDataTypeSignature(sig)) return (TupleType)engine.Repository.GetDatatypeBySignature(sig).FirstOrDefault();
+            // create new one
+            return new TupleType(structure: structure, isNullable: isNullable, memberNames: memberNames, name: name, engine: engine);
+        }
+        #endregion
+        /// <summary>
+        /// constructor
+        /// </summary
+        public TupleType(IDataType[] structure, string[] memberNames = null, string name = null, Boolean isNullable = false, Engine engine = null)
+            : base(typeId: otDataType.Tuple, isNullable: isNullable, defaultvalue: null, engine: engine, name: name)
+        {
+            // anonymous name
+            if (String.IsNullOrEmpty(name)) this.Name = Guid.NewGuid().ToString();
+            this.ComplexTypeName = ConstTypeName;
+            uint i = 0;
+            foreach (IDataType aType in structure)
+            {
+                string id;
+                if (memberNames != null && i <= memberNames.GetUpperBound(0)) id = memberNames[i];
+                else id = i.ToString();
+                this.AddMember(id, aType);
+                i++;
+            }
+            // raise event
+            RaiseOnCreation(this, datatype: this, engine: engine);
+        }
+    }
+    /// <summary>
     /// defines a text with several culturals
     /// </summary>
-    public class LanguageTextType : ComplexType
+    public class LanguageTextType : CompositeType
     {
         public const string ConstText = "TEXT";
         public const string ConstCultural = "CULTURAL";
@@ -1026,9 +1087,6 @@ namespace OnTrack.Rulez
                 this.cultural = cultural;
             }
         }
-        /// <summary>
-        /// returns or creates an anonymous type from the engine
-        /// </summary>
         /// <summary>
         /// returns or creates an anonymous type from the engine
         /// </summary>
@@ -1062,7 +1120,7 @@ namespace OnTrack.Rulez
     /// <summary>
     /// defines a data structure type such as lists
     /// </summary>
-    public abstract class StructuredType : DataType
+    public abstract class DataStructureType : DataType
     {
 #region "Static"
         /// <summary>
@@ -1161,7 +1219,7 @@ namespace OnTrack.Rulez
          /// <summary>
         /// constructor
         /// </summary
-         public StructuredType(otDataType typeId, string name = null, bool isNullable = false, Engine engine = null, object defaultvalue = null)
+         public DataStructureType(otDataType typeId, string name = null, bool isNullable = false, Engine engine = null, object defaultvalue = null)
              : base(typeId: typeId, isNullable: isNullable, defaultvalue: defaultvalue, name: name, engine: engine )
          {
              
@@ -1169,7 +1227,7 @@ namespace OnTrack.Rulez
          /// <summary>
          /// gets the Category
          /// </summary>
-         public override otDataTypeCategory Category { get { return otDataTypeCategory.Structure; } }
+         public override otDataTypeCategory Category { get { return otDataTypeCategory.DataStructure; } }
          /// <summary>
          /// gets or sets the subtype name
          /// </summary>
@@ -1177,12 +1235,12 @@ namespace OnTrack.Rulez
          /// <summary>
          /// gets the native Type
          /// </summary>
-         public override System.Type NativeType { get { return StructuredType.GetNativeType(this.TypeId); } }
+         public override System.Type NativeType { get { return DataStructureType.GetNativeType(this.TypeId); } }
     }
     /// <summary>
     /// defines a listed structured type
     /// </summary>
-    public class ListType: StructuredType
+    public class ListType: DataStructureType
     {
         private IDataType _innerDataType;
 
@@ -1450,6 +1508,6 @@ namespace OnTrack.Rulez
         /// <summary>
         /// gets the native Type
         /// </summary>
-        public override System.Type NativeType { get { if (_objectdefinition == null) return StructuredType.GetNativeType(this.TypeId); return _objectdefinition.ObjectType; } }
+        public override System.Type NativeType { get { if (_objectdefinition == null) return DataStructureType.GetNativeType(this.TypeId); return _objectdefinition.ObjectType; } }
     }
 }

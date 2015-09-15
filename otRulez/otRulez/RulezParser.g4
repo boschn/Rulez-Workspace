@@ -11,7 +11,7 @@ options {
 }
 
 // add the OnTrack eXpression Tree
-
+ 
 @header {
 // add the eXpression Tree
 using OnTrack.Rulez.eXPressionTree;
@@ -84,7 +84,7 @@ returns [ Core.IDataType datatype]
  */
 structuredType [string name]
 returns [ Core.IDataType datatype ]
-locals [ bool isnullable = false ]
+locals [ bool isnullable = false]
 	: LIST (isNullable {$isnullable = true;})? OF dataType[null] { $datatype = Rulez.ListType.GetDataType (innerDataType:$ctx.dataType().datatype, name: name, engine: this.Engine, isNullable: $isnullable);}
 	;
 
@@ -290,7 +290,7 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 locals [ string ClassName, uint keypos = 1 ]
 @after { BuildXPTNode ($ctx) ; }
 
-    :   dataObjectClass {$ClassName = $ctx.dataObjectClass().GetText();} L_SQUARE_BRACKET selectConditions[$ClassName, $keypos] R_SQUARE_BRACKET 
+    :   dataObject=dataObjectClass {$ClassName = $ctx.dataObjectClass().GetText();} L_SQUARE_BRACKET Conditions=selectConditions[$ClassName, $keypos] R_SQUARE_BRACKET 
 	;
 
 /* all selection conditions 
@@ -309,8 +309,8 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 @after { BuildXPTNode ($ctx) ; }
 
     :	
-	    ( NOT )? RPAREN selectConditions [$DefaultClassName, $keypos] LPAREN
-	|	( NOT )? selectCondition [$DefaultClassName, $keypos] (logicalOperator_2 { incIncreaseKeyNo($ctx);} ( NOT )? selectCondition [$DefaultClassName, $keypos])* 
+	    ( NOT )? RPAREN Conditions=selectConditions [$DefaultClassName, $keypos] LPAREN
+	|	( NOT )? Condition=selectCondition [$DefaultClassName, $keypos] (logicalOperator_2 { incIncreaseKeyNo($ctx);} ( NOT )? Condition=selectCondition [$DefaultClassName, $keypos])* 
 	
 	    ;
 
@@ -321,7 +321,7 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
  returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
  @after { BuildXPTNode ($ctx) ; }
 
-    :	(dataObjectEntryName compareOperator)? selectExpression
+    :	(dataObjectEntry=dataObjectEntryName Operator=compareOperator)? select=selectExpression
 
     ;
 

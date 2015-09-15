@@ -175,5 +175,10 @@ namespace OnTrack.Rulez.eXPressionTree
         /// defines the IeXPressionTree scope of the symbol
         /// </summary>
         IXPTree Scope { get; set; }
+        /// <summary>
+        /// returns true if the symbol is valid in the engine (late binding)
+        /// </summary>
+        bool? IsValid { get; }
+        
     }
 }

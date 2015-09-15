@@ -82,7 +82,8 @@ namespace OnTrack.Rulez
 
             public  const uint BEEP = 22;
 
-            private static string[] _ids = {"POS", "AND", "ANDALSO", "OR", "ORELSE", "NOT", "=", "!=", "GT", "GE", "LT", "LE", "+", "-", "*", "/", "MOD", "CONCAT", "BEEP"};
+            private static string[] _ids = {"POS", "AND", "ANDALSO", "OR", "ORELSE", "NOT", "","","","",
+                                            "=", "!=", "GT", "GE", "LT", "LE", "+", "-", "*", "/", "MOD", "CONCAT", "BEEP"};
             /// <summary>
             /// variable
             /// </summary>
@@ -658,7 +659,8 @@ namespace OnTrack.Rulez
         public bool HasOperator(Token id)
         {
             Initialize();
-            return _Operators.ContainsKey(id);
+            if (id != null) return _Operators.ContainsKey(id);
+            return false;
         }
         /// <summary>
         /// returns the selectionrule by handle

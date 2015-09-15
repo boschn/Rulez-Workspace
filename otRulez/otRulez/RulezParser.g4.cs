@@ -259,7 +259,7 @@ namespace OnTrack.Rulez
             if (ctx.oneRulez() != null && ctx.oneRulez ().Count() > 0)
             {
                 ctx.XPTree = new List<INode>();
-                foreach (INode aNode in ctx.oneRulez()) ctx.XPTree.Add(aNode);
+                foreach (OneRulezContext aCtx in ctx.oneRulez()) ctx.XPTree.Add(aCtx.XPTreeNode);
                 return true;
             }
             
@@ -307,7 +307,7 @@ namespace OnTrack.Rulez
             // get the name
             SelectionRule aRule = new SelectionRule(ctx.ruleid().GetText(), engine: this.Engine);
             ctx.XPTreeNode = aRule;
-            aRule.Selection = new eXPressionTree.SelectionStatementBlock(engine: this.Engine);
+           
             // add the parameters
             foreach (ParameterDefinition aParameter in ctx.names.Values)
             {
@@ -318,7 +318,10 @@ namespace OnTrack.Rulez
             }
             
             // add expression
-            if (ctx.selection() != null) aRule.Selection.Add( new @Return((SelectionExpression)ctx.selection().XPTreeNode));
+            if (ctx.selection() != null) {
+                aRule.Selection = new SelectionStatementBlock(engine: this.Engine);
+                aRule.Selection.Add(new @Return((SelectionExpression)ctx.selection().XPTreeNode)); 
+            }
             else if (ctx.selectStatementBlock() != null) aRule.Selection = (SelectionStatementBlock)ctx.selectStatementBlock().XPTreeNode;
 
             return true;
@@ -392,7 +395,7 @@ namespace OnTrack.Rulez
         {
             if (ctx.selectExpression() != null)
             {
-                ctx.XPTreeNode = new Return(Return: (IExpression) ctx.selectExpression().XPTreeNode, engine: this.Engine);
+                ctx.XPTreeNode = new Return(@return: (IExpression) ctx.selectExpression().XPTreeNode, engine: this.Engine);
                 return true;
             }
             return false;
@@ -498,12 +501,12 @@ namespace OnTrack.Rulez
              string entryName;
              // determine the key name with the key is not provided by the key position
              //
-             if (ctx.dataObjectEntryName() == null)
+             if (ctx.dataObjectEntry  == null)
              {
                  iObjectDefinition aObjectDefinition = this.Engine.GetDataObjectDefinition(ctx.DefaultClassName);
                  entryName = aObjectDefinition.Keys[ctx.keypos - 1];
              }
-             else entryName = ctx.dataObjectEntryName().GetText();
+             else entryName = ctx.dataObjectEntry.entryname ;
 
              // get the symbol
              DataObjectEntrySymbol aSymbol = new DataObjectEntrySymbol(ctx.DefaultClassName + "." + entryName, engine: this.Engine);
@@ -511,11 +514,11 @@ namespace OnTrack.Rulez
              // Operator
              Operator anOperator ;
              // default operator is the EQ operator
-             if (ctx.compareOperator()== null) anOperator = Engine.GetOperator(new Token(Token.EQ));
-             else anOperator = ctx.compareOperator().Operator;
+             if (ctx.Operator == null) anOperator = Engine.GetOperator(new Token(Token.EQ));
+             else anOperator = ctx.Operator.Operator;
 
              // build the comparer expression
-             CompareExpression aCompare = new CompareExpression(anOperator, aSymbol, (IExpression) ctx.selectExpression().XPTreeNode);
+             CompareExpression aCompare = new CompareExpression(anOperator, aSymbol, (IExpression) ctx.select.XPTreeNode);
              // set it
              ctx.XPTreeNode = aCompare;
              return true; 
@@ -563,11 +566,9 @@ namespace OnTrack.Rulez
              if (ctx.selectExpression().Count() == 1)
              {
                  if (ctx.MINUS() != null)
-                 {
                      ctx.XPTreeNode = new OperationExpression(new Token(Token.MINUS), new Literal(0), (IExpression)ctx.selectExpression()[0].XPTreeNode);
-                     return true;
-                 }
                  else ctx.XPTreeNode = (IExpression)ctx.selectExpression()[0].XPTreeNode;
+                 return true;
              }
              //| logicalOperator_1 selectExpression
              if (ctx.logicalOperator_1() != null && ctx.selectExpression().Count() == 1)
