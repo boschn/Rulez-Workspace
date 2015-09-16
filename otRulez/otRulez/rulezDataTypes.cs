@@ -1024,7 +1024,7 @@ namespace OnTrack.Rulez
         /// <summary>
         /// returns or creates a type from the engine
         /// </summary>
-        public static TupleType GetDataType(IDataType[] structure, Engine engine, string[] memberNames = null, string name = null, bool isNullable = false)
+        public new static TupleType GetDataType(IDataType[] structure, Engine engine, string[] memberNames = null, string name = null, bool isNullable = false)
         {
             string sig = CreateSignature(structure: structure, isNullable: isNullable);
             if (!String.IsNullOrEmpty(name) && engine.Repository.HasDataType(name))
@@ -1054,7 +1054,7 @@ namespace OnTrack.Rulez
                 string id;
                 if (memberNames != null && i <= memberNames.GetUpperBound(0)) id = memberNames[i];
                 else id = i.ToString();
-                this.AddMember(id, aType);
+                AddMember(id, aType);
                 i++;
             }
             // raise event
@@ -1250,9 +1250,9 @@ namespace OnTrack.Rulez
         /// <summary>
         /// returns or creates an anonymous List type from the engine
         /// </summary>
-        public static ListType GetDataType (IDataType innerDataType,  Engine engine, string name = null, bool isNullable = false)
+        public static ListType GetDataType (IDataType innerType,  Engine engine, string name = null, bool isNullable = false)
         {
-            string sig = CreateSignature(innerDataType, isNullable);
+            string sig = CreateSignature(innerType, isNullable);
             if (!String.IsNullOrEmpty(name) && engine.Repository.HasDataType(name))
             {
                 IDataType aDatatype = engine.Repository.GetDatatype(name);
@@ -1261,7 +1261,7 @@ namespace OnTrack.Rulez
             }
             if (engine.Repository.HasDataTypeSignature (sig)) return (ListType) engine.Repository.GetDatatypeBySignature (sig).FirstOrDefault();
             // create new one
-            return new ListType(innerDataType: innerDataType, isNullable: isNullable, name:name, engine: engine);
+            return new ListType(innerDataType: innerType, isNullable: isNullable, name:name, engine: engine);
         }
         /// <summary>
         /// returns a stored or new ListType object from otDataType

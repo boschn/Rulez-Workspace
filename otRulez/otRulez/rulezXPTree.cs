@@ -1020,7 +1020,7 @@ namespace OnTrack.Rulez.eXPressionTree
                     // check if return is added -> check if the resultlist is the same is in the Property
                     if (aNode != null && aNode is @Return)
                        // return expression must be a selectionExpression (or to-do a variable)
-                       if ((((@Return)aNode).Expression) is SelectionExpression) this.Result = ((SelectionExpression)((@Return)aNode).Expression).Result;
+                       if ((((@Return)aNode).Expression) is SelectionExpression) this.Result = ((SelectionExpression)((@Return)aNode).Expression).Results;
                        else throw new RulezException(RulezException.Types.InvalidNodeType, arguments: new object[] { aNode.NodeType.ToString(), "SelectionExpression" });
                     else
                     // only statements are allowed
@@ -1739,7 +1739,7 @@ namespace OnTrack.Rulez.eXPressionTree
     /// <summary>
     /// defines a node for holding an result
     /// </summary>
-    public class Result : XPTree
+/*    public class Result : XPTree
     {
         private String _ID;
         private List<String> _objectnames = new List<String> (); // object names the result is referring to
@@ -1825,8 +1825,10 @@ namespace OnTrack.Rulez.eXPressionTree
             if (!_objectnames.Contains<String>(anObjectname)) _objectnames.Add(anObjectname);
         }
     }
+    */
     /// <summary>
-    /// define a list of results
+    /// define a list of named results (Symbols) for a selection
+    /// also can return the Datatype for this
     /// </summary>
     public class ResultList: XPTree
     {
@@ -1834,16 +1836,6 @@ namespace OnTrack.Rulez.eXPressionTree
         /// constructor
         /// </summary>
         /// <param name="results"></param>
-        public ResultList(params Result[] results)
-        {
-            this.NodeType = otXPTNodeType.ResultList;
-            foreach (INode aNode in results) this.Nodes.Add(aNode);
-        }
-        public ResultList(List<Result> results)
-        {
-            this.NodeType = otXPTNodeType.ResultList;
-            foreach (INode aNode in results) this.Nodes.Add(aNode);
-        }
         public ResultList(params INode[] results)
         {
             this.NodeType = otXPTNodeType.ResultList;
@@ -1862,23 +1854,15 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <returns></returns>
         public Boolean  Add(INode node)
         {
-            if (node.NodeType == otXPTNodeType.ResultList)
-            {
-                throw new RulezException(RulezException.Types.InvalidOperandNodeType, arguments: new object[] { otXPTNodeType.ResultList .ToString(), otXPTNodeType.Result .ToString() });
-                
-            }else if (node.NodeType != otXPTNodeType.Result)
-            {
-                String anID = (this.Nodes.Count + 1).ToString();
-                this.Nodes.Add(new Result(ID:anID, node: node));
-
-            }else if (node.NodeType == otXPTNodeType.Result)
-            {
-                // check entries
-                foreach (Result aNode in this.Nodes) if ((node as Result).ID == aNode.ID)
-                        throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { (node as Result).ID });
+            // accept only  data object symbol
+             if (node.NodeType == otXPTNodeType.DataObjectSymbol)
+                {
                 this.Nodes.Add(node);
-            }
-            return true;
+                    return true;
+                }
+            
+                throw new RulezException(RulezException.Types.InvalidOperandNodeType, arguments: new object[] { node.NodeType.ToString(), otXPTNodeType.DataObjectSymbol.ToString() });
+               
         }
         /// <summary>
         /// gets or sets the type id of the result list
@@ -1889,8 +1873,8 @@ namespace OnTrack.Rulez.eXPressionTree
             get
             {
                 if (this.Nodes == null || this.Nodes.Count() == 0) return otDataType.Null;
-                if (this.Nodes.Count() == 1) return ((Result)this.Nodes[0]).TypeId;
-                throw new NotImplementedException(); // to-do: tuple of types
+                // returns a list of the innertype
+                return otDataType.List;
             }
             set
             {
@@ -1907,8 +1891,13 @@ namespace OnTrack.Rulez.eXPressionTree
             get
             {
                 if (this.Nodes == null || this.Nodes.Count() == 0) return Core.DataType.GetDataType (otDataType.Null);
-                if (this.Nodes.Count() == 1) return ((Result)this.Nodes[0]).DataType;
-                throw new NotImplementedException(); // to-do: tuple of types
+                if (this.Nodes.Count() == 1) return ListType.GetDataType(innerType: ((IExpression)this.Nodes[0]).DataType, engine: this.Engine) ;
+                // get a Datatype according to the structure
+                List<IDataType> structure = new List<IDataType>();
+                List<string> names = new List<string>();
+                foreach (ISymbol aResult in Nodes) { names.Add(aResult.ID);  structure.Add(aResult.DataType);}
+                IDataType innerType = TupleType.GetDataType(structure: structure.ToArray(), memberNames: names.ToArray(), engine: this.Engine);
+                return ListType.GetDataType(innerType: innerType, engine: this.Engine);
             }
             set
             {
@@ -1921,10 +1910,13 @@ namespace OnTrack.Rulez.eXPressionTree
         public IList<String> DataObjectNames ()
         {
             List<String> aList = new List<String>();
-            foreach (Result aNode in this.Nodes)
+            foreach (INode aNode in this.Nodes)
             {
-                foreach (String aName in aNode.Objectnames )
-                    if ( !aList.Contains(aName)) aList.Add(aName);
+                string aName = String.Empty;
+                if (aNode is DataObjectEntrySymbol) aName = ((DataObjectEntrySymbol)aNode).ObjectID;
+                if (aNode is DataObjectSymbol) aName = ((DataObjectSymbol)aNode).ObjectID;
+
+                if ( !String.IsNullOrEmpty (aName) && !aList.Contains(aName)) aList.Add(aName);
             }
             // return list
             return aList;
@@ -2099,7 +2091,7 @@ namespace OnTrack.Rulez.eXPressionTree
         public SelectionExpression(ResultList result=null, Engine engine = null): base(engine)
         {
             this.NodeType = otXPTNodeType.SelectionExpression;
-            this.Result = result;
+            this.Results = result;
         }
         /// <summary>
         /// gets or sets the type id of the variable
@@ -2109,7 +2101,7 @@ namespace OnTrack.Rulez.eXPressionTree
         {
             get
             {
-                return Result.TypeId;
+                return Results.TypeId;
             }
             set
             {
@@ -2125,7 +2117,7 @@ namespace OnTrack.Rulez.eXPressionTree
         {
             get
             {
-                return Result.DataType;
+                return Results.DataType;
             }
             set
             {
@@ -2136,9 +2128,9 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// gets or sets the result (which is a ResultList)
         /// </summary>
-        public ResultList Result { get { return _result; } set { _result = value; } }
+        public ResultList Results { get { return _result; } set { _result = value; } }
         /// <summary>
-        /// returns a List of objectnames retrieved with this rule
+        /// returns a List of object names retrieved with this rule
         /// </summary>
         /// <returns></returns>
         public IList<String> ResultingObjectnames()
@@ -2153,7 +2145,7 @@ namespace OnTrack.Rulez.eXPressionTree
         public override string ToString()
         {
             bool comma = false;
-            string aString = "{(" + NodeType.ToString ()+ ") " +  this.Result.ToString () +":";
+            string aString = "{(" + NodeType.ToString ()+ ") " +  this.Results.ToString () +":";
             foreach (INode aNode in Nodes)
             {
                 if (comma) aString += "," ;

@@ -412,7 +412,7 @@ namespace OnTrack.Rulez
             // extract the class name
             string aClassName = ctx.dataObjectClass().GetText();
             // create the result with the data object class name
-            eXPressionTree.ResultList Result = new ResultList(new Result[] { new Result(aClassName, node: new eXPressionTree.DataObjectSymbol(aClassName)) });
+            eXPressionTree.ResultList Result = new ResultList(new eXPressionTree.DataObjectSymbol(aClassName));
             // create a selection expression with the result
             eXPressionTree.SelectionExpression aSelection = new eXPressionTree.SelectionExpression(result: Result, engine: this.Engine);
             // add the subtree to the selection
