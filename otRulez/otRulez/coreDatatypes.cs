@@ -112,10 +112,8 @@ namespace OnTrack.Core
                 case otDataType.LanguageText:
                 case otDataType.Symbol:
                     return otDataTypeCategory.Composite;
-                // data object
+                // data structure
                 case otDataType.DataObject:
-                    return otDataTypeCategory.DataObject;
-                // structure
                 case otDataType.List:
                     return otDataTypeCategory.DataStructure;
                 // not found
@@ -136,8 +134,6 @@ namespace OnTrack.Core
                     return (IDataType) Rulez.PrimitiveType.GetPrimitiveType(typeId);
                 case otDataTypeCategory.Composite:
                     return (IDataType) Rulez.CompositeType.GetCompositeType(typeId);
-                case otDataTypeCategory.DataObject:
-                    return (IDataType) Rulez.DataObjectType.GetDataType(typeId);
                 case otDataTypeCategory.DataStructure:
                     return (IDataType) Rulez.DataStructureType.GetStructuredType(typeId);
                 default:
@@ -157,8 +153,6 @@ namespace OnTrack.Core
                      return Rulez.PrimitiveType.GetNativeType(typeId);
                 case otDataTypeCategory.Composite:
                      return Rulez.CompositeType.GetNativeType(typeId);
-                case otDataTypeCategory.DataObject:
-                     return Rulez.DataObjectType.GetNativeType(typeId);
                 case otDataTypeCategory.DataStructure:
                      return Rulez.DataStructureType.GetNativeType(typeId);
                 default:
@@ -178,8 +172,6 @@ namespace OnTrack.Core
                     return Rulez.PrimitiveType.GetDefaultValue(typeId);
                 case otDataTypeCategory.Composite:
                     return Rulez.CompositeType.GetDefaultValue(typeId);
-                case otDataTypeCategory.DataObject:
-                    return Rulez.DataObjectType.GetDefaultValue(typeId);
                 case otDataTypeCategory.DataStructure:
                     return Rulez.DataStructureType.GetDefaultValue(typeId);
                 default:

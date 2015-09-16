@@ -129,7 +129,6 @@ namespace OnTrack.Core
     {
         Primitive = 1,
         Composite ,
-        DataObject,
         DataStructure
     }
 

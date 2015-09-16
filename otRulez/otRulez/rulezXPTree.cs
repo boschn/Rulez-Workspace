@@ -1841,6 +1841,16 @@ namespace OnTrack.Rulez.eXPressionTree
             this.NodeType = otXPTNodeType.ResultList;
             foreach (INode aNode in results) this.Nodes.Add(aNode);
         }
+        public ResultList(params DataObjectSymbol[] results)
+        {
+            this.NodeType = otXPTNodeType.ResultList;
+            foreach (DataObjectSymbol aNode in results) this.Nodes.Add(aNode);
+        }
+        public ResultList(params DataObjectEntrySymbol[] results)
+        {
+            this.NodeType = otXPTNodeType.ResultList;
+            foreach (DataObjectEntrySymbol aNode in results) this.Nodes.Add(aNode);
+        }
         public ResultList(List<INode> results)
         {
             this.NodeType = otXPTNodeType.ResultList;
@@ -2128,7 +2138,17 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// gets or sets the result (which is a ResultList)
         /// </summary>
-        public ResultList Results { get { return _result; } set { _result = value; } }
+        public ResultList Results
+        {   get { return _result; }
+            set {
+                if (_result != value)
+                {
+                    _result = value;
+                    // set the engine to this Engine
+                    foreach (INode aNode in _result) aNode.Engine = this.Engine;
+                }
+            }
+        }
         /// <summary>
         /// returns a List of object names retrieved with this rule
         /// </summary>

@@ -1134,6 +1134,8 @@ namespace OnTrack.Rulez
             {
                 case otDataType.List:
                     return typeof(List<>);
+                case otDataType.DataObject:
+                    return typeof(iDataObject);
                 default:
                     if (typeId != otDataType.List)
                         throw new Rulez.RulezException(Rulez.RulezException.Types.DataTypeNotImplementedByCase,
@@ -1158,6 +1160,8 @@ namespace OnTrack.Rulez
             {
                 case otDataType.List:
                     return new List<string>();
+                case otDataType.DataObject:
+                    // return String.Empty;
                 default:
                     throw new Rulez.RulezException(Rulez.RulezException.Types.DataTypeNotImplementedByCase, arguments: new object[] { typeId.ToString(), "Core.StructuredType.GetDefaultValue" });
             }
@@ -1173,6 +1177,8 @@ namespace OnTrack.Rulez
             {
                 case otDataType.List:
                     return ListType.GetDataType (engine: Rules.Engine);
+                case otDataType.DataObject:
+                    // not implementable
                 default:
                     throw new Rulez.RulezException(Rulez.RulezException.Types.DataTypeNotImplementedByCase, arguments: new object[] { typeId.ToString(), "Core.StructuredType.GetStructuredType" });
 
@@ -1243,7 +1249,7 @@ namespace OnTrack.Rulez
     public class ListType: DataStructureType
     {
         private IDataType _innerDataType;
-
+        // constants
         const string ConstTypeName = "LIST";
 
 #region "Static"
@@ -1318,7 +1324,9 @@ namespace OnTrack.Rulez
             // try to convert 
             if (value != null)
             {
+                //if (value.GetType().IsAssignableFrom(typeof(List<>))) return ((IEnumerable)value).Cast<object>().Select(x => x.ToString()).ToList(); ;
                 if (value.GetType().IsAssignableFrom(typeof(List<>))) return ((IEnumerable)value).Cast<object>().Select(x => x.ToString()).ToList(); ;
+                //if (value.GetType().IsArray) return ((IEnumerable)value).Cast<object>().Select(x => x.ToString()).ToList();
                 if (value.GetType().IsArray) return ((IEnumerable)value).Cast<object>().Select(x => x.ToString()).ToList();
                 return DataType.ToList(value);
             }
@@ -1332,7 +1340,7 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        public new static String[] ToArray(String input)
+        public new static String[] ToArray(string input)
         {
             if (String.IsNullOrWhiteSpace(input))
             {
@@ -1348,7 +1356,7 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        public new static List<String> ToList(String input)
+        public new static List<string> ToList(string input)
         {
             if (String.IsNullOrWhiteSpace(input))
             {
@@ -1398,7 +1406,7 @@ namespace OnTrack.Rulez
     /// <summary>
     /// defines a data object type
     /// </summary>
-    public class DataObjectType: DataType
+    public class DataObjectType: DataStructureType
     {
         private Core.iObjectDefinition _objectdefinition;
         /// <summary>
@@ -1415,59 +1423,7 @@ namespace OnTrack.Rulez
             // create new one
             return new DataObjectType(name, engine: engine);
         }
-        // <summary>
-        /// Get native datatype
-        /// </summary>
-        /// <param name="typeId"></param>
-        /// <returns></returns>
-        public new static System.Type GetNativeType(otDataType typeId = otDataType.DataObject)
-        {
-            switch (typeId)
-            {
-                case otDataType.DataObject:
-                    return typeof(iDataObject);
-                default:
-                   throw new RulezException(RulezException.Types.DataTypeNotImplementedByClass,
-                        arguments: new object[] { typeId.ToString(), "OnTrack.Rulez.DataObjectType.GetNativeType" });
-
-            }
-        }
-        /// <summary>
-        /// returns a default value for the OnTrack Datatypes
-        /// </summary>
-        /// <param name="typeId"></param>
-        /// <returns></returns>
-        public new static object GetDefaultValue(otDataType typeId)
-        {
-            // if nullable than return the null
-            if ((typeId & otDataType.IsNullable) == otDataType.IsNullable) return null;
-            // strip off the nullable
-            typeId = (typeId ^ otDataType.IsNullable);
-            switch (typeId)
-            {
-                case otDataType.DataObject:
-                    return String.Empty;
-                default:
-                    throw new Rulez.RulezException(Rulez.RulezException.Types.DataTypeNotImplementedByCase, arguments: new object[] { typeId.ToString(), "Core.DataObjectType.GetDefaultValue" });
-
-            }
-
-        }
-        /// <summary>
-        /// returns a data object type of typeId if possible to make one
-        /// </summary>
-        /// <param name="typeId"></param>
-        /// <returns></returns>
-        public new static IDataType GetDataType(otDataType typeId)
-        {
-            switch (typeId)
-            {
-                case otDataType.DataObject:
-                   // return GetDataType (name: name, engine: Engine);
-                default:
-                    throw new Rulez.RulezException(Rulez.RulezException.Types.DataTypeNotImplementedByCase, arguments: new object[] { typeId.ToString(), "Core.DataObjectType.GetDataObjectType" });
-            }
-        }
+       
         /// <summary>
         /// constructor
         /// </summary
@@ -1477,10 +1433,7 @@ namespace OnTrack.Rulez
             // raise event !
             RaiseOnCreation(this, datatype: this, engine: engine);
         }
-        /// <summary>
-        /// gets the Category
-        /// </summary>
-        public override otDataTypeCategory Category { get { return otDataTypeCategory.DataObject; } }
+       
         /// <summary>
         /// gets the Signature
         /// </summary>
