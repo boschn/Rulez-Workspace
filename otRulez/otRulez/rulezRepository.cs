@@ -294,12 +294,12 @@ namespace OnTrack.Rulez
                                                   new Operator(Token.OR,2,6,  otDataType .Bool , otOperatorType.Logical ) ,
                                                   new Operator(Token.ORELSE,2,6,  otDataType .Bool , otOperatorType.Logical ) ,
                                                   new Operator(Token.NOT,1,7, otDataType .Bool, otOperatorType.Logical   ) ,
-                                                  new Operator(Token.EQ,2,4,  otDataType .Bool , otOperatorType.Compare ) ,
-                                                  new Operator(Token.NEQ,2,4,  otDataType .Bool , otOperatorType.Compare ) ,
-                                                  new Operator(Token.GT,2,4,  otDataType .Bool , otOperatorType.Compare ) ,
-                                                  new Operator(Token.GE,2,4,  otDataType .Bool, otOperatorType.Compare  ) ,
-                                                  new Operator(Token.LT,2,4,  otDataType .Bool , otOperatorType.Compare ) ,
-                                                  new Operator(Token.LE,2,4,  otDataType .Bool , otOperatorType.Compare ) ,
+                                                  new Operator(Token.EQ,2,8,  otDataType .Bool , otOperatorType.Compare ) ,
+                                                  new Operator(Token.NEQ,2,8,  otDataType .Bool , otOperatorType.Compare ) ,
+                                                  new Operator(Token.GT,2,8,  otDataType .Bool , otOperatorType.Compare ) ,
+                                                  new Operator(Token.GE,2,8,  otDataType .Bool, otOperatorType.Compare  ) ,
+                                                  new Operator(Token.LT,2,8,  otDataType .Bool , otOperatorType.Compare ) ,
+                                                  new Operator(Token.LE,2,8,  otDataType .Bool , otOperatorType.Compare ) ,
 
                                                   // Arithmetic - null means return type is determined by the operands
                                                   new Operator(Token.PLUS,2,2,  null , otOperatorType.Arithmetic ) ,
@@ -758,12 +758,12 @@ namespace OnTrack.Rulez
         public bool AddDataType(IDataType datatype)
         {
             Initialize();
-            if (this.HasDataType(datatype.Name)) _datatypes.Remove(datatype.Name);
-            _datatypes.Add(datatype.Name, datatype);
+            if (this.HasDataType(datatype.Name)) _datatypes.Remove(datatype.Name.ToUpper());
+            _datatypes.Add(datatype.Name.ToUpper(), datatype);
             if (!this.HasDataTypeSignature(datatype.Signature)) _datatypesSignature.Add(datatype.Signature.ToUpper(), new List<IDataType>());
             List<IDataType> aList = _datatypesSignature[datatype.Signature.ToUpper()];
             // remove all existing
-            aList.RemoveAll(x => x.Name == datatype.Name);
+            aList.RemoveAll(x => x.Name.ToUpper() == datatype.Name.ToUpper());
             aList.Add(datatype);
             return true;
         }
@@ -776,12 +776,12 @@ namespace OnTrack.Rulez
         public bool RemoveDataType(IDataType datatype)
         {
             Initialize();
-            if (this.HasDataType(datatype.Name)) _datatypes.Remove(datatype.Name);
+            if (this.HasDataType(datatype.Name)) _datatypes.Remove(datatype.Name.ToUpper());
             if (this.HasDataTypeSignature(datatype.Signature))
             {
                 List<IDataType> aList = _datatypesSignature[datatype.Signature.ToUpper()];
                 // remove all existing
-                aList.RemoveAll(x => x.Name == datatype.Name);
+                aList.RemoveAll(x => x.Name.ToUpper() == datatype.Name.ToUpper());
             }
             return true;
         }

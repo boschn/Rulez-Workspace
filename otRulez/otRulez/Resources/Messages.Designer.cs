@@ -124,6 +124,15 @@ namespace OnTrack.Rulez.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to data object class &apos;{0}&apos; has {1} keys - key no {2} is used indirect in expression.
+        /// </summary>
+        internal static string RCM_8 {
+            get {
+                return ResourceManager.GetString("RCM_8", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to invalid null argument.
         /// </summary>
         internal static string REM_1 {

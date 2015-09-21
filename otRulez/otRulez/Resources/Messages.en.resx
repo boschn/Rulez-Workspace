@@ -138,6 +138,9 @@
   <data name="RCM_7" xml:space="preserve">
     <value>rule id '{0}' is already defined</value>
   </data>
+  <data name="RCM_8" xml:space="preserve">
+    <value>data object class '{0}' has {1} keys - key no {2} is used indirect in expression</value>
+  </data>
   <data name="REM_1" xml:space="preserve">
     <value>invalid null argument</value>
   </data>

@@ -680,6 +680,10 @@ namespace OnTrack.Rulez
                 if ((this.TypeId & otDataType.IsNullable) == otDataType.IsNullable) { return (this.TypeId ^ otDataType.IsNullable).ToString().ToUpper() + "?";}
                 return this.TypeId.ToString().ToUpper();
             }
+            protected set
+            {
+                _signature = value;
+            }
         }
 
         /// <summary>
@@ -701,6 +705,10 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public new static System.Type GetNativeType(otDataType typeId)
         {
+
+            // strip off
+            if ((typeId & otDataType.IsNullable) == otDataType.IsNullable) typeId ^= otDataType.IsNullable;
+
             switch (typeId)
             {
                 case otDataType.Symbol:
@@ -725,8 +733,7 @@ namespace OnTrack.Rulez
         {
             // if nullable than return the null
             if ((typeId & otDataType.IsNullable) == otDataType.IsNullable) return null;
-            // strip off the nullable
-            typeId = (typeId ^ otDataType.IsNullable);
+           
             switch (typeId)
             {
              case otDataType.Symbol:
@@ -759,7 +766,7 @@ namespace OnTrack.Rulez
                 if (sig != String.Empty) sig += ",";
                 sig += dt.Signature;
             }
-            return (!String.IsNullOrWhiteSpace(typename) ? typename.ToUpper() : "COMPLEX") + (isNullable ?  "?" : String.Empty ) + "<" + sig + ">";
+            return (!String.IsNullOrWhiteSpace(typename) ? typename.ToUpper() : "COMPOSITE") + (isNullable ?  "?" : String.Empty ) + "<" + sig + ">";
         }
         /// <summary>
         /// returns a composite type of typeId if possible to make one
@@ -807,7 +814,8 @@ namespace OnTrack.Rulez
         {
             get 
             {
-                return String.IsNullOrEmpty (Name) ? Name: CreateSignature(typename: ComplexTypeName, structure: _structure.Values, name: Name);
+                if (String.IsNullOrEmpty(_signature )) _signature = CreateSignature(typename: ComplexTypeName, structure: _structure.Values, name: Name);
+                return _signature;
             } 
         }
         /// <summary>
@@ -1122,6 +1130,7 @@ namespace OnTrack.Rulez
     /// </summary>
     public abstract class DataStructureType : DataType
     {
+        protected List<IDataType> _innerTypes = new List<IDataType>();
 #region "Static"
         /// <summary>
         /// Get native datatype
@@ -1154,8 +1163,7 @@ namespace OnTrack.Rulez
         {
             // if nullable than return the null
             if ((typeId & otDataType.IsNullable) == otDataType.IsNullable) return null;
-            // strip off the nullable
-            typeId = (typeId ^ otDataType.IsNullable);
+            
             switch (typeId)
             {
                 case otDataType.List:
@@ -1173,6 +1181,8 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public static IDataType GetStructuredType(otDataType typeId)
         {
+            // strip off
+            if ((typeId & otDataType.IsNullable) == otDataType.IsNullable) typeId ^= otDataType.IsNullable ;
             switch (typeId)
             {
                 case otDataType.List:
@@ -1184,6 +1194,24 @@ namespace OnTrack.Rulez
 
 
             }
+        }
+        /// <summary>
+        /// create a signature
+        /// </summary>
+        /// <param name="typename"></param>
+        /// <param name="types"></param>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public static string CreateSignature(IEnumerable<IDataType> types, bool isNullable = false, string typename = null, string name = null)
+        {
+            if (!String.IsNullOrWhiteSpace(name)) return name.ToUpper();
+            string sig = String.Empty;
+            foreach (IDataType dt in types)
+            {
+                if (sig != String.Empty) sig += ",";
+                sig += dt.Signature;
+            }
+            return (!String.IsNullOrWhiteSpace(typename) ? typename.ToUpper() : "STRUCTURE") + (isNullable ? "?" : String.Empty) + "<" + sig + ">";
         }
         /// <summary>
         /// returns true if the value is of otDataType.Text
@@ -1242,13 +1270,26 @@ namespace OnTrack.Rulez
          /// gets the native Type
          /// </summary>
          public override System.Type NativeType { get { return DataStructureType.GetNativeType(this.TypeId); } }
+         /// <summary>
+         /// gets the Signature
+         /// </summary>
+         public override string Signature
+         {
+             get
+             {
+                if (String.IsNullOrEmpty(_signature))                   
+                    _signature = CreateSignature(typename: StructureTypeName, types: _innerTypes, name: Name);
+                return _signature;
+             }
+         }
     }
     /// <summary>
     /// defines a listed structured type
     /// </summary>
     public class ListType: DataStructureType
     {
-        private IDataType _innerDataType;
+
+       
         // constants
         const string ConstTypeName = "LIST";
 
@@ -1256,9 +1297,9 @@ namespace OnTrack.Rulez
         /// <summary>
         /// returns or creates an anonymous List type from the engine
         /// </summary>
-        public static ListType GetDataType (IDataType innerType,  Engine engine, string name = null, bool isNullable = false)
+        public static ListType GetDataType (IDataType innerDataType,  Engine engine, string name = null, bool isNullable = false)
         {
-            string sig = CreateSignature(innerType, isNullable);
+            string sig = CreateSignature(innerDataType, isNullable);
             if (!String.IsNullOrEmpty(name) && engine.Repository.HasDataType(name))
             {
                 IDataType aDatatype = engine.Repository.GetDatatype(name);
@@ -1267,7 +1308,7 @@ namespace OnTrack.Rulez
             }
             if (engine.Repository.HasDataTypeSignature (sig)) return (ListType) engine.Repository.GetDatatypeBySignature (sig).FirstOrDefault();
             // create new one
-            return new ListType(innerDataType: innerType, isNullable: isNullable, name:name, engine: engine);
+            return new ListType(innerDataType: innerDataType, isNullable: isNullable, name:name, engine: engine);
         }
         /// <summary>
         /// returns a stored or new ListType object from otDataType
@@ -1376,9 +1417,9 @@ namespace OnTrack.Rulez
         {
             // check on type
             this.StructureTypeName = ConstTypeName;
-            this.InnerDataType = InnerDataType;
+            this.InnerDataType = innerDataType;
             this.DefaultValue = GetDefaultValue(otDataType.List);
-
+            this.Signature = StructureTypeName + (IsNullable ? "?" : "") + "<" + innerDataType.Signature + ">";
             // raise event !
             RaiseOnCreation(this, datatype: this, engine: engine);
         }
@@ -1389,19 +1430,16 @@ namespace OnTrack.Rulez
         {
             get
             {
-                return _innerDataType;
+                return _innerTypes.FirstOrDefault ();
             }
             private set
             {
-                _innerDataType = value;
+                if (_innerTypes.Count() == 0) _innerTypes.Add(value);
+                else _innerTypes[0] = value;
             }
         }
         
-        /// <summary>
-        /// gets the Signature
-        /// </summary>
-        public override string Signature { get { return StructureTypeName  + (IsNullable ? "?" : "") + "<" + InnerDataType.Signature + ">"; } }
-    }
+     }
     
     /// <summary>
     /// defines a data object type
@@ -1417,7 +1455,8 @@ namespace OnTrack.Rulez
             if (engine.Repository.HasDataType(name))  
             {
                 IDataType aDatatype = engine.Repository.GetDatatype(name);
-                if (aDatatype.TypeId == otDataType.DataObject) return (DataObjectType)aDatatype;
+                if (aDatatype.TypeId ==  otDataType.DataObject || aDatatype.TypeId == (otDataType.IsNullable | otDataType.DataObject)) return (DataObjectType)aDatatype;
+                // not found as dataobject
                 throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { name, "not a data object type" });
             }
             // create new one
@@ -1437,7 +1476,7 @@ namespace OnTrack.Rulez
         /// <summary>
         /// gets the Signature
         /// </summary>
-        public override string Signature { get { return Name; } }
+        public override string Signature { get { return this.Name; } }
         /// <summary>
         /// returns true if the data object exists in Engine
         /// has no value if was not looked up via ObjectDefinition property

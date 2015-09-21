@@ -138,6 +138,9 @@
   <data name="RCM_7" xml:space="preserve">
     <value>Regel mit Id '{0}' ist bereits definiert.</value>
   </data>
+  <data name="RCM_8" xml:space="preserve">
+    <value>Datenobjekt Klasse '{0}' hat  {1} Schüsselfelder - Schlüsselfeld mit Nummer {2} wurde indirekt in Ausdruck benutzt</value>
+  </data>
   <data name="REM_1" xml:space="preserve">
     <value>null argument ist invalid</value>
   </data>

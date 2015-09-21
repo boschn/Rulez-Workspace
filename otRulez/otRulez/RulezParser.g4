@@ -26,8 +26,9 @@ using System.Collections.Generic;
 
 
 rulezUnit
-returns [ List<OnTrack.Rulez.eXPressionTree.INode> XPTree ]
-@after { BuildXPTNode ($ctx) ; }
+returns [OnTrack.Rulez.eXPressionTree.Unit XPTreeNode ]
+@init { $XPTreeNode = new OnTrack.Rulez.eXPressionTree.Unit(this.Engine);  RegisterMessages($XPTreeNode);}
+@after { BuildXPTNode ($ctx) ;  DeRegisterMessages($XPTreeNode);}
 
     : oneRulez ( EOS+ oneRulez )* EOS* EOF
     ;
@@ -181,8 +182,8 @@ selectionRulez
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 locals [ // parameteres
 		 Dictionary<string,ParameterDefinition> names = new Dictionary<string,ParameterDefinition>() ]
-@init{ $XPTreeNode = new SelectionRule();}
-@after { BuildXPTNode ($ctx) ; }
+@init{ $XPTreeNode = new SelectionRule(); RegisterMessages($XPTreeNode);}
+@after { BuildXPTNode ($ctx) ; DeRegisterMessages($XPTreeNode);}
 
     : SELECTION ruleid {((SelectionRule)$XPTreeNode).ID = $ctx.ruleid().GetText();} (LPAREN parameters RPAREN)? AS ( selectStatementBlock | selection ) 
 	
@@ -213,7 +214,8 @@ locals [
 		 // local variables
 		Dictionary<string,VariableDefinition> names = new Dictionary<string,VariableDefinition>() 
 		]
-@after { BuildXPTNode ($ctx) ; }
+@init {$XPTreeNode = new OnTrack.Rulez.eXPressionTree.SelectionStatementBlock(); RegisterMessages($XPTreeNode);}
+@after { BuildXPTNode ($ctx) ; DeRegisterMessages($XPTreeNode); }
 
 	: L_BRACKET selectStatement (EOS+ selectStatement)* R_BRACKET
 	

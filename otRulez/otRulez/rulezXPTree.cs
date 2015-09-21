@@ -31,9 +31,11 @@ namespace OnTrack.Rulez.eXPressionTree
     /// </summary>
     public abstract class Node : INode
     {
+       
         protected Engine _engine; // internal engine
         protected otXPTNodeType _nodeType;
         protected IXPTree _parent;
+        protected List<Rulez.Message> _errorlist = new List<Message>();
         // event
         protected event PropertyChangedEventHandler PropertyChanged;
         /// <summary>
@@ -61,6 +63,10 @@ namespace OnTrack.Rulez.eXPressionTree
         /// returns the engine
         /// </summary>
         public Engine Engine { get { return _engine; } set { _engine = value; if (PropertyChanged != null) PropertyChanged(this, new PropertyChangedEventArgs("Engine")); } }
+        /// <summary>
+        /// returns the Errors of the Node
+        /// </summary>
+        public IList<Rulez.Message> Messages { get { return _errorlist; } }
         /// <summary>
         /// accept the visitor
         /// </summary>
@@ -179,10 +185,15 @@ namespace OnTrack.Rulez.eXPressionTree
     /// </summary>
     public abstract class XPTree : IXPTree
     {
+       
+
+        // instance variables
         private ObservableCollection<INode> _nodes = new ObservableCollection<INode>();
         protected Engine _engine;
         private otXPTNodeType _nodeType;
         private IXPTree _parent;
+        private List<Message> _errorlist = new List<Message>();
+
         // event
         public event PropertyChangedEventHandler PropertyChanged;
         /// <summary>
@@ -194,6 +205,20 @@ namespace OnTrack.Rulez.eXPressionTree
             // default engine
             if (engine == null) engine = OnTrack.Rules.Engine;
             this.Nodes.CollectionChanged += _Nodes_CollectionChanged;
+            this.PropertyChanged += XPTree_PropertyChanged;
+        }
+        /// <summary>
+        /// PropertyChanged Event
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        protected virtual void  XPTree_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            // set the engine property also to the nodes
+            if (e.PropertyName == "Engine")
+            {
+                foreach (INode aNode in Nodes) aNode.Engine = this.Engine;
+            }
         }
         /// <summary>
         /// handler for changing the nodes list
@@ -222,6 +247,10 @@ namespace OnTrack.Rulez.eXPressionTree
         /// gets the Parent of the Node
         /// </summary>
         public IXPTree Parent { get { return _parent; } set { _parent = value; RaiseOnPropertyChanged(this,"Parent"); } }
+        /// <summary>
+        /// returns the Errors of the Node
+        /// </summary>
+        public IList<Rulez.Message> Messages { get { return _errorlist; } }
         /// <summary>
         /// returns the engine
         /// </summary>
@@ -493,7 +522,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// gets the Datatype
         /// </summary>
-        public Core.IDataType DataType { get { return this.Engine.Repository.GetDatatype(_objectdefinition.Objectname); } set { throw new InvalidOperationException(); } }
+        public Core.IDataType DataType { get { return DataObjectType.GetDataType(name:ID, engine:this.Engine); } set { throw new InvalidOperationException(); } }
         /// <summary>
         /// returns true if node is a leaf
         /// </summary>
@@ -800,11 +829,11 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <returns></returns>
         public override string ToString()
         {
-            string aString = "{" + this.NodeType.ToString();
-            if (Nodes.Count > 0) 
-                aString += "[" + Nodes[0].ToString() + "]";
+            string aString = "{" + this.NodeType.ToString()+ " ";
 
-            aString += ":";
+            if (Nodes.Count() > 0 && Nodes.First().GetType().GetInterfaces ().Contains(typeof(IExpression))) 
+                aString += ((IExpression)Nodes.First()).DataType.ToString() + " ";
+
             foreach (INode aNode in Nodes)
             {
                 aString += aNode.ToString();
@@ -998,6 +1027,7 @@ namespace OnTrack.Rulez.eXPressionTree
             {
                 //TO-DO: do not allow to change if not null thow exception if not equal
                 _result = value;
+                if (_result.Engine == null) _result.Engine = this.Engine;
             }
         }
 
@@ -1046,7 +1076,8 @@ namespace OnTrack.Rulez.eXPressionTree
         {
             bool comma = false;
             string aString = "{(" + NodeType.ToString() + ") ";
-            if (this.Result != null) aString += this.Result.ToString();
+            if (this.Result != null) 
+                aString += this.Result.DataType.ToString();
             aString += "[";
             foreach (ISymbol aSymbol in Variables)
             {
@@ -1901,13 +1932,13 @@ namespace OnTrack.Rulez.eXPressionTree
             get
             {
                 if (this.Nodes == null || this.Nodes.Count() == 0) return Core.DataType.GetDataType (otDataType.Null);
-                if (this.Nodes.Count() == 1) return ListType.GetDataType(innerType: ((IExpression)this.Nodes[0]).DataType, engine: this.Engine) ;
+                if (this.Nodes.Count() == 1) return ListType.GetDataType(innerDataType: ((IExpression)this.Nodes[0]).DataType, engine: this.Engine) ;
                 // get a Datatype according to the structure
                 List<IDataType> structure = new List<IDataType>();
                 List<string> names = new List<string>();
                 foreach (ISymbol aResult in Nodes) { names.Add(aResult.ID);  structure.Add(aResult.DataType);}
                 IDataType innerType = TupleType.GetDataType(structure: structure.ToArray(), memberNames: names.ToArray(), engine: this.Engine);
-                return ListType.GetDataType(innerType: innerType, engine: this.Engine);
+                return ListType.GetDataType(innerDataType: innerType, engine: this.Engine);
             }
             set
             {
@@ -1923,8 +1954,8 @@ namespace OnTrack.Rulez.eXPressionTree
             foreach (INode aNode in this.Nodes)
             {
                 string aName = String.Empty;
-                if (aNode is DataObjectEntrySymbol) aName = ((DataObjectEntrySymbol)aNode).ObjectID;
-                if (aNode is DataObjectSymbol) aName = ((DataObjectSymbol)aNode).ObjectID;
+                if (aNode is DataObjectEntrySymbol) aName = ((DataObjectEntrySymbol)aNode).ID;
+                if (aNode is DataObjectSymbol) aName = ((DataObjectSymbol)aNode).ID;
 
                 if ( !String.IsNullOrEmpty (aName) && !aList.Contains(aName)) aList.Add(aName);
             }
@@ -1937,6 +1968,44 @@ namespace OnTrack.Rulez.eXPressionTree
     /// </summary>
     public class SelectionRule : Rule, IExpression
     {
+        #region Static
+        /// <summary>
+        /// generate a selection Rule XPT out of a String
+        /// </summary>
+        /// <param name="source"></param>
+        /// <returns></returns>
+        public SelectionRule Generate(string source)
+        {
+            RulezParser.MessageListener aListener = new RulezParser.MessageListener();
+            RulezParser.SelectionRulezContext aCtx = null;
+
+            try
+            {
+                RulezLexer aLexer = new RulezLexer(new Antlr4.Runtime.AntlrInputStream(source));
+                // wrap a token-stream around the lexer
+                Antlr4.Runtime.CommonTokenStream theTokens = new Antlr4.Runtime.CommonTokenStream(aLexer);
+                // create the aParser
+                RulezParser aParser = new RulezParser(theTokens);
+                aParser.Trace = true;
+                aParser.Engine = this.Engine;
+                aParser.AddErrorListener(aListener);
+                // parse
+                aCtx = aParser.selectionRulez();
+                // return
+                return (SelectionRule) aCtx.XPTreeNode;
+            }
+            catch (Exception ex)
+            {
+                if (aCtx != null) return (SelectionRule) aCtx.XPTreeNode;
+                return null;
+            }
+        }
+
+        void Function(object sender, RulezParser.MessageListener.EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+        #endregion
         private Dictionary<string, ISymbol> _parameters = new Dictionary<string, ISymbol>(); // parameters
         /// <summary>
         /// constructor
@@ -2175,5 +2244,63 @@ namespace OnTrack.Rulez.eXPressionTree
             aString += "}";
             return aString;
         }
+    }
+    /// <summary>
+    /// top level 
+    /// </summary>
+    public class Unit : XPTree
+    {
+        private string _ID;
+        /// <summary>
+        /// constructor
+        /// </summary>
+        public Unit(Engine engine = null)
+            : base(engine)
+        {
+            this.NodeType = otXPTNodeType.Unit;
+        }
+        /// <summary>
+        /// constructor
+        /// </summary>
+        /// <param name="token"></param>
+        /// <param name="arguments"></param>
+        public Unit(INode[] arguments, Engine engine = null)
+            : base(engine)
+        {
+            this.NodeType = otXPTNodeType.Unit;
+            this.Nodes = new ObservableCollection<INode>(arguments.ToList());
+        }
+        #region "Properties"
+        /// <summary>
+        /// sets the ID of the block
+        /// </summary>
+        public string ID { get { if (_ID == null) _ID = Guid.NewGuid().ToString(); return _ID; } set { _ID = value; } }
+        #endregion
+        /// <summary>
+        /// Add a node 
+        /// </summary>
+        /// <param name="node"></param>
+        /// <returns></returns>
+        public bool Add(IXPTree node)
+        {
+            this.Nodes.Add(node);
+            return true;
+        }
+        /// <summary>
+        /// handler for changing the nodes list
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        protected override void _Nodes_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            base._Nodes_CollectionChanged(sender, e);
+            // check the nodes which are added
+            foreach (INode aNode in Nodes)
+            {
+                if (aNode != null && ! (aNode is SelectionRule ))
+                    throw new RulezException(RulezException.Types.InvalidNodeType, arguments: new object[] { aNode.NodeType.ToString(), "SelectionRule" });
+            }
+        }
+        
     }
 }

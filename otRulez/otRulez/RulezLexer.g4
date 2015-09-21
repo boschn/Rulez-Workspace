@@ -68,10 +68,10 @@ MINUS_EQ : '-=';
 PLUS_EQ : '+=';
 
 // others
- COLON :	',' ;
- STROKE : '|' ;
+ fragment COLON :	',' ;
+ fragment STROKE : '|' ;
  HASH : '#' ;
- DOT : '.' ;
+ fragment DOT : '.' ;
  QUESTIONMARK : '?';
 // parenthesis
  LPAREN : '(';

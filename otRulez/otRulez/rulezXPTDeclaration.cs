@@ -55,7 +55,8 @@ namespace OnTrack.Rulez.eXPressionTree
         SelectionStatementBlock,
         IfThenElse,
         Return,
-        
+        Unit,
+
     }
 
     /// <summary>
@@ -99,6 +100,10 @@ namespace OnTrack.Rulez.eXPressionTree
         /// </summary>
         /// <param name="visitor"></param>
         bool Accept(IVisitor visitor);
+        /// <summary>
+        /// returns the Errors of the Node
+        /// </summary>
+        IList<Rulez.Message> Messages { get; }
     }
     /// <summary>
     /// describes an abstract syntax tree

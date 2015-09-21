@@ -23,7 +23,7 @@ namespace OnTrack.Testing
         public ObjectEntryDefinition (iObjectDefinition objectdefinition, String entryname, otDataType typeid, bool isNull )
         {
             this.Objectname = objectdefinition.Objectname;
-            this.Entryname = entryname;
+            this.Entryname = entryname.ToUpper();
             this.DataType = Core.DataType.GetDataType(typeid) ;
             this.IsNullable = isNull;
             this.ObjectDefinition = objectdefinition ;
@@ -79,14 +79,14 @@ namespace OnTrack.Testing
         /// <param name="id"></param>
         public ObjectDefinition(String id)
         {
-            _id = id;
+            _id = id.ToUpper();
         }
 
         public bool AddEntry(iObjectEntryDefinition entry)
         {
-            if (_entries.ContainsKey (entry.Entryname)) _entries .Remove (entry.Entryname );
+            if (_entries.ContainsKey (entry.Entryname.ToUpper())) _entries .Remove (entry.Entryname.ToUpper() );
 
-            _entries .Add(entry.Entryname, entry);
+            _entries .Add(entry.Entryname.ToUpper(), entry);
             return true;
         }
         public string Objectname
@@ -217,13 +217,13 @@ namespace OnTrack.Testing
 
         public iObjectEntryDefinition GetiEntryDefinition(string entryname)
         {
-            if (this.HasEntry(entryname)) return _entries[entryname];
+            if (this.HasEntry(entryname)) return _entries[entryname.ToUpper()];
             return null;
         }
 
         public bool HasEntry(string entryname)
         {
-           return _entries.ContainsKey(entryname);
+           return _entries.ContainsKey(entryname.ToUpper());
         }
     }
 
@@ -268,8 +268,8 @@ namespace OnTrack.Testing
         /// <returns></returns>
         public iObjectDefinition GetIObjectDefinition(string id)
         {
-            if (_objects.ContainsKey(id))
-                return _objects[id];
+            if (_objects.ContainsKey(id.ToUpper()))
+                return _objects[id.ToUpper()];
             return null;
         }
 
@@ -295,8 +295,7 @@ namespace OnTrack.Testing
 
         public bool HasObjectDefinition(string id)
         {
-            if (_objects.ContainsKey(id))
-                return true;
+            if (_objects.ContainsKey(id.ToUpper()))  return true;
             return false;
         }
 
@@ -460,7 +459,7 @@ namespace OnTrack.Testing
         {
             // TODO: Implement this method
             result = null;
-            throw new NotImplementedException();
+            return true;
         }
 
         public bool Run(string id, Context context)
@@ -479,9 +478,23 @@ namespace OnTrack.Testing
         private Rulez.Engine _engine = new Rulez.Engine();
         
         // Test-Sources
-        String[] SyntaxTest =
+        String[] postiveSyntaxTest =
         {
             "selection s1 as deliverables[100];",
+            "selection s1a as testobject1[100,1];",
+            "selection s1b as deliverables[100|200];",
+            "selection s1c as testobject1[100|200, 1];",
+            "selection s2 (p1 as number) as deliverables[p1];",
+            "selection s3 (p1 as number? default 100 ) as deliverables[uid=p1];",
+            "selection s4 as testobject1[100,1, date > #10.09.2015#];",
+            "selection s4 as testobject1[(100, 1) | date > #10.09.2015#];",
+        };
+        String[] expectedTree =
+        {
+            "{Unit:{(SelectionRule) s1[]{ResultList:<DataObjectSymbol:deliverables>}{{(SelectionStatementBlock) LIST<DELIVERABLES?>[]{{Return LIST<DELIVERABLES?> {(SelectionExpression) {ResultList:<DataObjectSymbol:deliverables>}:{(CompareExpression) 10:'='<2,8,*>:<DataObjectSymbol:deliverables.uid>,<Literal:'100'>}}}}}}}}",
+            "selection s1a as testobject1[100,1];",
+            "selection s1b as deliverables[100|200];",
+            "selection s1c as testobject1[100|200, 1];",
             "selection s2 (p1 as number) as deliverables[p1];",
             "selection s3 (p1 as number? default 100 ) as deliverables[uid=p1];",
             "selection s4 as testobject1[100,1, date > #10.09.2015#];",
@@ -491,32 +504,61 @@ namespace OnTrack.Testing
         [TestMethod]
         public void AllSyntax()
         {
-            try
             {
                 // data context
                 _engine.AddDataEngine(new DataObjectEngine("test"));
 
-                for (uint i = 0; i < SyntaxTest.GetUpperBound(0); i++)
+                for (uint i = 0; i < postiveSyntaxTest.GetUpperBound(0); i++)
                 {
-                    RunSpecificTest(i);
+                    RunPositiveSyntaxTest(i+1, postiveSyntaxTest[i], expected: expectedTree[i]);
                 }
             }
-            catch (Exception ex)
-            {
-                Assert.Fail(ex.Message);
-            }
+            
         }
-       
         [TestMethod]
-        public void RunSpecificTest(uint no = 2)
+        public void RunDevelopmentTest()
         {
+            // data context
+                _engine.AddDataEngine(new DataObjectEngine("test"));
+
+            RunPositiveSyntaxTest(1, postiveSyntaxTest[0], expected: expectedTree[0]);
+        }
+        /// <summary>
+        /// run a positive syntax test by statement
+        /// </summary>
+        /// <param name="statement"></param>
+        [TestMethod]
+        public void RunPositiveSyntaxTest(ulong id, string statement, string expected = null)
+        {
+            bool aResult = false;
             try
             {
-                Assert.IsFalse(_engine.Generate(SyntaxTest[no]), "Failed: " + SyntaxTest[no]);
+                INode theNode =_engine.Verifiy(statement);
+
+                // check result
+                if (theNode == null)
+                    aResult = false;
+                else if (theNode.Messages.Where(x => x.Type == MessageType.Error).Count() == 0)
+                {
+                    if (String.IsNullOrEmpty(expected)) aResult = true;
+                    else if (String.Compare(theNode.ToString(), expected) == 00) aResult = true;
+                    else aResult = false;
+                }
+                
+                if (aResult)
+                    Console.Write(DateTime.Now.ToString("u") + ": Syntax Test #" + id.ToString() + " succeeded.");
+                else
+                {
+                    foreach (Message anError in theNode.Messages)
+                        Console.WriteLine(anError);
+
+                }
+                Assert.IsTrue(aResult, DateTime.Now.ToString("u") + ": Syntax Test #" + id.ToString() + " failed.");
             }
+                
             catch (Exception ex)
             {
-                Assert.Fail(ex.Message);
+                if  (!(ex is Microsoft.VisualStudio.TestTools.UnitTesting.AssertFailedException	))	Assert.Fail(ex.Message);
             }
         }
     }

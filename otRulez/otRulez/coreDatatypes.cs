@@ -40,6 +40,7 @@ namespace OnTrack.Core
         private Rulez.Engine _engine;
         private object _defaultvalue;
         private string _name;
+        protected string _signature = String.Empty;
         /// <summary>
         /// DataType Event Args
         /// </summary>
@@ -494,7 +495,7 @@ namespace OnTrack.Core
         protected DataType(otDataType typeId, bool isNullable = false, object defaultvalue = null, string name = null, Rulez.Engine engine = null)
         {
             _type = isNullable ? typeId | otDataType.IsNullable : typeId;
-            _name = (String.IsNullOrWhiteSpace(name)) ? this.Signature : name;
+            _name = (String.IsNullOrWhiteSpace(name)) ? this.Signature : name.ToUpper() + (isNullable ? "?" : String.Empty);
             _engine = engine;
             _defaultvalue = defaultvalue;
         }
@@ -519,14 +520,15 @@ namespace OnTrack.Core
         public string Name
         {
             get { return _name; }
-            protected set { _name = value!= null ? value.ToUpper () : System.Guid.NewGuid().ToString ();}
+            protected set { _name = (value!= null) ? value.ToUpper () : System.Guid.NewGuid().ToString ();}
         }
         /// <summary>
         /// gets the Signature of the  Datatype
         /// </summary>
-        public abstract string Signature
+        public virtual string Signature
         {
-            get;
+            get { return _signature; }
+            protected set { _signature = value; }
         }
         /// <summary>
         /// return true if the type is Nullable
@@ -565,7 +567,7 @@ namespace OnTrack.Core
         protected void RaiseOnCreation(object sender, IDataType datatype, Rulez.Engine engine = null)
         {
             if (engine == null) engine = this.Engine;
-            OnCreation(sender, new EventArgs(datatype: datatype, engine: engine));
+            if (OnCreation != null) OnCreation(sender, new EventArgs(datatype: datatype, engine: engine));
         }
         /// <summary>
         /// raise the event on Removal
@@ -575,7 +577,7 @@ namespace OnTrack.Core
         protected void RaiseOnRemoval(object sender, IDataType datatype, Rulez.Engine engine = null)
         {
             if (engine == null) engine = this.Engine;
-            OnRemoval(sender, new EventArgs(datatype: datatype, engine: engine));
+            if (OnRemoval != null) OnRemoval(sender, new EventArgs(datatype: datatype, engine: engine));
         }
         #endregion
         #region "IEqualComparer"

@@ -1,5 +1,4 @@
-﻿
-/**
+﻿/**
  *  ONTRACK RULEZ ENGINE
  *  
  * rulez parser extensions
@@ -13,17 +12,17 @@
  * (C) by Boris Schneider, 2015
  * 
  */
-
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
-using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
-using OnTrack.Core;
-using OnTrack.Rulez.eXPressionTree;
 using Antlr4.Runtime;
+using Antlr4.Runtime.Atn;
+using Antlr4.Runtime.Dfa;
+using Antlr4.Runtime.Sharpen;
+using OnTrack.Core;
 using OnTrack.Rulez.Resources;
+using OnTrack.Rulez.eXPressionTree;
 
 namespace OnTrack.Rulez
 {
@@ -117,17 +116,25 @@ namespace OnTrack.Rulez
         /// add a parametername from the current context to a context which has names
         /// </summary>
         /// <returns></returns>
-        bool AddParameter(string name, uint pos, IDataType datatype, LiteralContext literal, RuleContext context)
+        bool AddParameter(string name, uint pos, IDataType datatype, LiteralContext defaultvalue, RuleContext context)
         {
             RuleContext root = GetRootContext(context, typeof(SelectionRulezContext));
-            ParameterDefinition def = new ParameterDefinition(name: name, pos: pos, datatype: datatype, defaultvalue: literal.XPTreeNode);
+            INode theDefaultValue = null;
+
+            if (defaultvalue != null) theDefaultValue = defaultvalue.XPTreeNode;
+
+            ParameterDefinition def = new ParameterDefinition(name: name, pos: pos, datatype: datatype, defaultvalue: theDefaultValue);
             if (root != null)
             {
-                if (!((SelectionRulezContext)root).names.ContainsKey(name)) ((SelectionRulezContext)root).names.Add(name, def);
-                else { this.NotifyErrorListeners(String.Format(Messages.RCM_3, name, "SelectionRule")); return false; }
-
-                ((SelectionRulezContext)root).names.Add(name, def);
-                ((SelectionRule) ((SelectionRulezContext)root).XPTreeNode).AddNewParameter (name, datatype);
+                if (!((SelectionRulezContext)root).names.ContainsKey(name))
+                {
+                    ((SelectionRulezContext)root).names.Add(name, def);
+                    ((SelectionRule)((SelectionRulezContext)root).XPTreeNode).AddNewParameter(name, datatype);
+                }
+                else 
+                { this.NotifyErrorListeners(String.Format(Messages.RCM_3, name, "SelectionRule")); 
+                       return false; 
+                }
 
                 return true;
             }
@@ -258,8 +265,8 @@ namespace OnTrack.Rulez
             // selection Rulez
             if (ctx.oneRulez() != null && ctx.oneRulez ().Count() > 0)
             {
-                ctx.XPTree = new List<INode>();
-                foreach (OneRulezContext aCtx in ctx.oneRulez()) ctx.XPTree.Add(aCtx.XPTreeNode);
+                if (ctx.XPTreeNode == null) ctx.XPTreeNode = new eXPressionTree.Unit(this.Engine);
+                foreach (OneRulezContext aCtx in ctx.oneRulez()) ctx.XPTreeNode.Add((IXPTree)aCtx.XPTreeNode);
                 return true;
             }
             
@@ -333,8 +340,9 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public bool BuildXPTNode(SelectStatementBlockContext ctx)
         {
-            SelectionStatementBlock aBlock = new OnTrack.Rulez.eXPressionTree.SelectionStatementBlock();
-            ctx.XPTreeNode = aBlock;
+            if (ctx.XPTreeNode == null) ctx.XPTreeNode = new OnTrack.Rulez.eXPressionTree.SelectionStatementBlock();
+            SelectionStatementBlock aBlock = (SelectionStatementBlock) ctx.XPTreeNode ;
+
             // add the defined variables to the XPT
             foreach (VariableDefinition aVariable in ctx.names.Values)
             {
@@ -451,7 +459,7 @@ namespace OnTrack.Rulez
             if (ctx.selectCondition().Count() > 1)
             {
                eXPressionTree.LogicalExpression theLogical = (LogicalExpression)ctx.selectCondition()[0].XPTreeNode;
-               for(uint i = 0; i < ctx.selectCondition().Count();i++)
+               for(uint i = 0; i < ctx.selectCondition().Count()-1;i++)
                {
                    Operator anOperator = ctx.logicalOperator_2()[i].Operator;
                   
@@ -460,7 +468,7 @@ namespace OnTrack.Rulez
                    {
                        theLogical = new LogicalExpression(anOperator, theLogical, (LogicalExpression)ctx.selectCondition()[i + 1].XPTreeNode);
                        // negate
-                       if (ctx.NOT()[i + 1] != null)
+                       if (ctx.NOT().Count() >= i+1 && ctx.NOT()[i + 1] != null)
                            theLogical = LogicalExpression.NOT((IExpression)theLogical);
                    }
                    else
@@ -488,7 +496,8 @@ namespace OnTrack.Rulez
         /// <returns></returns>
          public uint incIncreaseKeyNo(SelectConditionsContext ctx)
          {
-             if (ctx.logicalOperator_2().Last().Operator.Token.ToUint == Token.AND || ctx.logicalOperator_2().Last().Operator.Token.ToUint == Token.ANDALSO) return ctx.keypos + 1;
+             // increase only if the last operator was an AND/ANDALSO
+             if (ctx.logicalOperator_2().Last().Operator.Token.ToUint == Token.AND || ctx.logicalOperator_2().Last().Operator.Token.ToUint == Token.ANDALSO) return ctx.keypos ++;
              return ctx.keypos;
          }
          /// <summary>
@@ -504,7 +513,13 @@ namespace OnTrack.Rulez
              if (ctx.dataObjectEntry  == null)
              {
                  iObjectDefinition aObjectDefinition = this.Engine.GetDataObjectDefinition(ctx.DefaultClassName);
-                 entryName = aObjectDefinition.Keys[ctx.keypos - 1];
+                 if (ctx.keypos <= aObjectDefinition.Keys.Count()) entryName = aObjectDefinition.Keys[ctx.keypos - 1];
+                 else
+                 {
+                     this.NotifyErrorListeners(String.Format(Messages.RCM_8, ctx.DefaultClassName, aObjectDefinition.Keys.Count(), ctx.keypos));
+                     return false;
+                 }
+
              }
              else entryName = ctx.dataObjectEntry.entryname ;
 
@@ -656,6 +671,183 @@ namespace OnTrack.Rulez
             if (aSymbol != null) return true;
             return false;
         }
-        
+        /// <summary>
+        /// register a Messagehandler to the node
+        /// </summary>
+        /// <param name="node"></param>
+        /// <returns></returns>
+        public bool RegisterMessages(INode node)
+        {
+            bool result = false;
+            // register at the listener our event listener
+            EventHandler<RulezParser.MessageListener.EventArgs> handler = (s,e) => node.Messages.Add(e.Message);
+            foreach (var aListener in this.ErrorListeners )
+                if (aListener is MessageListener)
+                { ((MessageListener)aListener).OnMessageAdded += handler; result = true; 
+                }
+            return result;
+        }
+        /// <summary>
+        /// register a Messagehandler to the node
+        /// </summary>
+        /// <param name="node"></param>
+        /// <returns></returns>
+        public bool DeRegisterMessages(INode node)
+        {
+            bool result = false;
+            // register at the listener our event listener
+            EventHandler<RulezParser.MessageListener.EventArgs> handler = (s,e) => node.Messages.Add(e.Message);
+            foreach (var aListener in this.ErrorListeners)
+                if (aListener is MessageListener) 
+                {
+                    ((MessageListener)aListener).ClearOnMessageAddedEvents();
+                    result = true;
+                }
+            return result;
+        }
+
+        /// <summary>
+        /// build-in Message Listener
+        /// </summary>
+        public class MessageListener : Antlr4.Runtime.BaseErrorListener
+        {
+            /// <summary>
+            /// event args
+            /// </summary>
+            public class EventArgs: System.EventArgs
+            {
+                public Message Message;
+
+                /// <summary>
+                /// constructor
+                /// </summary>
+                /// <param name="message"></param>
+                public EventArgs(Message message)
+                {
+                    this.Message = message;
+                }
+            }
+       
+            /// <summary>
+            /// list of errors
+            /// </summary>
+            private List<Message> _errors = new List<Message>();
+
+            // the OnMessageAdded Event
+            public event EventHandler<EventArgs> OnMessageAdded;
+
+            /// <summary>
+            /// constructor
+            /// </summary>
+            public MessageListener()
+            {
+            }
+
+            /// <summary>
+            /// get the errors
+            /// </summary>
+            public IEnumerable<Message> Errors
+            {
+                get
+                {
+                    return _errors.Where(x => x.Type == MessageType.Error);
+                }
+            }
+
+            /// <summary>
+            /// get the warnings
+            /// </summary>
+            public IEnumerable<Message> Warnings
+            {
+                get
+                {
+                    return _errors.Where(x => x.Type == MessageType.Warning);
+                }
+            }
+
+            public override void ReportAmbiguity(Antlr4.Runtime.Parser recognizer, DFA dfa, int startIndex, int stopIndex, bool exact, BitSet ambigAlts, ATNConfigSet configs)
+            {
+            }
+
+            public override void ReportAttemptingFullContext(Parser recognizer, DFA dfa, int startIndex, int stopIndex, BitSet conflictingAlts, SimulatorState conflictState)
+            {
+            }
+
+            public override void ReportContextSensitivity(Parser recognizer, DFA dfa, int startIndex, int stopIndex, int prediction, SimulatorState acceptState)
+            {
+            }
+
+            /// <summary>
+            /// process the SyntaxError
+            /// </summary>
+            /// <param name="recognizer"></param>
+            /// <param name="offendingSymbol"></param>
+            /// <param name="line"></param>
+            /// <param name="charPositionInLine"></param>
+            /// <param name="msg"></param>
+            /// <param name="e"></param>
+            public override void SyntaxError(IRecognizer recognizer, IToken offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
+            {
+                if (charPositionInLine != 00)
+                    Console.WriteLine(String.Format("ERROR <{0},{1:D2}>:{2}", line, charPositionInLine, msg));
+                else
+                    Console.WriteLine(String.Format("ERROR <line {0}>:{1}", line, msg));
+                // publish the message
+                Message message = new Message(type: MessageType.Error, line: line, pos: charPositionInLine, message: msg);
+                if (OnMessageAdded != null) OnMessageAdded(this, new EventArgs(message));
+                _errors.Add(message);
+            }
+            /// <summary>
+            /// clear all events
+            /// </summary>
+            public void ClearOnMessageAddedEvents()
+            {
+                foreach (EventHandler<MessageListener.EventArgs> aHandler in this.OnMessageAdded.GetInvocationList())
+                    this.OnMessageAdded += aHandler;
+            }
+        }
+    }
+
+    /// <summary>
+    /// type of messages
+    /// </summary>
+    public enum MessageType : uint
+    {
+        Error = 1,
+        Warning
+    }
+    /// <summary>
+    /// structure for erors
+    /// </summary>
+    public struct Message
+    {
+        public DateTime Timestamp;
+        public MessageType Type;
+        public int Line;
+        public int Pos;
+        public string Text;
+        /// <summary>
+        /// constructor
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="line"></param>
+        /// <param name="pos"></param>
+        /// <param name="message"></param>
+        public Message(MessageType type = MessageType.Error, int line = 0, int pos = 0, string message = null)
+        {
+            this.Timestamp = DateTime.Now;
+            this.Type = type;
+            this.Line = line;
+            this.Pos = pos;
+            this.Text = message;
+        }
+        /// <summary>
+        /// convert to string
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return String.Format("{0:u}: {1] [{2},{3}] {4}", this.Timestamp, this.Type.ToString(), this.Line, this.Pos, this.Text);
+        }
     }
 }

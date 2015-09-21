@@ -172,6 +172,43 @@ namespace OnTrack.Rulez
             return(this.Generate(new Antlr4.Runtime.AntlrInputStream(source)));
         }
         /// <summary>
+        /// Verify a source code and return the Inode
+        /// </summary>
+        /// <param name="source"></param>
+        /// <returns></returns>
+        public INode Verifiy(string source)
+        {
+            RulezParser.MessageListener aListener = new RulezParser.MessageListener();
+            RulezParser.RulezUnitContext aCtx = null;
+            try
+            {
+                RulezLexer aLexer = new RulezLexer(new Antlr4.Runtime.AntlrInputStream(source));
+                // wrap a token-stream around the lexer
+                Antlr4.Runtime.CommonTokenStream theTokens = new Antlr4.Runtime.CommonTokenStream(aLexer);
+                // create the aParser
+                RulezParser aParser = new RulezParser(theTokens);
+                aParser.Trace = true;
+                aParser.Engine = this;
+                aParser.AddErrorListener(aListener);
+                aCtx = aParser.rulezUnit();
+                if (aCtx != null) return aCtx.XPTreeNode;
+                return null;
+            }
+            catch (Exception ex)
+            {
+                if (aCtx != null)
+                {
+                    if (aCtx.XPTreeNode != null)
+                    {
+                        aCtx.XPTreeNode.Messages.Add(new Message(type: MessageType.Error, message: ex.Message));
+                        return aCtx.XPTreeNode;
+                    }
+                }
+                return null;
+            }
+        }
+       
+        /// <summary>
         /// generate from a input string a rule by parsing and compiling and store it
         /// </summary>
         /// <param name="input"></param>
@@ -225,12 +262,13 @@ namespace OnTrack.Rulez
                 }
 
                 // if successfull
-                if (result) {
+                if (result) 
+                {
                     rule.RuleState = otRuleState.generatedCode ;
-                    // save the theCode
-                    if (!String.IsNullOrEmpty(code.Handle)) code.Handle = rule.Handle;
-
-                    if (!String.IsNullOrEmpty(code.Handle)) AddCode(code);
+                    //  get the handle
+                    if (code != null && !String.IsNullOrEmpty(code.Handle)) code.Handle = rule.Handle;
+                    // add it to the code base
+                    if (code != null &&  !String.IsNullOrEmpty(code.Handle)) AddCode(code);
                     else throw new RulezException(RulezException.Types.HandleNotDefined, arguments: new object[] { rule.ID});
                 }
                 return result;
@@ -250,16 +288,16 @@ namespace OnTrack.Rulez
         {
             try
             {
-                bool result = false;
+                bool result = true;
                 code = null;
 
                 // check if the object to which data engine
                 foreach (iDataObjectEngine aDataEngine in _dataobjectEngines.Reverse <iDataObjectEngine > () )
                 {
-                    foreach (String aName in rule.ResultingObjectnames () ) result &= aDataEngine.Objects.HasObjectDefinition(id: aName);
-                    if (result) {
+                    foreach (String aName in rule.ResultingObjectnames () ) 
+                        result &= aDataEngine.Objects.HasObjectDefinition(id: aName);
+                    if (result) 
                         return aDataEngine.Generate((rule as eXPressionTree.IRule), out code);
-                    }
                 }
 
                 // failure
@@ -270,9 +308,6 @@ namespace OnTrack.Rulez
                 }
                 
                 return false;
-                
-
-
             }
             catch (Exception ex)
             {
