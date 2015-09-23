@@ -160,7 +160,7 @@ namespace OnTrack.Rulez
             _innerException = inner;
 
             // log it 
-            System.Diagnostics.Debug.Print("Exception " + DateTime.Now.ToString("u") + ":" + ID.ToString() + " " + _message);
+            System.Diagnostics.Debug.Print("Exception " + DateTime.Now.ToString("s") + ":" + ID.ToString() + " " + _message);
         }
         /// <summary>
         /// gets the message string of the exception

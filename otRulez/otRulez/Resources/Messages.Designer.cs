@@ -70,6 +70,24 @@ namespace OnTrack.Rulez.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to data object class &apos;{0}&apos; has no entry &apos;{1}&apos;.
+        /// </summary>
+        internal static string RCM_10 {
+            get {
+                return ResourceManager.GetString("RCM_10", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to identifier &apos;{0}&apos; could not be recognized.
+        /// </summary>
+        internal static string RCM_11 {
+            get {
+                return ResourceManager.GetString("RCM_11", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to no variable context &apos;{0}&apos; found.
         /// </summary>
         internal static string RCM_2 {
@@ -129,6 +147,15 @@ namespace OnTrack.Rulez.Resources {
         internal static string RCM_8 {
             get {
                 return ResourceManager.GetString("RCM_8", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to data object class &apos;{0]&apos; is not defined.
+        /// </summary>
+        internal static string RCM_9 {
+            get {
+                return ResourceManager.GetString("RCM_9", resourceCulture);
             }
         }
         

@@ -46,8 +46,10 @@ DECIMALUNIT: D E C I M A L U N I T;
 LANGUAGETEXT: L A N G U A G E T E X T;
 SYMBOL: S Y M B O L;
 
-// literals
-TEXTLITERAL : '"' (~["\r\n] | '""')* '"'  '#' LETTER (LETTERORDIGIT)*;
+// Text
+TEXTLITERAL : '"' (~["\r\n] | '""')* '"' ;
+// Text
+LANGUAGETEXTLITERAL : '"' (~["\r\n] | '""')* '"'  '#' LETTER (LETTERORDIGIT)*;
 // #ORANGE
 SYMBOLLITERAL : '#' LETTER (LETTERORDIGIT)*;
 // #10.12.2014#

@@ -83,7 +83,8 @@ namespace OnTrack.Rulez
             public  const uint BEEP = 22;
 
             private static string[] _ids = {"POS", "AND", "ANDALSO", "OR", "ORELSE", "NOT", "","","","",
-                                            "=", "!=", "GT", "GE", "LT", "LE", "+", "-", "*", "/", "MOD", "CONCAT", "BEEP"};
+                                            "=", "!=", "GT", "GE", "LT", "LE", "+", "-", "*", "/", "MOD", "CONCAT", 
+                                            "BEEP"};
             /// <summary>
             /// variable
             /// </summary>
@@ -117,6 +118,39 @@ namespace OnTrack.Rulez
                 throw new NotImplementedException();
             }
             /// <summary>
+            /// == comparerer on datatypes
+            /// </summary>
+            /// <param name="a"></param>
+            /// <param name="b"></param>
+            /// <returns></returns>
+            public static bool operator ==(Token a, Token b)
+            {
+                // If both are null, or both are same instance, return true.
+                if (System.Object.ReferenceEquals(a, b))
+                {
+                    return true;
+                }
+
+                // If one is null, but not both, return false.
+                if (((object)a == null) || ((object)b == null))
+                {
+                    return false;
+                }
+
+                // Return true if the fields match:
+                return a.ToUint == b.ToUint ;
+            }
+            /// <summary>
+            /// != comparer
+            /// </summary>
+            /// <param name="a"></param>
+            /// <param name="b"></param>
+            /// <returns></returns>
+            public static bool operator !=(Token a, Token b)
+            {
+                return !(a == b);
+            }
+            /// <summary>
             /// Equals
             /// </summary>
             /// <param name="obj"></param>
@@ -144,7 +178,8 @@ namespace OnTrack.Rulez
             /// <returns></returns>
             public override string ToString()
             {
-                return this.ToUint.ToString()+ ":'" + _ids[this.ToUint ]+"'";
+                if ( this.ToUint <= _ids.GetUpperBound (0) ) return  "'" + _ids[this.ToUint ]+"'";
+                return this.ToUint.ToString();
             }
         }
    
@@ -335,8 +370,9 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public static Operator GetOperator(Token token)
         {
-            if (token.ToUint < _buildInOperators.Length) return _buildInOperators[token.ToUint];
-            throw new RulezException(RulezException.Types.OutOfArraySize, arguments: new object[] { token.ToUint, _buildInOperators.Length });
+            Operator o =  _buildInOperators.Where( x => x.Token == token).FirstOrDefault();
+            if (o == null) throw new RulezException(RulezException.Types.OperatorNotDefined, arguments: new object[] { token.ToString() });
+            return o;
         }
         /// <summary>
         /// return the Operator Definition
@@ -407,15 +443,7 @@ namespace OnTrack.Rulez
         /// </summary>
         public otOperatorType Type { get { return _type; } }
         #endregion
-        /// <summary>
-        /// implementation of comparable
-        /// </summary>
-        /// <param name="obj"></param>
-        /// <returns></returns>
-        public int CompareTo(Operator obj)
-        {
-            return this.Token.CompareTo(obj.Token);
-        }
+        
         /// <summary>
         /// override Hashcode
         /// </summary>
@@ -435,14 +463,56 @@ namespace OnTrack.Rulez
                 return false;
             else
                 return this.CompareTo((Operator)obj) == 0;
-        }      
+        }
+        /// <summary>
+        /// implementation of comparable
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public  int CompareTo(Operator obj)
+        {
+            return this.CompareTo(obj);
+        }
+        /// <summary>
+        /// == comparerer on datatypes
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static bool operator ==(Operator a, Operator b)
+        {
+            // If both are null, or both are same instance, return true.
+            if (System.Object.ReferenceEquals(a, b))
+            {
+                return true;
+            }
+
+            // If one is null, but not both, return false.
+            if (((object)a == null) || ((object)b == null))
+            {
+                return false;
+            }
+
+            // Return true if the fields match:
+            return a.Token == b.Token;
+        }
+        /// <summary>
+        /// != comparer
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static bool operator !=(Operator a, Operator b)
+        {
+            return !(a == b);
+        }
         /// <summary>
         /// To string
         /// </summary>
         /// <returns></returns>
         public override string ToString()
         {
-            return CreateSignature(this.Token, this.Arguments, this.Priority, this.ReturnType);
+            return this.Token.ToString();
         }
     }
     /// <summary>

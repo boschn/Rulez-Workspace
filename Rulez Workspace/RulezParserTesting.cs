@@ -198,7 +198,8 @@ namespace OnTrack.Testing
             }
             set
             {
-                _keynames = new List<string>(value);
+                _keynames = new List<string>();
+                foreach (string s in value) _keynames.Add(s.ToUpper());
             }
         }
 
@@ -247,16 +248,16 @@ namespace OnTrack.Testing
         public DataObjectRepository()
         {
             ObjectDefinition theDeliverables = new ObjectDefinition("deliverables");
-            theDeliverables.AddEntry(new ObjectEntryDefinition(theDeliverables, "uid", otDataType.Number, false));
+            theDeliverables.AddEntry(new ObjectEntryDefinition(theDeliverables, "UID", otDataType.Number, false));
             theDeliverables.Keys = new string[] {"uid"};
             _objects.Add(theDeliverables.Objectname, theDeliverables);
             // testobject1 class
             ObjectDefinition aTestObject = new ObjectDefinition("testobject1");
-            aTestObject.AddEntry(new ObjectEntryDefinition(aTestObject, "uid", otDataType.Number, false));
-            aTestObject.AddEntry(new ObjectEntryDefinition(aTestObject, "ver", otDataType.Number, false));
-            aTestObject.AddEntry(new ObjectEntryDefinition(aTestObject, "date", otDataType.Date, true));
-            aTestObject.AddEntry(new ObjectEntryDefinition(aTestObject, "desc", otDataType.Text, true));
-            aTestObject.Keys = new string[] { "uid", "ver" };
+            aTestObject.AddEntry(new ObjectEntryDefinition(aTestObject, "UID", otDataType.Number, false));
+            aTestObject.AddEntry(new ObjectEntryDefinition(aTestObject, "VER", otDataType.Number, false));
+            aTestObject.AddEntry(new ObjectEntryDefinition(aTestObject, "CREATED", otDataType.Date, true));
+            aTestObject.AddEntry(new ObjectEntryDefinition(aTestObject, "DESC", otDataType.Text, true));
+            aTestObject.Keys = new string[] { "UID", "VER" };
             _objects.Add(aTestObject.Objectname, aTestObject);
             
         }
@@ -480,10 +481,23 @@ namespace OnTrack.Testing
         // Test-Sources
         String[] postiveSyntaxTest =
         {
+            // 1
             "selection s1 as deliverables[100];",
+            // 2
             "selection s1a as testobject1[100,1];",
-            "selection s1b as deliverables[100|200];",
-            "selection s1c as testobject1[100|200, 1];",
+            // 3
+            "selection s1b as deliverables[uid = 100|200];",
+            // 4
+            "selection s1c as testobject1[[ 100|200|300, 2] | created > #10.03.2015# ];", 
+            // 5
+            "selection s1d as testobject1[[ 100|200|300, 2 ] | [ 150, 3 ]];",
+            // 6
+            "selection s1e as testobject1[( 100 ) | ( 150 ) , 2];",
+            // 7
+            "selection s1f as testobject1[ uid=100 OR ( created > #20.05.2015# and desc = \"test\" )]",
+            // 8
+            "selection s1g as testobject1[ uid=ver + 1, 1]",
+            // 9
             "selection s2 (p1 as number) as deliverables[p1];",
             "selection s3 (p1 as number? default 100 ) as deliverables[uid=p1];",
             "selection s4 as testobject1[100,1, date > #10.09.2015#];",
@@ -491,22 +505,36 @@ namespace OnTrack.Testing
         };
         String[] expectedTree =
         {
-            "{Unit:{(SelectionRule) s1[]{ResultList:<DataObjectSymbol:deliverables>}{{(SelectionStatementBlock) LIST<DELIVERABLES?>[]{{Return LIST<DELIVERABLES?> {(SelectionExpression) {ResultList:<DataObjectSymbol:deliverables>}:{(CompareExpression) 10:'='<2,8,*>:<DataObjectSymbol:deliverables.uid>,<Literal:'100'>}}}}}}}}",
-            "selection s1a as testobject1[100,1];",
-            "selection s1b as deliverables[100|200];",
-            "selection s1c as testobject1[100|200, 1];",
-            "selection s2 (p1 as number) as deliverables[p1];",
-            "selection s3 (p1 as number? default 100 ) as deliverables[uid=p1];",
-            "selection s4 as testobject1[100,1, date > #10.09.2015#];",
-            "selection s4 as testobject1[(100, 1) | date > #10.09.2015#];",
+            // 1
+            "{Unit:{(SelectionRule) s1[]{ResultList:<DataObjectSymbol:DELIVERABLES>}{{(SelectionStatementBlock) LIST<DELIVERABLES?>[]{{Return LIST<DELIVERABLES?> {(SelectionExpression) {ResultList:<DataObjectSymbol:DELIVERABLES>}:{(CompareExpression) '=':<DataObjectSymbol:DELIVERABLES.UID>,<NUMBER:100>}}}}}}}}",
+            // 2
+            "{Unit:{(SelectionRule) s1a[]{ResultList:<DataObjectSymbol:TESTOBJECT1>}{{(SelectionStatementBlock) LIST<TESTOBJECT1?>[]{{Return LIST<TESTOBJECT1?> {(SelectionExpression) {ResultList:<DataObjectSymbol:TESTOBJECT1>}:{(LogicalExpression) 'ANDALSO':{(CompareExpression) '=':<DataObjectSymbol:testobject1.uid>,<NUMBER:100>},{(CompareExpression) '=':<DataObjectSymbol:testobject1.ver>,<NUMBER:1>}}}}}}}}}",
+            // 3
+            "{Unit:{(SelectionRule) s1b[]{ResultList:<DataObjectSymbol:DELIVERABLES>}{{(SelectionStatementBlock) LIST<DELIVERABLES?>[]{{Return LIST<DELIVERABLES?> {(SelectionExpression) {ResultList:<DataObjectSymbol:DELIVERABLES>}:{(LogicalExpression) 'ORELSE':{(CompareExpression) '=':<DataObjectSymbol:deliverables.uid>,<NUMBER:100>},{(CompareExpression) '=':<DataObjectSymbol:deliverables.UID>,<NUMBER:200>}}}}}}}}}",
+            // 4
+            "{Unit:{(SelectionRule) s1c[]{ResultList:<DataObjectSymbol:TESTOBJECT1>}{{(SelectionStatementBlock) LIST<TESTOBJECT1?>[]{{Return LIST<TESTOBJECT1?> {(SelectionExpression) {ResultList:<DataObjectSymbol:TESTOBJECT1>}:{(LogicalExpression) 'ORELSE':{(LogicalExpression) 'ANDALSO':{(LogicalExpression) 'ORELSE':{(LogicalExpression) 'ORELSE':{(CompareExpression) '=':<DataObjectSymbol:testobject1.UID>,<NUMBER:100>},{(CompareExpression) '=':<DataObjectSymbol:testobject1.UID>,<NUMBER:200>}},{(CompareExpression) '=':<DataObjectSymbol:testobject1.UID>,<NUMBER:300>}},{(CompareExpression) '=':<DataObjectSymbol:testobject1.VER>,<NUMBER:2>}},{(CompareExpression) 'GT':<DataObjectSymbol:testobject1.created>,<DATE:10.03.2015 00:00:00>}}}}}}}}}",
+            // 5
+            "{Unit:{(SelectionRule) s1d[]{ResultList:<DataObjectSymbol:TESTOBJECT1>}{{(SelectionStatementBlock) LIST<TESTOBJECT1?>[]{{Return LIST<TESTOBJECT1?> {(SelectionExpression) {ResultList:<DataObjectSymbol:TESTOBJECT1>}:{(LogicalExpression) 'ORELSE':{(LogicalExpression) 'ANDALSO':{(LogicalExpression) 'ORELSE':{(LogicalExpression) 'ORELSE':{(CompareExpression) '=':<DataObjectSymbol:testobject1.UID>,<NUMBER:100>},{(CompareExpression) '=':<DataObjectSymbol:testobject1.UID>,<NUMBER:200>}},{(CompareExpression) '=':<DataObjectSymbol:testobject1.UID>,<NUMBER:300>}},{(CompareExpression) '=':<DataObjectSymbol:testobject1.VER>,<NUMBER:2>}},{(LogicalExpression) 'ANDALSO':{(CompareExpression) '=':<DataObjectSymbol:testobject1.UID>,<NUMBER:150>},{(CompareExpression) '=':<DataObjectSymbol:testobject1.VER>,<NUMBER:3>}}}}}}}}}}",
+            // 6
+            "{Unit:{(SelectionRule) s1e[]{ResultList:<DataObjectSymbol:TESTOBJECT1>}{{(SelectionStatementBlock) LIST<TESTOBJECT1?>[]{{Return LIST<TESTOBJECT1?> {(SelectionExpression) {ResultList:<DataObjectSymbol:TESTOBJECT1>}:{(LogicalExpression) 'ANDALSO':{(LogicalExpression) 'ORELSE':{(CompareExpression) '=':<DataObjectSymbol:testobject1.UID>,<NUMBER:100>},{(CompareExpression) '=':<DataObjectSymbol:testobject1.UID>,<NUMBER:150>}},{(CompareExpression) '=':<DataObjectSymbol:testobject1.VER>,<NUMBER:2>}}}}}}}}}",
+            // 7
+            "{Unit:{(SelectionRule) s1f[]{ResultList:<DataObjectSymbol:TESTOBJECT1>}{{(SelectionStatementBlock) LIST<TESTOBJECT1?>[]{{Return LIST<TESTOBJECT1?> {(SelectionExpression) {ResultList:<DataObjectSymbol:TESTOBJECT1>}:{(LogicalExpression) 'ORELSE':{(CompareExpression) '=':<DataObjectSymbol:testobject1.uid>,<NUMBER:100>},{(LogicalExpression) 'ANDALSO':{(CompareExpression) 'GT':<DataObjectSymbol:testobject1.created>,<DATE:20.05.2015 00:00:00>},{(CompareExpression) '=':<DataObjectSymbol:testobject1.desc>,<TEXT:\"test\">}}}}}}}}}}",
+            // 8
+            "{Unit:{(SelectionRule) s1g[]{ResultList:<DataObjectSymbol:TESTOBJECT1>}{{(SelectionStatementBlock) LIST<TESTOBJECT1?>[]{{Return LIST<TESTOBJECT1?> {(SelectionExpression) {ResultList:<DataObjectSymbol:TESTOBJECT1>}:{(LogicalExpression) 'ANDALSO':{(CompareExpression) '=':<DataObjectSymbol:testobject1.uid>,{(OperationExpression) '+':<DataObjectSymbol:testobject1.ver>,<NUMBER:1>}},{(CompareExpression) '=':<DataObjectSymbol:testobject1.VER>,<NUMBER:1>}}}}}}}}}",
         };
-
+        String[] negativSyntaxTest =
+        {
+            "selection s1 as deliverables[100,1];", // automatic keycount wrong
+            "selection s1a as delivarebles[\"100\"];", // wrong type of key
+            
+        };
+        Engine Engine { get { return _engine; }  }
         [TestMethod]
         public void AllSyntax()
         {
             {
                 // data context
-                _engine.AddDataEngine(new DataObjectEngine("test"));
+                Engine.AddDataEngine(new DataObjectEngine("test"));
 
                 for (uint i = 0; i < postiveSyntaxTest.GetUpperBound(0); i++)
                 {
@@ -519,9 +547,9 @@ namespace OnTrack.Testing
         public void RunDevelopmentTest()
         {
             // data context
-                _engine.AddDataEngine(new DataObjectEngine("test"));
-
-            RunPositiveSyntaxTest(1, postiveSyntaxTest[0], expected: expectedTree[0]);
+            Engine.AddDataEngine(new DataObjectEngine("test"));
+            uint i =8;
+            RunPositiveSyntaxTest(i, postiveSyntaxTest[i-1], expected: expectedTree[i-1]);
         }
         /// <summary>
         /// run a positive syntax test by statement
@@ -531,9 +559,58 @@ namespace OnTrack.Testing
         public void RunPositiveSyntaxTest(ulong id, string statement, string expected = null)
         {
             bool aResult = false;
+          
+            Console.Out.WriteLine(DateTime.Now.ToString("s") + ": Syntax Test #" + id.ToString() + ":" + statement);
+                
+            INode theNode = _engine.Verifiy(statement);
+
+            // check result
+            if (theNode == null)
+                aResult = false;
+            else if (theNode.Messages.Where(x => x.Type == MessageType.Error).Count() == 0)
+            {
+                if (String.IsNullOrEmpty(expected))
+                    aResult = true;
+                else if (String.Compare(theNode.ToString(), expected, true) == 00)
+                    aResult = true;
+                else
+                {
+                    Console.Out.WriteLine(DateTime.Now.ToString("s") + ": Syntax Test #" + id.ToString() + " expected result :" + expected);
+                    aResult = false;
+                }
+            }
+                
+            if (!aResult)
+            {
+                Console.Out.WriteLine(DateTime.Now.ToString("s") + ": Syntax Test #" + id.ToString() + " failed.");
+                if (theNode != null)
+                {
+                    Console.Out.WriteLine("Errors:");
+                    foreach (Message anError in theNode.Messages)
+                        Console.Out.WriteLine(anError.ToString());
+                    Console.Out.WriteLine();
+                    Console.Out.WriteLine("Result:");
+                    Console.Out.WriteLine(theNode.ToString());
+                }
+            }
+            else
+                Console.Out.WriteLine(DateTime.Now.ToString("s") + ": Syntax Test #" + id.ToString() + " succeeded.");
+
+            // assert
+            Assert.IsTrue(aResult, DateTime.Now.ToString("s") + ": Syntax Test #" + id.ToString() + " failed.");
+            
+        }
+        /// <summary>
+        /// run a positive syntax test by statement
+        /// </summary>
+        /// <param name="statement"></param>
+        [TestMethod]
+        public void RunNegativeSyntaxTest(ulong id, string statement, string expected = null)
+        {
+            bool aResult = false;
             try
             {
-                INode theNode =_engine.Verifiy(statement);
+                INode theNode = _engine.Verifiy(statement);
 
                 // check result
                 if (theNode == null)
@@ -544,21 +621,22 @@ namespace OnTrack.Testing
                     else if (String.Compare(theNode.ToString(), expected) == 00) aResult = true;
                     else aResult = false;
                 }
-                
-                if (aResult)
-                    Console.Write(DateTime.Now.ToString("u") + ": Syntax Test #" + id.ToString() + " succeeded.");
+
+                if (!aResult)
+                {
+                    Console.Out.Write(DateTime.Now.ToString("s") + ": Syntax Test #" + id.ToString() + " succeeded.");
+                    foreach (Message anError in theNode.Messages) Console.WriteLine(anError);
+                }
                 else
                 {
-                    foreach (Message anError in theNode.Messages)
-                        Console.WriteLine(anError);
-
+                    Console.Out.Write(DateTime.Now.ToString("s") + ": Syntax Test #" + id.ToString() + " was not as a failure recognized.");
                 }
-                Assert.IsTrue(aResult, DateTime.Now.ToString("u") + ": Syntax Test #" + id.ToString() + " failed.");
+                Assert.IsFalse(aResult, DateTime.Now.ToString("s") + ": Syntax Test #" + id.ToString() + " failed.");
             }
-                
+
             catch (Exception ex)
             {
-                if  (!(ex is Microsoft.VisualStudio.TestTools.UnitTesting.AssertFailedException	))	Assert.Fail(ex.Message);
+                if (!(ex is Microsoft.VisualStudio.TestTools.UnitTesting.AssertFailedException)) Assert.Fail(ex.Message);
             }
         }
     }

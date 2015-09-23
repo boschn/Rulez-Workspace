@@ -93,7 +93,7 @@ namespace OnTrack.Rulez
                 
                 return ((SelectStatementBlockContext)root).names.ContainsKey(name);
             }
-            this.NotifyErrorListeners(String.Format(Messages.RCM_2, name, "SelectStatementBlock"));
+            // this.NotifyErrorListeners(String.Format(Messages.RCM_2, name, "SelectStatementBlock"));
             return false;
         }
         /// <summary>
@@ -152,7 +152,7 @@ namespace OnTrack.Rulez
             {
                 return ((SelectionRulezContext)root).names.ContainsKey(name);
             }
-            this.NotifyErrorListeners(String.Format(Messages.RCM_4, name, "SelectionRule"));
+            // this.NotifyErrorListeners(String.Format(Messages.RCM_4, name, "SelectionRule"));
             return false;
         }
         /// <summary>
@@ -170,6 +170,54 @@ namespace OnTrack.Rulez
             }
             this.NotifyErrorListeners(String.Format(Messages.RCM_4, name, "SelectionRule"));
             return false;
+        }
+        /// <summary>
+        /// returns true if this a Data Object class
+        /// </summary>
+        /// <returns></returns>
+        bool IsDataObjectClass(string name, RuleContext context)
+        {
+            return Engine.Repository.HasDataObjectDefinition(name);
+        }
+        /// <summary>
+        /// returns true if this a Data Object class
+        /// </summary>
+        /// <returns></returns>
+        bool IsDataObjectEntry(string name, RuleContext context)
+        {
+            // if we are in the right context
+            if (context is DataObjectEntryNameContext)
+            {
+                DataObjectEntryNameContext ctx = (DataObjectEntryNameContext)context;
+                string aClassname = String.Empty;
+                if (string.IsNullOrEmpty(ctx.ClassName)) aClassname = GetDefaultClassName(context);
+                else aClassname = ctx.ClassName;
+
+                if (Engine.Repository.HasDataObjectDefinition(aClassname))
+                    return (Engine.Repository.GetDataObjectDefinition(aClassname).HasEntry(name));
+
+                return false;
+            }
+            else
+            {
+                SelectExpressionContext ctx = (SelectExpressionContext)context;
+                string aClassname = GetDefaultClassName(context);
+                if (! (String.IsNullOrEmpty(aClassname)))
+                    if (Engine.Repository.HasDataObjectDefinition(aClassname))
+                        return (Engine.Repository.GetDataObjectDefinition(aClassname).HasEntry(name));
+                    else return false;
+                else 
+                {
+                    // check the name might be a full name
+                    // string entryname = String.Split(name, '.'c).Last();
+
+                }
+                return false;
+            } 
+
+                return false;
+
+           
         }
         /// <summary>
         /// checks if the name is a unique rule id and throws an error
@@ -445,28 +493,24 @@ namespace OnTrack.Rulez
                 else ctx.XPTreeNode = LogicalExpression.NOT((IExpression)ctx.selectCondition()[0].XPTreeNode);
                 return true;
             }
-            //|   RPAREN selectConditions [$ClassName, $keypos] LPAREN
-            if (ctx.selectConditions() != null)
-            {
-                if (ctx.NOT().Count() == 0) ctx.XPTreeNode = ctx.selectConditions().XPTreeNode;
-                else ctx.XPTreeNode = LogicalExpression.NOT((IExpression)ctx.selectConditions().XPTreeNode);
-                // set the max priority for disabling reshuffle
-                ((OperationExpression)ctx.XPTreeNode).Priority = uint.MaxValue ;
-                return true;
-            }
+            
             // if we have more than this 
             //|	selectCondition [$ClassName, $keypos] (logicalOperator_2 selectCondition [$ClassName, $keypos])* 
             if (ctx.selectCondition().Count() > 1)
             {
                eXPressionTree.LogicalExpression theLogical = (LogicalExpression)ctx.selectCondition()[0].XPTreeNode;
+               if (theLogical == null) return false;
+
                for(uint i = 0; i < ctx.selectCondition().Count()-1;i++)
                {
                    Operator anOperator = ctx.logicalOperator_2()[i].Operator;
                   
                     // x or y and z ->  ( x or  y) and z )
-                   if (theLogical.Priority > anOperator.Priority)
+                   if (theLogical.Priority >= anOperator.Priority)
                    {
-                       theLogical = new LogicalExpression(anOperator, theLogical, (LogicalExpression)ctx.selectCondition()[i + 1].XPTreeNode);
+                       if ((LogicalExpression)ctx.selectCondition()[i + 1].XPTreeNode != null)
+                            theLogical = new LogicalExpression(anOperator, theLogical, (LogicalExpression)ctx.selectCondition()[i + 1].XPTreeNode);
+                       else return false;
                        // negate
                        if (ctx.NOT().Count() >= i+1 && ctx.NOT()[i + 1] != null)
                            theLogical = LogicalExpression.NOT((IExpression)theLogical);
@@ -477,7 +521,7 @@ namespace OnTrack.Rulez
                        IExpression right = (IExpression)theLogical.RightOperand;
                        theLogical.RightOperand = new LogicalExpression(anOperator, right, (IExpression)ctx.selectCondition()[i + 1].XPTreeNode);
                        // negate
-                       if (ctx.NOT()[i + 1] != null)
+                       if (ctx.NOT().Count() >= i + 1 &&  ctx.NOT()[i + 1] != null)
                            theLogical.RightOperand = LogicalExpression.NOT((IExpression)theLogical.RightOperand);
                     
                    }
@@ -496,10 +540,41 @@ namespace OnTrack.Rulez
         /// <returns></returns>
          public uint incIncreaseKeyNo(SelectConditionsContext ctx)
          {
+             
              // increase only if the last operator was an AND/ANDALSO
-             if (ctx.logicalOperator_2().Last().Operator.Token.ToUint == Token.AND || ctx.logicalOperator_2().Last().Operator.Token.ToUint == Token.ANDALSO) return ctx.keypos ++;
+             if (ctx.logicalOperator_2() != null)
+             {
+                 
+                 // if there is an AND or ANDALSO
+                 if (ctx.logicalOperator_2().Last().Operator.Token.ToUint == Token.AND || ctx.logicalOperator_2().Last().Operator.Token.ToUint == Token.ANDALSO)
+                 {
+                     // check if the last named entry is a key -> reposition for unamed defaults
+                     // (100,200,uid=150,250) -> keypos 1,2,1,2
+                     if (ctx.selectCondition() != null  )
+                     {
+                         if (ctx.selectCondition().Last().dataObjectEntry != null)
+                         {
+                             DataObjectEntrySymbol aSymbol = (DataObjectEntrySymbol)ctx.selectCondition().Last().dataObjectEntry.XPTreeNode;
+                             if (aSymbol.CheckValidity().HasValue && aSymbol.IsValid.Value == true)
+                                 if (aSymbol.ObjectDefinition.Keys.Contains(aSymbol.Entryname))
+                                 {
+                                     int pos = Array.FindIndex(aSymbol.ObjectDefinition.Keys, x => String.Compare(x, aSymbol.Entryname.ToUpper(), true) == 0);
+                                     if (pos >= 0) ctx.keypos = (uint)pos+1; // keypos is starting from 1 ... -> will be increased to next key lower down
+                                 }
+                         }
+                     }
+
+                     // simply increase and return
+                     return ctx.keypos++;
+                 }
+                
+             }
+                         
+
              return ctx.keypos;
+
          }
+       
          /// <summary>
          /// build a XPT Node out of a selection condition
          /// </summary>
@@ -508,35 +583,59 @@ namespace OnTrack.Rulez
          public bool BuildXPTNode(SelectConditionContext ctx)
          {
              string entryName;
-             // determine the key name with the key is not provided by the key position
-             //
-             if (ctx.dataObjectEntry  == null)
+             //|   RPAREN selectConditions [$ClassName, $keypos] LPAREN 
+             if (ctx.selectConditions() != null)
              {
-                 iObjectDefinition aObjectDefinition = this.Engine.GetDataObjectDefinition(ctx.DefaultClassName);
-                 if (ctx.keypos <= aObjectDefinition.Keys.Count()) entryName = aObjectDefinition.Keys[ctx.keypos - 1];
-                 else
-                 {
-                     this.NotifyErrorListeners(String.Format(Messages.RCM_8, ctx.DefaultClassName, aObjectDefinition.Keys.Count(), ctx.keypos));
-                     return false;
-                 }
-
+                 if (ctx.NOT()==null) ctx.XPTreeNode = ctx.selectConditions().XPTreeNode;
+                 else ctx.XPTreeNode = LogicalExpression.NOT((IExpression)ctx.selectConditions().XPTreeNode);
+                 // set the max priority for disabling reshuffle
+                 ((OperationExpression)ctx.XPTreeNode).Priority = uint.MaxValue;
+                 return true;
              }
-             else entryName = ctx.dataObjectEntry.entryname ;
+             else
+             {
+                 // determine the key name with the key is not provided by the key position
+                 //
+                 if (ctx.dataObjectEntry == null)
+                 {
+                     string aClassName = GetDefaultClassName(ctx);
+                     if (this.Engine.Repository.HasDataObjectDefinition(aClassName))
+                     {
+                         iObjectDefinition aObjectDefinition = this.Engine.GetDataObjectDefinition(aClassName);
+                         if (ctx.keypos <= aObjectDefinition.Keys.Count())
+                             entryName = aClassName + "." + aObjectDefinition.Keys[ctx.keypos - 1];
+                         else
+                         {
+                             this.NotifyErrorListeners(String.Format(Messages.RCM_8, aClassName, aObjectDefinition.Keys.Count(), ctx.keypos));
+                             return false;
+                         }
+                     }else
+                     {
+                         this.NotifyErrorListeners(String.Format(Messages.RCM_9, aClassName));
+                         return false;
+                     }
 
-             // get the symbol
-             DataObjectEntrySymbol aSymbol = new DataObjectEntrySymbol(ctx.DefaultClassName + "." + entryName, engine: this.Engine);
+                 }
+                 else entryName = ctx.dataObjectEntry.entryname;
 
-             // Operator
-             Operator anOperator ;
-             // default operator is the EQ operator
-             if (ctx.Operator == null) anOperator = Engine.GetOperator(new Token(Token.EQ));
-             else anOperator = ctx.Operator.Operator;
+                 // get the symbol
+                 DataObjectEntrySymbol aSymbol = new DataObjectEntrySymbol(entryName, engine: this.Engine);
 
-             // build the comparer expression
-             CompareExpression aCompare = new CompareExpression(anOperator, aSymbol, (IExpression) ctx.select.XPTreeNode);
-             // set it
-             ctx.XPTreeNode = aCompare;
-             return true; 
+                 // Operator
+                 Operator anOperator;
+                 // default operator is the EQ operator
+                 if (ctx.Operator == null) anOperator = Engine.GetOperator(new Token(Token.EQ));
+                 else anOperator = ctx.Operator.Operator;
+
+                 // build the comparer expression
+                 CompareExpression aCompare = null;
+                 if (aSymbol != null && ctx.select.XPTreeNode != null) aCompare = new CompareExpression(anOperator, aSymbol, (IExpression)ctx.select.XPTreeNode);
+                 else return false;
+                 // set it
+                 ctx.XPTreeNode = aCompare;
+                 return true;
+             }
+             return false;
          }
         /// <summary>
         /// build an XPTreeNode for a select expression
@@ -574,41 +673,64 @@ namespace OnTrack.Rulez
              {
                  ctx.XPTreeNode =  (IExpression)ctx.selectExpression()[0].XPTreeNode;
                  // set the max priority for disabling reshuffle
-                 ((OperationExpression)ctx.XPTreeNode).Priority = uint.MaxValue;
+                 if (ctx.XPTreeNode != null && ctx.XPTreeNode is OperationExpression) ((OperationExpression)ctx.XPTreeNode).Priority = uint.MaxValue;
                  return true;
-             }
+             } 
              //| ( PLUS | MINUS ) selectExpression
              if (ctx.selectExpression().Count() == 1)
              {
-                 if (ctx.MINUS() != null)
-                     ctx.XPTreeNode = new OperationExpression(new Token(Token.MINUS), new Literal(0), (IExpression)ctx.selectExpression()[0].XPTreeNode);
-                 else ctx.XPTreeNode = (IExpression)ctx.selectExpression()[0].XPTreeNode;
+                 if (ctx.selectExpression()[0].XPTreeNode != null)
+                 {
+                     if (ctx.MINUS() != null)
+                         ctx.XPTreeNode = new OperationExpression(new Token(Token.MINUS), new Literal(0), (IExpression)ctx.selectExpression()[0].XPTreeNode);
+                     else ctx.XPTreeNode = (IExpression)ctx.selectExpression()[0].XPTreeNode;
+                 }
+                 else return false;
+
                  return true;
              }
              //| logicalOperator_1 selectExpression
              if (ctx.logicalOperator_1() != null && ctx.selectExpression().Count() == 1)
              {
-                 ctx.XPTreeNode = new LogicalExpression(ctx.logicalOperator_1().Operator, (IExpression)ctx.selectExpression()[0].XPTreeNode);
+                 if (ctx.selectExpression()[0].XPTreeNode != null)
+                     ctx.XPTreeNode = new LogicalExpression(ctx.logicalOperator_1().Operator, (IExpression)ctx.selectExpression()[0].XPTreeNode);
+                 else return false;
                  return true;
              }
              //| selectExpression arithmeticOperator selectExpression
              if (ctx.arithmeticOperator().Count() > 0 && ctx.selectExpression().Count() > 1)
              {
-                OperationExpression theExpression = (OperationExpression)ctx.selectExpression()[0].XPTreeNode;
-               for(uint i = 0; i < ctx.selectExpression().Count();i++)
+                 IExpression theExpression = (IExpression)ctx.selectExpression()[0].XPTreeNode;
+                 if (theExpression == null) return false;
+
+
+               for(uint i = 0; i < ctx.selectExpression().Count()-1;i++)
                {
                    Operator anOperator = ctx.arithmeticOperator()[i].Operator;
-                  
-                    // x * y + z ->  ( x *  y) + z )
-                   if (theExpression.Priority > anOperator.Priority)
+                   if (!(theExpression is OperationExpression))
                    {
-                       theExpression = new OperationExpression(anOperator, theExpression, (OperationExpression)ctx.selectExpression()[i + 1].XPTreeNode);
+                       if ((IExpression)ctx.selectExpression()[i + 1].XPTreeNode != null)
+                           theExpression = new OperationExpression(anOperator, theExpression, (IExpression)ctx.selectExpression()[i + 1].XPTreeNode);
+                       else return false;
                    }
                    else
-                   {   // x + y o* z ->  x + ( y * z )
-                       // build the new (lower) operation in the higher level tree (right with the last operand)
-                       IExpression right = (IExpression)theExpression.RightOperand;
-                       theExpression.RightOperand = new LogicalExpression(anOperator, right, (IExpression)ctx.selectExpression()[i + 1].XPTreeNode);
+                   {
+
+                       // x * y + z ->  ( x *  y) + z )
+                       if (((OperationExpression)theExpression).Priority > anOperator.Priority)
+                       {
+                           if ((IExpression)ctx.selectExpression()[i + 1].XPTreeNode != null)
+                               theExpression = new OperationExpression(anOperator, theExpression, (IExpression)ctx.selectExpression()[i + 1].XPTreeNode);
+                           else return false;
+                       }
+                       else
+                       {   // x + y o* z ->  x + ( y * z )
+                           // build the new (lower) operation in the higher level tree (right with the last operand)
+                           IExpression right = (IExpression) ((OperationExpression)theExpression).RightOperand;
+                           if (right != null && (IExpression)ctx.selectExpression()[i + 1].XPTreeNode != null)
+                               ((OperationExpression)theExpression).RightOperand = new LogicalExpression(anOperator, right, (IExpression)ctx.selectExpression()[i + 1].XPTreeNode);
+                           else return false;
+                       }
                    }
                }
                ctx.XPTreeNode = theExpression;
@@ -662,9 +784,14 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public bool BuildXPTNode(DataObjectEntryNameContext ctx)
         {
+            string aClassName = String.Empty;
+
             /// build the entry name
-            if (ctx.dataObjectClass() == null) ctx.entryname = GetDefaultClassName(ctx) + "." + ctx.IDENTIFIER().GetText();
-	        else ctx.entryname = ctx.dataObjectClass().ClassName + "." + ctx.IDENTIFIER().GetText();
+            if (ctx.dataObjectClass() == null) aClassName = GetDefaultClassName (ctx);
+	        else aClassName = ctx.dataObjectClass().ClassName ;
+            // full entry name
+            ctx.entryname = aClassName + "." + ctx.IDENTIFIER().GetText();
+            ctx.ClassName = aClassName;
             // get the symbol from the engine
             DataObjectEntrySymbol aSymbol = new DataObjectEntrySymbol(ctx.entryname, engine: this.Engine);
             ctx.XPTreeNode = aSymbol;
@@ -788,14 +915,19 @@ namespace OnTrack.Rulez
             /// <param name="e"></param>
             public override void SyntaxError(IRecognizer recognizer, IToken offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
             {
-                if (charPositionInLine != 00)
-                    Console.WriteLine(String.Format("ERROR <{0},{1:D2}>:{2}", line, charPositionInLine, msg));
-                else
-                    Console.WriteLine(String.Format("ERROR <line {0}>:{1}", line, msg));
                 // publish the message
-                Message message = new Message(type: MessageType.Error, line: line, pos: charPositionInLine, message: msg);
+                string text = String.Empty;
+                if (e is FailedPredicateException) text = String.Format(Messages.RCM_11, offendingSymbol.Text );
+                else text = msg;
+
+                Message message = new Message(type: MessageType.Error, line: line, pos: charPositionInLine, message: text);
                 if (OnMessageAdded != null) OnMessageAdded(this, new EventArgs(message));
                 _errors.Add(message);
+
+                if (charPositionInLine != 00)
+                    Console.Out.WriteLine(String.Format("ERROR <{0},{1:D2}>:{2}", line, charPositionInLine, text));
+                else
+                    Console.Out.WriteLine(String.Format("ERROR <line {0}>:{1}", line, text));
             }
             /// <summary>
             /// clear all events
@@ -847,7 +979,7 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public override string ToString()
         {
-            return String.Format("{0:u}: {1] [{2},{3}] {4}", this.Timestamp, this.Type.ToString(), this.Line, this.Pos, this.Text);
+            return String.Format("{0:s}: {1} [Line {2}, Position {3}] {4}", this.Timestamp, this.Type.ToString(), this.Line, this.Pos, this.Text);
         }
     }
 }

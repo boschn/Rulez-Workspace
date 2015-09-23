@@ -120,6 +120,12 @@
   <data name="RCM_1" xml:space="preserve">
     <value>Variablenname '{0}' ist im Kontext '{1}' bereits definiert</value>
   </data>
+  <data name="RCM_10" xml:space="preserve">
+    <value>Datenobjekt Klasse '{0}' hat keinen Eintrag '{1}'</value>
+  </data>
+  <data name="RCM_11" xml:space="preserve">
+    <value>Bezeichner '{0}' konnte nicht erkannt werden</value>
+  </data>
   <data name="RCM_2" xml:space="preserve">
     <value>Keinen Variablen-Kontext '{0}' gefunden.</value>
   </data>
@@ -140,6 +146,9 @@
   </data>
   <data name="RCM_8" xml:space="preserve">
     <value>Datenobjekt Klasse '{0}' hat  {1} Schüsselfelder - Schlüsselfeld mit Nummer {2} wurde indirekt in Ausdruck benutzt</value>
+  </data>
+  <data name="RCM_9" xml:space="preserve">
+    <value>Datenobjekt Klasse'{0}' ist nicht definiert</value>
   </data>
   <data name="REM_1" xml:space="preserve">
     <value>null argument ist invalid</value>

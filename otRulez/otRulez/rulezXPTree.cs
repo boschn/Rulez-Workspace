@@ -176,7 +176,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <returns></returns>
         public override string ToString()
         {
-            return String.Format("<{0}:'{1}'>", NodeType.ToString(),this.Value);
+            return String.Format("<{0}:{1}>", (this.DataType != null) ? this.DataType.ToString(): NodeType.ToString(),  this.Value);
         }
     }
 
@@ -217,7 +217,7 @@ namespace OnTrack.Rulez.eXPressionTree
             // set the engine property also to the nodes
             if (e.PropertyName == "Engine")
             {
-                foreach (INode aNode in Nodes) aNode.Engine = this.Engine;
+                foreach (INode aNode in Nodes) if (aNode != null) aNode.Engine = this.Engine;
             }
         }
         /// <summary>
@@ -229,7 +229,7 @@ namespace OnTrack.Rulez.eXPressionTree
         {
             // set the parent
             if (e.Action == NotifyCollectionChangedAction.Add)
-                foreach (INode aNode in e.NewItems) { aNode.Parent = this; aNode.Engine = this.Engine; }
+                foreach (INode aNode in e.NewItems) { if (aNode != null) { aNode.Parent = this; aNode.Engine = this.Engine; } }
         }
         /// <summary>
         /// return the node type
@@ -500,7 +500,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// returns the IObjectDefinition
         /// </summary>
-        public iObjectDefinition Definition
+        public iObjectDefinition ObjectDefinition
         {
             get
             {
@@ -585,7 +585,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <returns></returns>
         public override string ToString()
         {
-            return String.Format("<{0}:{1}>", NodeType.ToString(), this.ID);
+            return String.Format("<{0}:{1}>", NodeType.ToString(), this.ID.ToUpper());
         }
     }
     /// <summary>
@@ -640,7 +640,11 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// returns the IObjectDefinition
         /// </summary>
-        public iObjectEntryDefinition Definition { get { return _entrydefinition; } }
+        public iObjectDefinition ObjectDefinition { get { return _entrydefinition.ObjectDefinition; } }
+        /// <summary>
+        /// returns the IObjectEntryDefinition
+        /// </summary>
+        public iObjectEntryDefinition ObjectEntryDefinition { get { return _entrydefinition; } }
         /// <summary>
         /// returns the ObjectID of the entry
         /// </summary>
