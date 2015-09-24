@@ -865,7 +865,7 @@ namespace OnTrack.Rulez
             Initialize();
             foreach (iDataObjectRepository aRepository in _dataobjectRepositories)
             {
-                if (aRepository.HasObjectDefinition(id)) return true;
+                if (aRepository.HasObjectDefinition(CanonicalName.ClassName (id))) return true;
             }
             return false;
         }
@@ -879,7 +879,7 @@ namespace OnTrack.Rulez
             Initialize();
             foreach (iDataObjectRepository aRepository in _dataobjectRepositories)
             {
-                iObjectDefinition aDefinition = aRepository.GetIObjectDefinition(id);
+                iObjectDefinition aDefinition = aRepository.GetIObjectDefinition(CanonicalName.ClassName(id));
                 if (aDefinition != null) return aDefinition;
             }
             throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[] { id, "DataObjectEntrySymbol Repositories" });

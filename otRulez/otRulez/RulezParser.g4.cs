@@ -178,9 +178,7 @@ namespace OnTrack.Rulez
         bool IsDataObjectClass(string name, RuleContext context)
         {
             // check the name might be a full name
-            CanonicalName aName = new CanonicalName(name);
-            string aClassname = aName.IsCanonical() ? aName.ClassName() : name;
-            return Engine.Repository.HasDataObjectDefinition(aClassname);
+            return Engine.Repository.HasDataObjectDefinition(CanonicalName.ClassName(name));
         }
         /// <summary>
         /// returns true if this a Data Object class
