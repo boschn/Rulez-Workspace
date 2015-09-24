@@ -177,7 +177,10 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         bool IsDataObjectClass(string name, RuleContext context)
         {
-            return Engine.Repository.HasDataObjectDefinition(name);
+            // check the name might be a full name
+            CanonicalName aName = new CanonicalName(name);
+            string aClassname = aName.IsCanonical() ? aName.ClassName() : name;
+            return Engine.Repository.HasDataObjectDefinition(aClassname);
         }
         /// <summary>
         /// returns true if this a Data Object class
@@ -185,39 +188,30 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         bool IsDataObjectEntry(string name, RuleContext context)
         {
+            // check the name might be a full name
+            CanonicalName aName = new CanonicalName(name);
+            string aClassname = aName.IsCanonical() ? aName.ClassName() : String.Empty;
+            string anEntryName = aName.EntryName();
+
             // if we are in the right context
             if (context is DataObjectEntryNameContext)
             {
                 DataObjectEntryNameContext ctx = (DataObjectEntryNameContext)context;
-                string aClassname = String.Empty;
                 if (string.IsNullOrEmpty(ctx.ClassName)) aClassname = GetDefaultClassName(context);
-                else aClassname = ctx.ClassName;
-
-                if (Engine.Repository.HasDataObjectDefinition(aClassname))
-                    return (Engine.Repository.GetDataObjectDefinition(aClassname).HasEntry(name));
-
-                return false;
+                else if (!String.IsNullOrWhiteSpace(ctx.ClassName)) aClassname = ctx.ClassName;
             }
-            else
+            else if (context is SelectExpressionContext)
             {
                 SelectExpressionContext ctx = (SelectExpressionContext)context;
-                string aClassname = GetDefaultClassName(context);
-                if (! (String.IsNullOrEmpty(aClassname)))
-                    if (Engine.Repository.HasDataObjectDefinition(aClassname))
-                        return (Engine.Repository.GetDataObjectDefinition(aClassname).HasEntry(name));
-                    else return false;
-                else 
-                {
-                    // check the name might be a full name
-                    // string entryname = String.Split(name, '.'c).Last();
-
-                }
-                return false;
-            } 
-
-                return false;
-
-           
+                string aDefaultname = GetDefaultClassName(ctx);
+                if (!(String.IsNullOrEmpty(aDefaultname))) aClassname = aDefaultname;
+            }
+                
+            // check if DataObjectEntry is there
+            if (!string.IsNullOrWhiteSpace(aClassname) && Engine.Repository.HasDataObjectDefinition(aClassname))
+                return (Engine.Repository.GetDataObjectDefinition(aClassname).HasEntry(anEntryName));
+            // no way to get classname and entryname
+            return false;
         }
         /// <summary>
         /// checks if the name is a unique rule id and throws an error

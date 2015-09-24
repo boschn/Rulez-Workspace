@@ -362,7 +362,7 @@ locals [ string defaultClassName ]
     : literal 
     | {IsParameterName(CurrentToken.Text, $ctx)}? parameterName
 	| {IsVariableName(CurrentToken.Text, $ctx)}? variableName
-	| {IsDataObjectEntry(CurrentToken.Text, $ctx)}? dataobject=dataObjectEntryName  { $ctx.XPTreeNode = $ctx.dataobject.XPTreeNode; }
+	| {IsDataObjectEntry(CurrentToken.Text, $ctx)}? dataobject=dataObjectEntryName  { $ctx.XPTreeNode = $ctx.dataobject.XPTreeNode; } // who knows why we need that
     | ( PLUS | MINUS ) selectExpression 
 	| logicalOperator_1 selectExpression 
 	| LPAREN selectExpression RPAREN

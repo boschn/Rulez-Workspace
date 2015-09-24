@@ -64,6 +64,7 @@
     <Compile Include="rulez.cs" />
     <Compile Include="rulezDataTypes.cs" />
     <Compile Include="rulezEngine.cs" />
+    <Compile Include="rulezHelper.cs" />
     <Compile Include="RulezLexer.g4.cs">
       <DependentUpon>RulezLexer.g4</DependentUpon>
     </Compile>
