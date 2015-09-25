@@ -8,19 +8,6 @@
 
 lexer grammar RulezLexer;
 
-
-// Comments
-BlockComment
-    :   '/*' .*? '*/'
-        -> channel(HIDDEN)
-    ;
-
-LineComment
-    :   '//' ~[\r\n]*
-        -> channel(HIDDEN)
-    ;
-
-
 // keywords
 TYPE : T Y P E;
 SELECTION : S E L E C T I O N ;
@@ -46,35 +33,28 @@ DECIMALUNIT: D E C I M A L U N I T;
 LANGUAGETEXT: L A N G U A G E T E X T;
 SYMBOL: S Y M B O L;
 
-// Text
-TEXTLITERAL : '"' (~["\r\n] | '""')* '"' ;
-// Text
-LANGUAGETEXTLITERAL : '"' (~["\r\n] | '""')* '"'  '#' LETTER (LETTERORDIGIT)*;
-// #ORANGE
-SYMBOLLITERAL : '#' LETTER (LETTERORDIGIT)*;
-// #10.12.2014#
-DATELITERAL : '#' (~[#\r\n])* '#';
-// + 100
-NUMBERLITERAL : ('+' | '-')? ('0'..'9')+ ;
-// 100.00
-DECIMALLITERAL :  ('+' | '-')? ('0'..'9')* '.' ('0'..'9')+ ;
-// 100#h
-DECIMALUNITLITERAL :  ('+' | '-')? ('0'..'9')* '.' ('0'..'9')+ '#' LETTER (LETTERORDIGIT)*;
+// literals
 TRUE : T R U E ;
 FALSE : F A L S E ;
 NULL :  N U L L ;
 
+// logical operators
+AND :	(A N D | ',') ;
+OR :	(O R | '|') ;
+NOT:	(N O T | '!') ;
+XOR :	(X O R | '&');
 // assignments
 ASSIGN : ':=';
 MINUS_EQ : '-=';
 PLUS_EQ : '+=';
 
 // others
- fragment COLON :	',' ;
- fragment STROKE : '|' ;
- HASH : '#' ;
- fragment DOT : '.' ;
- QUESTIONMARK : '?';
+COLON :	',' ;
+STROKE : '|' ;
+HASH : '#' ;
+DOT : '.' ;
+QUESTIONMARK : '?';
+
 // parenthesis
  LPAREN : '(';
  RPAREN : ')';
@@ -83,11 +63,7 @@ PLUS_EQ : '+=';
  L_BRACKET: '{' ;
  R_BRACKET: '}';
 
-// logical operators
- AND :	(A N D | COLON) ;
- OR :	(O R | STROKE) ;
- NOT:	(N O T | '!') ;
- XOR :	(X O R | '&');
+
 // compare operators
 EQ : '=';
 NEQ : '<>';
@@ -103,16 +79,28 @@ PLUS : '+';
 POW : '^';
 MODULO: '%';
 
-
 // End of Statement
 EOS : ( ';' )  ;
+
+// Text
+TEXTLITERAL : '"' (~["\r\n] | '""')* '"' ;
+// Text
+LANGUAGETEXTLITERAL : '"' (~["\r\n] | '""')* '"'  '#' LETTER (LETTERORDIGIT)*;
+// #ORANGE
+SYMBOLLITERAL : '#' LETTER (LETTERORDIGIT)*;
+// #10.12.2014#
+DATELITERAL : '#' (~[#\r\n])* '#';
+// + 100
+NUMBERLITERAL : ('+' | '-')? ('0'..'9')+ ;
+// 100.00
+DECIMALLITERAL :  ('+' | '-')? ('0'..'9')* '.' ('0'..'9')+ ;
+// 100#h
+DECIMALUNITLITERAL :  ('+' | '-')? ('0'..'9')* '.' ('0'..'9')+ '#' LETTER (LETTERORDIGIT)*;
 
 // identifier
 IDENTIFIER : LETTER (LETTERORDIGIT)*;
 
-// letters
-fragment LETTER : [a-zA-Z_äöüÄÖÜ];
-fragment LETTERORDIGIT : [a-zA-Z0-9_äöüÄÖÜ];
+
 
 // case insensitive chars
 fragment A:('a'|'A');
@@ -142,6 +130,22 @@ fragment X:('x'|'X');
 fragment Y:('y'|'Y');
 fragment Z:('z'|'Z');
 
+
+// letters
+fragment LETTER : [a-zA-Z_äöüÄÖÜ];
+fragment LETTERORDIGIT : [a-zA-Z0-9_äöüÄÖÜ];
+
+// Comments
+BlockComment
+    :   '/*' .*? '*/'
+        -> channel(HIDDEN)
+    ;
+
+LineComment
+    :   '//' ~[\r\n]*
+        -> channel(HIDDEN)
+    ;
+
 // whitespace, line breaks, comments, ...
 Newline
     :   (   '\r' '\n'?
@@ -151,5 +155,7 @@ Newline
     ;
 
 WS : [ \t]+  -> skip;
+
+
 
 

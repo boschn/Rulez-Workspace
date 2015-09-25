@@ -321,10 +321,12 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <returns></returns>
         public override string ToString()
         {
+            bool first = true;
             string aString = "{" + this.NodeType.ToString() + ":";
             foreach (INode aNode in Nodes)
             {
-                aString += aNode.ToString();
+                aString += (( first==false )? "," : String.Empty) + ((aNode != null) ? aNode.ToString() : "<NULL>");
+                if (first) first = false;
             }
             aString += "}";
             return aString;
@@ -640,27 +642,27 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// returns the IObjectDefinition
         /// </summary>
-        public iObjectDefinition ObjectDefinition { get { return _entrydefinition.ObjectDefinition; } }
+        public iObjectDefinition ObjectDefinition { get { CheckValidity(); return _entrydefinition.ObjectDefinition; } }
         /// <summary>
         /// returns the IObjectEntryDefinition
         /// </summary>
-        public iObjectEntryDefinition ObjectEntryDefinition { get { return _entrydefinition; } }
+        public iObjectEntryDefinition ObjectEntryDefinition { get { CheckValidity();  return _entrydefinition; } }
         /// <summary>
         /// returns the ObjectID of the entry
         /// </summary>
-        public String ObjectID { get { return _entrydefinition.Objectname; } }
+        public String ObjectID { get { CheckValidity();  return _entrydefinition.Objectname; } }
         /// <summary>
         /// returns the ObjectID of the entry
         /// </summary>
-        public String Entryname { get { return _entrydefinition.Entryname; } }
+        public String Entryname { get { CheckValidity(); return _entrydefinition.Entryname; } }
         /// <summary>
         /// gets or sets the Type of the variable
         /// </summary>
-        public otDataType  TypeId { get { return _entrydefinition.TypeId; } set { throw new NotImplementedException(); } }
+        public otDataType TypeId { get { CheckValidity();  return _entrydefinition.TypeId; } set { throw new NotImplementedException(); } }
         /// <summary>
         /// gets the Datatype
         /// </summary>
-        public Core.IDataType DataType { get { return _entrydefinition.DataType; } set { throw new InvalidOperationException(); } }
+        public Core.IDataType DataType { get { CheckValidity(); return _entrydefinition.DataType; } set { throw new InvalidOperationException(); } }
         /// <summary>
         /// returns the scope
         /// </summary>
@@ -751,7 +753,9 @@ namespace OnTrack.Rulez.eXPressionTree
         {
             // TODO: check the argumetns
             this.NodeType = otXPTNodeType.IfThenElse;
-            this.Nodes = new ObservableCollection<INode>(new INode[]{expression, @do, @else});
+            if (@else != null)
+                this.Nodes = new ObservableCollection<INode>(new INode[]{expression, @do, @else});
+            else this.Nodes = new ObservableCollection<INode>(new INode[] { expression, @do });
         }
 
         #region "Properties"
@@ -1176,7 +1180,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// </summary>
         /// <param name="token"></param>
         /// <param name="arguments"></param>
-        public Assignment(ISymbol symbol,INode expression)
+        public Assignment(ISymbol symbol,IExpression expression)
             : base()
         {
             this.NodeType = otXPTNodeType.Assignment;
@@ -1287,6 +1291,10 @@ namespace OnTrack.Rulez.eXPressionTree
         /// gets the typeId of this Expression
         /// </summary>
         public otDataType TypeId { get { throw new NotImplementedException(); } set { throw new InvalidOperationException(); } }
+        /// <summary>
+        /// returns true if node is a leaf
+        /// </summary>
+        public bool HasSubNodes { get { if (this.Operator.Arguments != 0) return true; return false; } }
         #endregion
         /// <summary>
         /// build and return a recursive LogicalExpression Tree from arguments
@@ -1309,6 +1317,20 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <param name="operand"></param>
         public OperationExpression(Engine engine = null): base(engine)
         { 
+        }
+        public OperationExpression(Token token,  Engine engine = null)
+            : base(engine)
+        {
+            if (token == null)
+                throw new RulezException(RulezException.Types.OperatorNotDefined, arguments: new object[] { "null" });
+            if (OnTrack.Rules.Engine.GetOperator(token) == null)
+                throw new RulezException(RulezException.Types.OperatorNotDefined, arguments: new object[] { token.ToString() });
+            _token = token;
+            if (this.Operator.Arguments != 0)
+                throw new RulezException(RulezException.Types.OperandsNotEqualOperatorDefinition, arguments: new object[] { token.ToString(), this.Operator.Arguments, 0 });
+            
+            _engine = engine;
+            this.NodeType = otXPTNodeType.OperationExpression;
         }
         public OperationExpression(Token token, INode operand, Engine engine = null): base(engine)
         {
@@ -1437,6 +1459,13 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <param name="operand"></param>
         public LogicalExpression(Engine engine): base(engine: engine)
         { this.NodeType = otXPTNodeType.LogicalExpression; }
+        public LogicalExpression(Token op, Engine engine = null)
+            : base(op, engine)
+        {
+            if (this.Operator.Type != otOperatorType.Logical && this.Operator.Type != otOperatorType.Logical )
+                throw new RulezException(RulezException.Types.OperatorTypeNotExpected, arguments: new object[] { op.ToString(), "logical" });
+            this.NodeType = otXPTNodeType.LogicalExpression;
+        }
         public LogicalExpression(Token op, IExpression operand, Engine engine = null)
             : base(op, operand, engine)
         {
@@ -1564,7 +1593,7 @@ namespace OnTrack.Rulez.eXPressionTree
              return new LogicalExpression(new Token(Token.ORELSE), this, rightoperand);
          }
          /// <summary>
-         /// returns an LogicalExpression with ORELSE
+         /// returns an LogicalExpression with NOT
          /// </summary>
          /// <param name="leftoperand"></param>
          /// <param name="rightoperand"></param>
@@ -1572,6 +1601,16 @@ namespace OnTrack.Rulez.eXPressionTree
          static public LogicalExpression NOT(IExpression operand)
          {
              return new LogicalExpression(new Token(Token.NOT), operand);
+         }
+         /// <summary>
+         /// returns an LogicalExpression with TRUE (always true)
+         /// </summary>
+         /// <param name="leftoperand"></param>
+         /// <param name="rightoperand"></param>
+         /// <returns></returns>
+         static public LogicalExpression TRUE()
+         {
+             return new LogicalExpression(new Token(Token.TRUE));
          }
          
 #endregion
@@ -1648,7 +1687,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <returns></returns>
         static public CompareExpression EQ(IExpression leftoperand, IExpression rightoperand)
         {
-            return new CompareExpression(new Token(Token.NEQ), leftoperand, rightoperand);
+            return new CompareExpression(new Token(Token.EQ), leftoperand, rightoperand);
         }
         /// <summary>
         /// returns an LogicalExpression with NEQUAL

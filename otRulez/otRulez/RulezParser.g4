@@ -73,8 +73,8 @@ typeDefinition [string name]
 dataType [string name]
 returns [ Core.IDataType datatype]
 	: primitiveType { $datatype = Rulez.PrimitiveType.GetPrimitiveType($ctx.primitiveType().typeId);}
-	| structuredType [$name] {$datatype = $ctx.structuredType().datatype;}
-	| complexType [$name] {$datatype = $ctx.complexType().datatype;}
+	| datastructureType [$name] {$datatype = $ctx.datastructureType().datatype;}
+	| compositeType [$name] {$datatype = $ctx.compositeType().datatype;}
 
 	// defined data types by name such as data objects, if the save name is null
 	|  {$name == null && IsDataTypeName($ctx.GetText())}? IDENTIFIER { $datatype = this.Engine.Repository.GetDatatype($ctx.IDENTIFIER().GetText());}
@@ -83,7 +83,7 @@ returns [ Core.IDataType datatype]
 /* structure types
  * LIST? of DATE, LIST of deliverables
  */
-structuredType [string name]
+datastructureType [string name]
 returns [ Core.IDataType datatype ]
 locals [ bool isnullable = false]
 	: LIST (isNullable {$isnullable = true;})? OF dataType[null] { $datatype = Rulez.ListType.GetDataType (innerDataType:$ctx.dataType().datatype, name: name, engine: this.Engine, isNullable: $isnullable);}
@@ -94,7 +94,7 @@ locals [ bool isnullable = false]
  * if name = null then anonymous name else name is the name the type is saved under
  *
  */
-complexType  [string name]
+compositeType  [string name]
 returns [ Core.IDataType datatype ]
     : symbolTypeDeclaration  [$name] 
 	| decimalUnitDeclaration [$name]
@@ -285,7 +285,11 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
  *		deliverables[(109|110|120)] = deliverables[uid=109 OR uid=110 OR uid = 120] -> returns list with 
  *		deliverables[109, category = "DOC"] = deliverables[UID = 109 AND CATEGORY = "DOC"]
  *		deliverables[(109|110|120), created >= #10.12.2015#] = deliverables[(UID = 109 OR UID = 110 OR UID = 120) AND CREATED >= 10.12.2015]
+ *		deliverables[] -> all
  *
+ *		deliverables[100].desc
+ *		deliverables [created >= #01.01.2015#].[uid,desc,created]
+
  */
 
 selection
@@ -294,7 +298,19 @@ locals [ string ClassName ]
 @after { BuildXPTNode ($ctx) ; }
 	// Note: $ClassName will be used from GetDefaultClassname () as workaround for providing the classname by rule argument
 	//
-    :   dataObject=dataObjectClass {$ClassName = $ctx.dataObject.GetText();} L_SQUARE_BRACKET Conditions=selectConditions[1] R_SQUARE_BRACKET 
+    :   dataObject=dataObjectClass {$ClassName = $ctx.dataObject.GetText();}  L_SQUARE_BRACKET (Conditions=selectConditions[1])?  R_SQUARE_BRACKET  resultSelection [$ClassName]
+	;
+
+/* data object entry selection of the results
+ *
+ */
+resultSelection [string ClassName]
+returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
+@after { BuildXPTNode ($ctx) ; }
+	:
+	   DOT dataObjectEntryName // -> one data Object Entry Name
+	|  (DOT)? L_SQUARE_BRACKET ( dataObjectEntryName ( AND dataObjectEntryName )* )? R_SQUARE_BRACKET
+	| // rule is optional -> means that the full object is the result
 	;
 
 /* all selection conditions 
@@ -311,8 +327,8 @@ locals [ string ClassName ]
 selectConditions[uint keypos] // argument keypos as keyposition
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 @after { BuildXPTNode ($ctx) ; }
-    :	
-		( NOT )? selectCondition [$keypos] (logicalOperator_2 { incIncreaseKeyNo($ctx); } ( NOT )? selectCondition [$keypos])* 
+    :	L_SQUARE_BRACKET  R_SQUARE_BRACKET // all
+	|	( NOT )? selectCondition [$keypos] (logicalOperator_2 { incIncreaseKeyNo($ctx); } ( NOT )? selectCondition [$keypos])* 
 	    ;
 
 /* selection condition with position 
@@ -329,10 +345,11 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
  selectCondition [uint keypos]
  returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
  @after { BuildXPTNode ($ctx) ; }
-    :	
+    :	 
 	    ( NOT )? L_SQUARE_BRACKET {$keypos = 1;} selectConditions [$keypos]  R_SQUARE_BRACKET
 	|   ( NOT )? LPAREN  selectConditions [$keypos]  RPAREN
-	|	( { IsDataObjectEntry(CurrentToken.Text, $ctx)}? dataObjectEntry=dataObjectEntryName Operator=compareOperator)? select=selectExpression 
+	// check if entryname is preceded with an object class here else we are not getting into this rule
+	|	( { IsDataObjectEntry(CurrentToken.Text, $ctx) | IsDataObjectClass(CurrentToken.Text, $ctx) }? dataObjectEntry=dataObjectEntryName Operator=compareOperator)? select=selectExpression 
     ;
 
 /*
@@ -362,11 +379,12 @@ locals [ string defaultClassName ]
     : literal 
     | {IsParameterName(CurrentToken.Text, $ctx)}? parameterName
 	| {IsVariableName(CurrentToken.Text, $ctx)}? variableName
-	| {IsDataObjectEntry(CurrentToken.Text, $ctx)}? dataobject=dataObjectEntryName  { $ctx.XPTreeNode = $ctx.dataobject.XPTreeNode; } // who knows why we need that
+	|  dataobject=dataObjectEntryName  { $ctx.XPTreeNode = $ctx.dataobject.XPTreeNode; } // who knows why we need that
     | ( PLUS | MINUS ) selectExpression 
 	| logicalOperator_1 selectExpression 
 	| LPAREN selectExpression RPAREN
     | selectExpression (arithmeticOperator selectExpression)+
+	| selection
 	
     ;
 
@@ -403,17 +421,18 @@ dataObjectClass
 returns [ string ClassName ]
 //{this.Engine.Repository.HasDataObjectDefinition($ctx.IDENTIFIER().GetText())}?
 @after{ $ClassName = $ctx.IDENTIFIER().GetText() ;}
-    : { IsDataObjectClass(CurrentToken.Text, $ctx)}? IDENTIFIER   
+    :  IDENTIFIER   
     ;
 
 // Object Entry Name
 //
 // ClassName will be handled in BuildXPTNode
 dataObjectEntryName 
-returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode , string ClassName ]
+returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode , string ClassName  ]
 locals [ string entryname ]
 @after { BuildXPTNode ($ctx) ; }
-    : (Class=dataObjectClass DOT)?  IDENTIFIER 
+    : { IsDataObjectClass(CurrentToken.Text, $ctx)}? Class=dataObjectClass DOT {IsDataObjectEntry(CurrentToken.Text, $ctx)}?   IDENTIFIER 
+	| {IsDataObjectEntry(CurrentToken.Text, $ctx)}?  IDENTIFIER
     ;
 
 // parameter name

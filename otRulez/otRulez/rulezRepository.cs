@@ -59,7 +59,7 @@ namespace OnTrack.Rulez
             /// <summary>
             /// static - must be ascending and discrete ! (do not leave one out !!)
             /// </summary>
-            public  const uint POS = 0;
+            public  const uint TRUE = 0;
             public  const uint AND = 1;
             public  const uint ANDALSO = 2;
             public  const uint OR = 3;
@@ -82,7 +82,7 @@ namespace OnTrack.Rulez
 
             public  const uint BEEP = 22;
 
-            private static string[] _ids = {"POS", "AND", "ANDALSO", "OR", "ORELSE", "NOT", "","","","",
+            private static string[] _ids = {"TRUE", "AND", "ANDALSO", "OR", "ORELSE", "NOT", "","","","",
                                             "=", "!=", "GT", "GE", "LT", "LE", "+", "-", "*", "/", "MOD", "CONCAT", 
                                             "BEEP"};
             /// <summary>
@@ -323,7 +323,7 @@ namespace OnTrack.Rulez
         private static Operator[] _buildInOperators = {
 
                                                   // logical Operations
-                                                  new Operator(Token.POS,1,7,otDataType .Bool ,  otOperatorType.Logical  ) ,
+                                                  new Operator(Token.TRUE,0,7,otDataType .Bool ,  otOperatorType.Logical  ) ,
                                                   new Operator(Token.AND,2,5,  otDataType .Bool , otOperatorType.Logical ) ,
                                                   new Operator(Token.ANDALSO,2,5 ,  otDataType .Bool, otOperatorType.Logical ) ,
                                                   new Operator(Token.OR,2,6,  otDataType .Bool , otOperatorType.Logical ) ,

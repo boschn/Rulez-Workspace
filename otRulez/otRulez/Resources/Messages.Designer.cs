@@ -88,6 +88,15 @@ namespace OnTrack.Rulez.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to instance of data object class &apos;{0}&apos; not in scope.
+        /// </summary>
+        internal static string RCM_12 {
+            get {
+                return ResourceManager.GetString("RCM_12", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to no variable context &apos;{0}&apos; found.
         /// </summary>
         internal static string RCM_2 {

@@ -26,11 +26,11 @@ namespace OnTrack.Rulez
     /// <summary>
     /// class for working with canonical names
     /// </summary>
-    public class CanonicalName : string
+    public class CanonicalName 
     {
 #region Static
 
-        public static char ConstDot = '.';
+        public static char ConstDelimiter = '.';
 
         /// <summary>
         /// returns true if the name is in canonical form
@@ -40,7 +40,7 @@ namespace OnTrack.Rulez
         public static bool IsCanonical(string name)
         {
             if (string.IsNullOrWhiteSpace(name)) return false;
-            return name.IndexOf(ConstDot)>=0;
+            return name.IndexOf(ConstDelimiter)>=0;
         }
         /// <summary>
         /// returns the entry name of a string or the string if the name is not in canonical form
@@ -51,7 +51,7 @@ namespace OnTrack.Rulez
         {
             if (IsCanonical(name))
             {
-                string [] split = name.Split (ConstDot);
+                string [] split = name.Split (ConstDelimiter);
                 return split[split.GetUpperBound (0)];
             }
             return name;
@@ -65,7 +65,7 @@ namespace OnTrack.Rulez
         {
             if (IsCanonical(name))
             {
-                string [] split = name.Split (ConstDot);
+                string [] split = name.Split (ConstDelimiter);
                 if (split.GetUpperBound (0)> 1) return split[split.GetUpperBound (0) -1 ];
                 return string.Empty;
             }
@@ -80,13 +80,13 @@ namespace OnTrack.Rulez
         {
             if (IsCanonical(name))
             {
-                string [] split = name.Split (ConstDot);
+                string [] split = name.Split (ConstDelimiter);
                 if (split.GetUpperBound (0)> 2) 
                 { 
                     string modulename = string.Empty;
                     for (uint i = 0; i < split.GetUpperBound (0)-2; i++) 
                         if (i==0) modulename = split[i];
-                        else modulename += ConstDot + split[i];
+                        else modulename += ConstDelimiter + split[i];
                     return modulename;
                 }
                 return string.Empty;

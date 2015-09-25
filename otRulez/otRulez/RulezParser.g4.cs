@@ -40,10 +40,17 @@ namespace OnTrack.Rulez
             public uint pos;
             public IDataType datatype;
             public string name;
-            public INode defaultvalue;
-
-            public ParameterDefinition(string name, IDataType datatype, uint pos, INode defaultvalue = null)
+            public IExpression defaultvalue;
+            /// <summary>
+            /// Constructor
+            /// </summary>
+            /// <param name="name"></param>
+            /// <param name="datatype"></param>
+            /// <param name="pos"></param>
+            /// <param name="defaultvalue"></param>
+            public ParameterDefinition(string name, IDataType datatype, uint pos, IExpression defaultvalue = null)
             { this.name = name; this.datatype = datatype; this.pos = pos; this.defaultvalue = defaultvalue; }
+
         }
         /// <summary>
         /// structure to hold a variable definition
@@ -123,7 +130,7 @@ namespace OnTrack.Rulez
 
             if (defaultvalue != null) theDefaultValue = defaultvalue.XPTreeNode;
 
-            ParameterDefinition def = new ParameterDefinition(name: name, pos: pos, datatype: datatype, defaultvalue: theDefaultValue);
+            ParameterDefinition def = new ParameterDefinition(name: name, pos: pos, datatype: datatype, defaultvalue: (IExpression) theDefaultValue);
             if (root != null)
             {
                 if (!((SelectionRulezContext)root).names.ContainsKey(name))
@@ -196,13 +203,32 @@ namespace OnTrack.Rulez
             {
                 DataObjectEntryNameContext ctx = (DataObjectEntryNameContext)context;
                 if (string.IsNullOrEmpty(ctx.ClassName)) aClassname = GetDefaultClassName(context);
-                else if (!String.IsNullOrWhiteSpace(ctx.ClassName)) aClassname = ctx.ClassName;
+                else if (!String.IsNullOrWhiteSpace(ctx.ClassName))
+                {
+                    // if classname differs than it is not allowed
+                    if (string.Compare(ctx.ClassName, aClassname, true) != 00)
+                        this.NotifyErrorListeners(String.Format (Messages.RCM_12, ctx.ClassName));
+                    else aClassname = ctx.ClassName;
+                }
             }
             else if (context is SelectExpressionContext)
             {
                 SelectExpressionContext ctx = (SelectExpressionContext)context;
                 string aDefaultname = GetDefaultClassName(ctx);
                 if (!(String.IsNullOrEmpty(aDefaultname))) aClassname = aDefaultname;
+            }
+            else if (context is SelectConditionContext)
+            {
+                SelectConditionContext ctx = (SelectConditionContext)context;
+                string aDefaultname = GetDefaultClassName(ctx);
+                if (!(String.IsNullOrEmpty(aDefaultname))) aClassname = aDefaultname;
+            }
+            else if (context is ResultSelectionContext)
+            {
+                ResultSelectionContext ctx = (ResultSelectionContext)context;
+                string aDefaultname = GetDefaultClassName(ctx);
+                if (string.IsNullOrEmpty(ctx.ClassName)) aClassname = GetDefaultClassName(context);
+                else if (!String.IsNullOrWhiteSpace(ctx.ClassName)) aClassname = ctx.ClassName;
             }
                 
             // check if DataObjectEntry is there
@@ -354,15 +380,6 @@ namespace OnTrack.Rulez
             // get the name
             SelectionRule aRule = new SelectionRule(ctx.ruleid().GetText(), engine: this.Engine);
             ctx.XPTreeNode = aRule;
-           
-            // add the parameters
-            foreach (ParameterDefinition aParameter in ctx.names.Values)
-            {
-                ISymbol symbol = aRule.AddNewParameter(aParameter.name, datatype: aParameter.datatype);
-                // defaultvalue assignment
-                if (aParameter.defaultvalue != null) aRule.Selection.Nodes.Add(new eXPressionTree.IfThenElse(eXPressionTree.CompareExpression.EQ(symbol, new Literal(null, otDataType.@Null)), 
-                                                                                                    new eXPressionTree.Assignment(symbol, (IXPTree) aParameter.defaultvalue)));
-            }
             
             // add expression
             if (ctx.selection() != null) {
@@ -370,7 +387,15 @@ namespace OnTrack.Rulez
                 aRule.Selection.Add(new @Return((SelectionExpression)ctx.selection().XPTreeNode)); 
             }
             else if (ctx.selectStatementBlock() != null) aRule.Selection = (SelectionStatementBlock)ctx.selectStatementBlock().XPTreeNode;
-
+            // add the parameters
+            foreach (ParameterDefinition aParameter in ctx.names.Values)
+            {
+                ISymbol symbol = aRule.AddNewParameter(aParameter.name, datatype: aParameter.datatype);
+                // defaultvalue assignment
+                if (aParameter.defaultvalue != null) aRule.Selection.Nodes.Insert(0, new eXPressionTree.IfThenElse(
+                    eXPressionTree.CompareExpression.EQ(symbol, new Literal(null, otDataType.@Null)),
+                    new eXPressionTree.Assignment(symbol, (IExpression)aParameter.defaultvalue)));
+            }
             return true;
         }
         /// <summary>
@@ -388,7 +413,7 @@ namespace OnTrack.Rulez
             {
                 ISymbol symbol = aBlock.AddNewVariable(aVariable.name, datatype: aVariable.datatype);
                 // defaultvalue assignment
-                if (aVariable.defaultvalue != null) aBlock.Nodes.Add(new eXPressionTree.Assignment(symbol, (IXPTree)aVariable.defaultvalue));
+                if (aVariable.defaultvalue != null) aBlock.Nodes.Add(new eXPressionTree.Assignment(symbol, (IExpression)aVariable.defaultvalue));
             }
             // add statements
             foreach (SelectStatementContext statementCTX in ctx.selectStatement() )
@@ -455,18 +480,48 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public bool BuildXPTNode(SelectionContext ctx)
         {
-            // to-do data object entries
-
             // extract the class name
-            string aClassName = ctx.dataObjectClass().GetText();
+            if (String.IsNullOrEmpty(ctx.ClassName)) ctx.ClassName = ctx.dataObjectClass().GetText();
+
             // create the result with the data object class name
-            eXPressionTree.ResultList Result = new ResultList(new eXPressionTree.DataObjectSymbol(aClassName, engine: this.Engine));
+            eXPressionTree.ResultList Result = (ResultList) ctx.resultSelection().XPTreeNode;
+            
             // create a selection expression with the result
             eXPressionTree.SelectionExpression aSelection = new eXPressionTree.SelectionExpression(result: Result, engine: this.Engine);
-            // add the subtree to the selection
-            aSelection.Nodes.Add(ctx.selectConditions().XPTreeNode);
+
+            //  L_SQUARE_BRACKET  R_SQUARE_BRACKET // all
+            if (ctx.selectConditions() == null)
+            {
+                // simple true operator
+                aSelection.Nodes.Add(LogicalExpression.TRUE()); 
+            }
+            else
+            {
+                // add the subtree to the selection
+                aSelection.Nodes.Add(ctx.selectConditions().XPTreeNode);
+            }
             // add it to selection as XPTreeNode
             ctx.XPTreeNode = aSelection;
+            return true;
+        }
+        /// <summary>
+        /// build an XPTree with the results
+        /// </summary>
+        /// <param name="ctx"></param>
+        /// <returns></returns>
+        public bool BuildXPTNode(ResultSelectionContext ctx)
+        {
+            List<INode> results = new List<INode>();
+
+            // add the class
+            if (ctx.dataObjectEntryName() == null || ctx.dataObjectEntryName().Count () == 0)
+                results.Add(new eXPressionTree.DataObjectSymbol(ctx.ClassName, engine: this.Engine));
+            else
+                // add the entries
+                foreach (DataObjectEntryNameContext anEntryCTX in ctx.dataObjectEntryName())
+                    results.Add(new eXPressionTree.DataObjectEntrySymbol(anEntryCTX.entryname, engine: this.Engine));
+
+            ctx.XPTreeNode = new ResultList(results);
             return true;
         }
         /// <summary>
@@ -476,6 +531,13 @@ namespace OnTrack.Rulez
         /// <returns></returns>
          public bool BuildXPTNode(SelectConditionsContext ctx)
         {
+            //  L_SQUARE_BRACKET  R_SQUARE_BRACKET // all
+            if (ctx.selectCondition() == null || ctx.selectCondition().Count()==0)
+            {
+                // simple true operator
+                ctx.XPTreeNode = LogicalExpression.TRUE();
+                return true;
+            }
             // only one condition
             //    selectCondition [$ClassName, $keypos]
      
@@ -745,8 +807,9 @@ namespace OnTrack.Rulez
                  {
                      // set the XPTreeNode to the Symbol
                      ctx.XPTreeNode = ((SelectionRule)((SelectionRulezContext)root).XPTreeNode).Parameters.Where(x => x.ID == ctx.GetText()).FirstOrDefault();
+                     return true;
                  }
-             }
+             }else
              this.NotifyErrorListeners(String.Format(Messages.RCM_4, ctx.GetText(), "SelectionRule"));
              return false;
          }

@@ -861,7 +861,7 @@ namespace OnTrack.Rulez
     {
         public const string ConstValue = "VALUE";
         public const string ConstSYMBOL = "SYMBOL";
-        public const string ConstTypename = "SYMBOL";
+        public const string ConstTypeName = "SYMBOL";
 
         // additional combined data types
         protected Dictionary<string, object> _allowedSymboles = new Dictionary<string, object>();
@@ -887,12 +887,13 @@ namespace OnTrack.Rulez
         public SymbolType( otDataType innerTypeId = otDataType.Number, Boolean isNullable= false, Engine engine = null, string name = null)
             : base(typeId: otDataType.Symbol, isNullable: isNullable, defaultvalue: null, engine: engine, name: name)
         {
-            this.ComplexTypeName = ConstTypename;
+            this.ComplexTypeName = ConstTypeName;
             // anonymous name
             if (String.IsNullOrEmpty(name)) this.Name = Guid.NewGuid().ToString();
             // define the structure
             AddMember(ConstSYMBOL, DataType.GetDataType(otDataType.Text));
             AddMember(ConstValue, DataType.GetDataType(innerTypeId));
+            _signature = CreateSignature(_structure.Values, isNullable: isNullable, typename: ConstTypeName, name: name);
             // raise event
             RaiseOnCreation(this, datatype: this, engine: engine);
         }
@@ -1010,6 +1011,7 @@ namespace OnTrack.Rulez
             this.ComplexTypeName = ConstTypeName; ;
             AddMember(ConstValue, PrimitiveType.GetPrimitiveType(otDataType.Decimal));
             AddMember(ConstUnit, unit);
+            _signature = CreateSignature(_structure.Values, isNullable: isNullable, typename: ConstTypeName, name: name);
             // raise event
             RaiseOnCreation(this, datatype: this, engine: engine);
         }
@@ -1034,7 +1036,7 @@ namespace OnTrack.Rulez
         /// </summary>
         public new static TupleType GetDataType(IDataType[] structure, Engine engine, string[] memberNames = null, string name = null, bool isNullable = false)
         {
-            string sig = CreateSignature(structure: structure, isNullable: isNullable);
+            string sig = CreateSignature(structure: structure, typename: ConstTypeName, isNullable: isNullable);
             if (!String.IsNullOrEmpty(name) && engine.Repository.HasDataType(name))
             {
                 IDataType aDatatype = engine.Repository.GetDatatype(name);
@@ -1065,6 +1067,7 @@ namespace OnTrack.Rulez
                 AddMember(id, aType);
                 i++;
             }
+            _signature = CreateSignature(structure: structure, isNullable: isNullable, typename: ConstTypeName, name: name);
             // raise event
             RaiseOnCreation(this, datatype: this, engine: engine);
         }
@@ -1121,6 +1124,7 @@ namespace OnTrack.Rulez
             this.ComplexTypeName = ConstTypeName;
             AddMember(ConstText, PrimitiveType.GetPrimitiveType(otDataType.Text));
             AddMember(ConstCultural, cultural);
+            _signature = CreateSignature(_structure.Values, isNullable: isNullable, typename: ConstTypeName, name: name);
             // raise event
             RaiseOnCreation(this, datatype: this, engine: engine);
         }
@@ -1469,6 +1473,7 @@ namespace OnTrack.Rulez
         public DataObjectType(string name, Engine engine=null)
             : base(otDataType.DataObject, isNullable:true, defaultvalue: null, engine: engine, name: name)
         {
+            //_signature = CreateSignature(_structure.Values, isNullable: isNullable, typename: ConstTypeName, name: name);
             // raise event !
             RaiseOnCreation(this, datatype: this, engine: engine);
         }

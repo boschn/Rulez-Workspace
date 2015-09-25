@@ -106,6 +106,9 @@
   <data name="RCM_11" xml:space="preserve">
     <value>identifier '{0}' could not be recognized</value>
   </data>
+  <data name="RCM_12" xml:space="preserve">
+    <value>instance of data object class '{0}' not in scope</value>
+  </data>
   <data name="RCM_2" xml:space="preserve">
     <value>no variable context '{0}' found</value>
   </data>

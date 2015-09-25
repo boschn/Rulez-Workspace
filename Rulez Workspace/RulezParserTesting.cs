@@ -494,14 +494,21 @@ namespace OnTrack.Testing
             // 6
             "selection s1e as testobject1[( 100 ) | ( 150 ) , 2];",
             // 7
-            "selection s1f as testobject1[ uid=100 OR ( created > #20.05.2015# and desc = \"test\" )]",
+            "selection s1f as testobject1[ testobject1.uid=100 OR ( created > #20.05.2015# and desc = \"test\" )];",
             // 8
-            "selection s1g as testobject1[ uid=ver + 1, 1]",
+            "selection s1g as testobject1[ uid=ver + 1, 1];",
             // 9
+            "selection s1g as testobject1[];",
+            // 10
             "selection s2 (p1 as number) as deliverables[p1];",
+            // 11
             "selection s3 (p1 as number? default 100 ) as deliverables[uid=p1];",
-            "selection s4 as testobject1[100,1, date > #10.09.2015#];",
-            "selection s4 as testobject1[(100, 1) | date > #10.09.2015#];",
+            // 12
+            "selection s12 as deliverables[100].uid ;",
+            // 13
+            "selection s13 as testobject1[100][desc,created and ver] ;",
+            // 14
+            "selection s4 as testobject1[ uid = deliverables[100].uid, 2];"    
         };
         String[] expectedTree =
         {
@@ -521,6 +528,18 @@ namespace OnTrack.Testing
             "{Unit:{(SelectionRule) s1f[]{ResultList:<DataObjectSymbol:TESTOBJECT1>}{{(SelectionStatementBlock) LIST<TESTOBJECT1?>[]{{Return LIST<TESTOBJECT1?> {(SelectionExpression) {ResultList:<DataObjectSymbol:TESTOBJECT1>}:{(LogicalExpression) 'ORELSE':{(CompareExpression) '=':<DataObjectSymbol:testobject1.uid>,<NUMBER:100>},{(LogicalExpression) 'ANDALSO':{(CompareExpression) 'GT':<DataObjectSymbol:testobject1.created>,<DATE:20.05.2015 00:00:00>},{(CompareExpression) '=':<DataObjectSymbol:testobject1.desc>,<TEXT:\"test\">}}}}}}}}}}",
             // 8
             "{Unit:{(SelectionRule) s1g[]{ResultList:<DataObjectSymbol:TESTOBJECT1>}{{(SelectionStatementBlock) LIST<TESTOBJECT1?>[]{{Return LIST<TESTOBJECT1?> {(SelectionExpression) {ResultList:<DataObjectSymbol:TESTOBJECT1>}:{(LogicalExpression) 'ANDALSO':{(CompareExpression) '=':<DataObjectSymbol:testobject1.uid>,{(OperationExpression) '+':<DataObjectSymbol:testobject1.ver>,<NUMBER:1>}},{(CompareExpression) '=':<DataObjectSymbol:testobject1.VER>,<NUMBER:1>}}}}}}}}}",
+            // 9
+            "{Unit:{(SelectionRule) s1g[]{ResultList:<DataObjectSymbol:TESTOBJECT1>}{{(SelectionStatementBlock) LIST<TESTOBJECT1?>[]{{Return LIST<TESTOBJECT1?> {(SelectionExpression) {ResultList:<DataObjectSymbol:TESTOBJECT1>}:{(LogicalExpression) 'TRUE':}}}}}}}}",
+            // 10
+            "{Unit:{(SelectionRule) s2[<Variable:p1>]{ResultList:<DataObjectSymbol:DELIVERABLES>}{{(SelectionStatementBlock) LIST<DELIVERABLES?>[]{{Return LIST<DELIVERABLES?> {(SelectionExpression) {ResultList:<DataObjectSymbol:DELIVERABLES>}:{(CompareExpression) '=':<DataObjectSymbol:deliverables.UID>,<Variable:p1>}}}}}}}}",
+            // 11
+            "{Unit:{(SelectionRule) s3[<Variable:p1>]{ResultList:<DataObjectSymbol:DELIVERABLES>}{{(SelectionStatementBlock) LIST<DELIVERABLES?>[]{{IfThenElse:{(CompareExpression) '=':<Variable:p1>,<NULL:>},{Assignment:<Variable:p1>,<NUMBER:100>}},{Return LIST<DELIVERABLES?> {(SelectionExpression) {ResultList:<DataObjectSymbol:DELIVERABLES>}:{(CompareExpression) '=':<DataObjectSymbol:deliverables.uid>,<Variable:p1>}}}}}}}}",
+            // 12
+            "{Unit:{(SelectionRule) s12[]{ResultList:<DataObjectSymbol:deliverables.uid>}{{(SelectionStatementBlock) LIST<NUMBER>[]{{Return LIST<NUMBER> {(SelectionExpression) {ResultList:<DataObjectSymbol:deliverables.uid>}:{(CompareExpression) '=':<DataObjectSymbol:deliverables.UID>,<NUMBER:100>}}}}}}}}",
+            // 13
+            "{Unit:{(SelectionRule) s13[]{ResultList:<DataObjectSymbol:testobject1.desc><DataObjectSymbol:testobject1.created><DataObjectSymbol:testobject1.ver>}{{(SelectionStatementBlock) LIST<TUPLE<TEXT,DATE,NUMBER>>[]{{Return LIST<TUPLE<TEXT,DATE,NUMBER>> {(SelectionExpression) {ResultList:<DataObjectSymbol:testobject1.desc><DataObjectSymbol:testobject1.created><DataObjectSymbol:testobject1.ver>}:{(CompareExpression) '=':<DataObjectSymbol:testobject1.UID>,<NUMBER:100>}}}}}}}}",
+            // 14
+            ""
         };
         String[] negativSyntaxTest =
         {
@@ -548,7 +567,7 @@ namespace OnTrack.Testing
         {
             // data context
             Engine.AddDataEngine(new DataObjectEngine("test"));
-            uint i =8;
+            uint i = 11;
             RunPositiveSyntaxTest(i, postiveSyntaxTest[i-1], expected: expectedTree[i-1]);
         }
         /// <summary>

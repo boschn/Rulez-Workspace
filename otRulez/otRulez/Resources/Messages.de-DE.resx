@@ -126,6 +126,9 @@
   <data name="RCM_11" xml:space="preserve">
     <value>Bezeichner '{0}' konnte nicht erkannt werden</value>
   </data>
+  <data name="RCM_12" xml:space="preserve">
+    <value>Die Instanz der Datenobjekt Klasse '{0}' ist nicht im Zugriff der Anweisung</value>
+  </data>
   <data name="RCM_2" xml:space="preserve">
     <value>Keinen Variablen-Kontext '{0}' gefunden.</value>
   </data>
