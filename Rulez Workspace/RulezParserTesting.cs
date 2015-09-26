@@ -249,6 +249,7 @@ namespace OnTrack.Testing
         {
             ObjectDefinition theDeliverables = new ObjectDefinition("deliverables");
             theDeliverables.AddEntry(new ObjectEntryDefinition(theDeliverables, "UID", otDataType.Number, false));
+            theDeliverables.AddEntry(new ObjectEntryDefinition(theDeliverables, "CREATED", otDataType.Date, true));
             theDeliverables.Keys = new string[] {"uid"};
             _objects.Add(theDeliverables.Objectname, theDeliverables);
             // testobject1 class
@@ -508,7 +509,7 @@ namespace OnTrack.Testing
             // 13
             "selection s13 as testobject1[100][desc,created and ver] ;",
             // 14
-            "selection s4 as testobject1[ uid = deliverables[100].uid, 2];"    
+            "selection s14 (p1 as date) as testobject1[ uid = deliverables[created >= p1].uid, 2];"    
         };
         String[] expectedTree =
         {
@@ -539,7 +540,7 @@ namespace OnTrack.Testing
             // 13
             "{Unit:{(SelectionRule) s13[]{ResultList:<DataObjectSymbol:testobject1.desc><DataObjectSymbol:testobject1.created><DataObjectSymbol:testobject1.ver>}{{(SelectionStatementBlock) LIST<TUPLE<TEXT,DATE,NUMBER>>[]{{Return LIST<TUPLE<TEXT,DATE,NUMBER>> {(SelectionExpression) {ResultList:<DataObjectSymbol:testobject1.desc><DataObjectSymbol:testobject1.created><DataObjectSymbol:testobject1.ver>}:{(CompareExpression) '=':<DataObjectSymbol:testobject1.UID>,<NUMBER:100>}}}}}}}}",
             // 14
-            ""
+            "{Unit:{(SelectionRule) s14[<Variable:p1>]{ResultList:<DataObjectSymbol:TESTOBJECT1>}{{(SelectionStatementBlock) LIST<TESTOBJECT1?>[]{{Return LIST<TESTOBJECT1?> {(SelectionExpression) {ResultList:<DataObjectSymbol:TESTOBJECT1>}:{(LogicalExpression) 'ANDALSO':{(CompareExpression) '=':<DataObjectSymbol:testobject1.uid>,{(SelectionExpression) {ResultList:<DataObjectSymbol:deliverables.uid>}:{(CompareExpression) 'GE':<DataObjectSymbol:deliverables.created>,<Variable:p1>}}},{(CompareExpression) '=':<DataObjectSymbol:testobject1.VER>,<NUMBER:2>}}}}}}}}}"
         };
         String[] negativSyntaxTest =
         {
@@ -567,7 +568,7 @@ namespace OnTrack.Testing
         {
             // data context
             Engine.AddDataEngine(new DataObjectEngine("test"));
-            uint i = 11;
+            uint i = 14;
             RunPositiveSyntaxTest(i, postiveSyntaxTest[i-1], expected: expectedTree[i-1]);
         }
         /// <summary>

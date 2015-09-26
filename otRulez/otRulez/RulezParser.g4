@@ -239,8 +239,8 @@ assignment
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 @after { BuildXPTNode ($ctx) ; }
 
-	: variableName EQ selectExpression
-	| dataObjectEntryName  EQ selectExpression
+	: {IsVariableName(CurrentToken.Text, $ctx)}? variableName EQ selectExpression
+	| { IsDataObjectEntry(CurrentToken.Text, $ctx) | IsDataObjectClass(CurrentToken.Text, $ctx) }? dataObjectEntryName  EQ selectExpression
 	
 	;
 

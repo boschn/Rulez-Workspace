@@ -716,6 +716,11 @@ namespace OnTrack.Rulez
                  ctx.XPTreeNode = ctx.variableName().XPTreeNode;
                  return true;
              }
+             if (ctx.selection () != null)
+             {
+                 ctx.XPTreeNode = ctx.selection().XPTreeNode;
+                 return true;
+             }
              //| dataObjectEntryName
              if (ctx.dataObjectEntryName()!= null)
              {
