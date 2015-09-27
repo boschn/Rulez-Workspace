@@ -54,7 +54,7 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 	;
 
 typeid
-	: IDENTIFIER
+	: identifier
 	;
 
 /*
@@ -77,7 +77,7 @@ returns [ Core.IDataType datatype]
 	| compositeType [$name] {$datatype = $ctx.compositeType().datatype;}
 
 	// defined data types by name such as data objects, if the save name is null
-	|  {$name == null && IsDataTypeName($ctx.GetText())}? IDENTIFIER { $datatype = this.Engine.Repository.GetDatatype($ctx.IDENTIFIER().GetText());}
+	|  {$name == null && IsDataTypeName($ctx.GetText())}? identifier { $datatype = this.Engine.Repository.GetDatatype($ctx.identifier().GetText());}
 	;
 
 /* structure types
@@ -111,8 +111,8 @@ returns [ Core.IDataType datatype ]
 decimalUnitDeclaration [string name]
 returns [ Core.IDataType datatype ]
 	: DECIMALUNIT OF symbol=symbolTypeDeclaration[null] {$datatype = Rulez.DecimalUnitType.GetDataType( unit: (SymbolType) $ctx.symbol.datatype, name: name, engine: this.Engine);  }
-	 {IsSymbolType($ctx.IDENTIFIER().GetText())}? LANGUAGETEXT OF IDENTIFIER 
-		{$datatype = Rulez.DecimalUnitType.GetDataType(unit: (SymbolType) this.Engine.Repository.GetDatatype($ctx.IDENTIFIER().GetText()), name: name, engine: this.Engine);}
+	 {IsSymbolType($ctx.identifier().GetText())}? LANGUAGETEXT OF identifier 
+		{$datatype = Rulez.DecimalUnitType.GetDataType(unit: (SymbolType) this.Engine.Repository.GetDatatype($ctx.identifier().GetText()), name: name, engine: this.Engine);}
 
 	;
 
@@ -126,8 +126,8 @@ returns [ Core.IDataType datatype ]
 languageTextDeclaration [string name]
 returns [ Core.IDataType datatype ]
 	: LANGUAGETEXT OF symbol=symbolTypeDeclaration[null] {$datatype = Rulez.LanguageTextType.GetDataType( cultural: (SymbolType) $ctx.symbol.datatype, name: name, engine: this.Engine);  }
-	| {IsSymbolType($ctx.IDENTIFIER().GetText())}? LANGUAGETEXT OF IDENTIFIER 
-		{$datatype = Rulez.LanguageTextType.GetDataType(cultural: (SymbolType) this.Engine.Repository.GetDatatype($ctx.IDENTIFIER().GetText()), name: name,engine: this.Engine);}
+	| {IsSymbolType($ctx.identifier().GetText())}? LANGUAGETEXT OF identifier 
+		{$datatype = Rulez.LanguageTextType.GetDataType(cultural: (SymbolType) this.Engine.Repository.GetDatatype($ctx.identifier().GetText()), name: name,engine: this.Engine);}
 	;
 /*
  * anonymous symbol declaration
@@ -148,7 +148,7 @@ locals  [uint pos = 1]
  *
  */
 symbolDeclaration [Rulez.SymbolType datatype, uint pos]
-	: IDENTIFIER {datatype.AddSymbol($ctx.GetText().ToUpper(), Core.DataType.To($pos, otDataType.Number));}
+	: identifier {datatype.AddSymbol($ctx.GetText().ToUpper(), Core.DataType.To($pos, otDataType.Number));}
 	;
 
 /* base types
@@ -190,7 +190,7 @@ locals [ // parameteres
     ;
 // rulename
 ruleid
-    : IDENTIFIER 
+    : identifier 
 	{ CheckUniqueSelectionRuleId ($ctx.GetText()); }
     ;
 /* Parameterdefinition
@@ -202,8 +202,8 @@ locals [ uint pos = 1 ]
     ;
 // parameter definition with a default value 
 parameterdefinition  [uint pos]
-    : IDENTIFIER AS dataType[null] ( DEFAULT defaultvalue=literal )? 
-		{AddParameter($ctx.IDENTIFIER().GetText(), $pos, $ctx.dataType().datatype, $ctx.defaultvalue,$ctx);}
+    : identifier AS dataType[null] ( DEFAULT defaultvalue=literal )? 
+		{AddParameter($ctx.identifier().GetText(), $pos, $ctx.dataType().datatype, $ctx.defaultvalue,$ctx);}
     ;
 
 /* SelectStatementBlock
@@ -247,8 +247,8 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 /* Variable Declaration
  */
 variableDeclaration
-	: IDENTIFIER AS dataType[null] ( DEFAULT literal )? 
-		{AddVariable($ctx.IDENTIFIER().GetText(), $ctx.dataType().datatype, $ctx.literal(), $ctx);}
+	: identifier AS dataType[null] ( DEFAULT literal )? 
+		{AddVariable($ctx.identifier().GetText(), $ctx.dataType().datatype, $ctx.literal(), $ctx);}
 	;
 	
 /* MATCH 
@@ -419,9 +419,9 @@ returns [ OnTrack.Rulez.Operator Operator  ]
 //
 dataObjectClass
 returns [ string ClassName ]
-//{this.Engine.Repository.HasDataObjectDefinition($ctx.IDENTIFIER().GetText())}?
-@after{ $ClassName = $ctx.IDENTIFIER().GetText() ;}
-    :  IDENTIFIER   
+//{this.Engine.Repository.HasDataObjectDefinition($ctx.identifier().GetText())}?
+@after{ $ClassName = $ctx.identifier().GetText() ;}
+    :  identifier   
     ;
 
 // Object Entry Name
@@ -431,8 +431,8 @@ dataObjectEntryName
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode , string ClassName  ]
 locals [ string entryname ]
 @after { BuildXPTNode ($ctx) ; }
-    : { IsDataObjectClass(CurrentToken.Text, $ctx)}? Class=dataObjectClass DOT {IsDataObjectEntry(CurrentToken.Text, $ctx)}?   IDENTIFIER 
-	| {IsDataObjectEntry(CurrentToken.Text, $ctx)}?  IDENTIFIER
+    : { IsDataObjectClass(CurrentToken.Text, $ctx)}? Class=dataObjectClass DOT {IsDataObjectEntry(CurrentToken.Text, $ctx)}?   identifier 
+	| {IsDataObjectEntry(CurrentToken.Text, $ctx)}?  identifier
     ;
 
 // parameter name
@@ -441,7 +441,7 @@ locals [ string entryname ]
 parameterName
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 @after { BuildXPTNode ($ctx) ; }
-    :   IDENTIFIER 
+    :   identifier 
 	
     ;
 
@@ -452,7 +452,7 @@ variableName
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 @after { BuildXPTNode ($ctx) ; }
 
-    :    IDENTIFIER 
+    :    identifier 
 	
     ;
 
@@ -471,3 +471,22 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
     | FALSE  { $ctx.XPTreeNode = new OnTrack.Rulez.eXPressionTree.Literal(false, otDataType.Bool); }
     | TRUE  { $ctx.XPTreeNode = new OnTrack.Rulez.eXPressionTree.Literal(true, otDataType.Bool); }
     ;
+
+/*
+ * identifier parsing rule
+ */
+ identifier
+    :
+	// keywords
+	  TYPE | SELECTION | AS | DEFAULT | NULLABLE | OF | MATCH | WITH | RETURN | DO 
+	// types
+	| NUMBER | DECIMAL | TEXT | MEMO | TIMESTAMP | LIST | DATE | DECIMALUNIT | LANGUAGETEXT | SYMBOL
+	// named literals
+	| TRUE | FALSE | NULL
+	// logical operators 
+	| A N D | O R | N O T | X O R
+	// identifier
+	| IDENTIFIER // finally
+	;
+
+

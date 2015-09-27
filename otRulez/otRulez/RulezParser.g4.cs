@@ -850,7 +850,7 @@ namespace OnTrack.Rulez
             if (ctx.dataObjectClass() == null) aClassName = GetDefaultClassName (ctx);
 	        else aClassName = ctx.dataObjectClass().ClassName ;
             // full entry name
-            ctx.entryname = aClassName + "." + ctx.IDENTIFIER().GetText();
+            ctx.entryname = aClassName + "." + ctx.identifier().GetText();
             ctx.ClassName = aClassName;
             // get the symbol from the engine
             DataObjectEntrySymbol aSymbol = new DataObjectEntrySymbol(ctx.entryname, engine: this.Engine);
