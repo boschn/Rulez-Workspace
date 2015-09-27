@@ -206,7 +206,7 @@ namespace OnTrack.Rulez
                 else if (!String.IsNullOrWhiteSpace(ctx.ClassName))
                 {
                     // if classname differs than it is not allowed
-                    if (string.Compare(ctx.ClassName, aClassname, true) != 00)
+                    if (! String.IsNullOrEmpty (aClassname) && string.Compare(ctx.ClassName, aClassname, true) != 00)
                         this.NotifyErrorListeners(String.Format (Messages.RCM_12, ctx.ClassName));
                     else aClassname = ctx.ClassName;
                 }

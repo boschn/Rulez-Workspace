@@ -431,7 +431,7 @@ dataObjectEntryName
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode , string ClassName  ]
 locals [ string entryname ]
 @after { BuildXPTNode ($ctx) ; }
-    : { IsDataObjectClass(CurrentToken.Text, $ctx)}? Class=dataObjectClass DOT {IsDataObjectEntry(CurrentToken.Text, $ctx)}?   identifier 
+    : { IsDataObjectClass(CurrentToken.Text, $ctx)}? Class=dataObjectClass { $ClassName = $ctx.Class.GetText();} DOT {IsDataObjectEntry(CurrentToken.Text, $ctx)}?   identifier 
 	| {IsDataObjectEntry(CurrentToken.Text, $ctx)}?  identifier
     ;
 

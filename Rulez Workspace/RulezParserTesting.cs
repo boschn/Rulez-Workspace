@@ -511,7 +511,7 @@ namespace OnTrack.Testing
             // 14
             "selection s14 (p1 as date) as testobject1[ uid = deliverables[date >= p1].uid, 2];" ,  
              // 15 semantic not possible -> cycle loop
-            "selection s14 (p1 as date) as testobject1[ uid = deliverables[created >= testobject1.created].uid, 2];"    
+            "selection s14 (p1 as date) as testobject1[ uid = deliverables[date >= testobject1.created].uid, 2];"    
         };
         String[] expectedTree =
         {
@@ -544,7 +544,7 @@ namespace OnTrack.Testing
             // 14
             "{Unit:{(SelectionRule) s14[<Variable:p1>]{ResultList:<DataObjectSymbol:TESTOBJECT1>}{{(SelectionStatementBlock) LIST<TESTOBJECT1?>[]{{Return LIST<TESTOBJECT1?> {(SelectionExpression) {ResultList:<DataObjectSymbol:TESTOBJECT1>}:{(LogicalExpression) 'ANDALSO':{(CompareExpression) '=':<DataObjectSymbol:testobject1.uid>,{(SelectionExpression) {ResultList:<DataObjectSymbol:deliverables.uid>}:{(CompareExpression) 'GE':<DataObjectSymbol:deliverables.date>,<Variable:p1>}}},{(CompareExpression) '=':<DataObjectSymbol:testobject1.VER>,<NUMBER:2>}}}}}}}}}",
             // 15
-            "",
+            "{Unit:{(SelectionRule) s14[<Variable:p1>]{ResultList:<DataObjectSymbol:TESTOBJECT1>}{{(SelectionStatementBlock) LIST<TESTOBJECT1?>[]{{Return LIST<TESTOBJECT1?> {(SelectionExpression) {ResultList:<DataObjectSymbol:TESTOBJECT1>}:{(LogicalExpression) 'ANDALSO':{(CompareExpression) '=':<DataObjectSymbol:testobject1.uid>,{(SelectionExpression) {ResultList:<DataObjectSymbol:deliverables.uid>}:{(CompareExpression) 'GE':<DataObjectSymbol:deliverables.date>,<DataObjectSymbol:testobject1.created>}}},{(CompareExpression) '=':<DataObjectSymbol:testobject1.VER>,<NUMBER:2>}}}}}}}}}",
         };
         String[] negativSyntaxTest =
         {
@@ -572,7 +572,7 @@ namespace OnTrack.Testing
         {
             // data context
             Engine.AddDataEngine(new DataObjectEngine("test"));
-            uint i = 14;
+            uint i = 15;
             RunPositiveSyntaxTest(i, postiveSyntaxTest[i-1], expected: expectedTree[i-1]);
         }
         /// <summary>

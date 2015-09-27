@@ -2281,8 +2281,11 @@ namespace OnTrack.Rulez.eXPressionTree
             foreach (INode aNode in Nodes)
             {
                 if (comma) aString += "," ;
-                aString += aNode.ToString();
-                comma = true;
+                if (aNode != null)
+                {
+                    aString += aNode.ToString();
+                    comma = true;
+                }
             }
             aString += "}";
             return aString;
