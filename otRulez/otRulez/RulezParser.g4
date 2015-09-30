@@ -77,7 +77,7 @@ returns [ Core.IDataType datatype]
 	| compositeType [$name] {$datatype = $ctx.compositeType().datatype;}
 
 	// defined data types by name such as data objects, if the save name is null
-	|  {$name == null && IsDataTypeName($ctx.GetText())}? identifier { $datatype = this.Engine.Repository.GetDatatype($ctx.identifier().GetText());}
+	|  {$name == null && IsDataTypeName($ctx.GetText())}? identifier { $datatype = this.Engine.Globals.GetDatatype($ctx.identifier().GetText());}
 	;
 
 /* structure types
@@ -110,9 +110,9 @@ returns [ Core.IDataType datatype ]
  */
 decimalUnitDeclaration [string name]
 returns [ Core.IDataType datatype ]
-	: DECIMALUNIT OF symbol=symbolTypeDeclaration[null] {$datatype = Rulez.DecimalUnitType.GetDataType( unit: (SymbolType) $ctx.symbol.datatype, name: name, engine: this.Engine);  }
+	: DECIMALUNIT OF symboldecl=symbolTypeDeclaration[null] {$datatype = Rulez.DecimalUnitType.GetDataType( unit: (SymbolType) $ctx.symbol.datatype, name: name, engine: this.Engine);  }
 	 {IsSymbolType($ctx.identifier().GetText())}? LANGUAGETEXT OF identifier 
-		{$datatype = Rulez.DecimalUnitType.GetDataType(unit: (SymbolType) this.Engine.Repository.GetDatatype($ctx.identifier().GetText()), name: name, engine: this.Engine);}
+		{$datatype = Rulez.DecimalUnitType.GetDataType(unit: (SymbolType) this.Engine.Globals.GetDatatype($ctx.identifier().GetText()), name: name, engine: this.Engine);}
 
 	;
 
@@ -125,9 +125,9 @@ returns [ Core.IDataType datatype ]
  */
 languageTextDeclaration [string name]
 returns [ Core.IDataType datatype ]
-	: LANGUAGETEXT OF symbol=symbolTypeDeclaration[null] {$datatype = Rulez.LanguageTextType.GetDataType( cultural: (SymbolType) $ctx.symbol.datatype, name: name, engine: this.Engine);  }
+	: LANGUAGETEXT OF symboldecl=symbolTypeDeclaration[null] {$datatype = Rulez.LanguageTextType.GetDataType( cultural: (SymbolType) $ctx.symbol.datatype, name: name, engine: this.Engine);  }
 	| {IsSymbolType($ctx.identifier().GetText())}? LANGUAGETEXT OF identifier 
-		{$datatype = Rulez.LanguageTextType.GetDataType(cultural: (SymbolType) this.Engine.Repository.GetDatatype($ctx.identifier().GetText()), name: name,engine: this.Engine);}
+		{$datatype = Rulez.LanguageTextType.GetDataType(cultural: (SymbolType) this.Engine.Globals.GetDatatype($ctx.identifier().GetText()), name: name,engine: this.Engine);}
 	;
 /*
  * anonymous symbol declaration
@@ -239,8 +239,7 @@ assignment
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 @after { BuildXPTNode ($ctx) ; }
 
-	: {IsVariableName(CurrentToken.Text, $ctx)}? variableName EQ selectExpression
-	| { IsDataObjectEntry(CurrentToken.Text, $ctx) | IsDataObjectClass(CurrentToken.Text, $ctx) }? dataObjectEntryName  EQ selectExpression
+	: symbol EQ selectExpression
 	
 	;
 
@@ -257,7 +256,7 @@ match
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 @after { BuildXPTNode ($ctx) ; }
 
-	: MATCH (variableName | parameterName | dataObjectEntryName ) WITH matchcase ( OR matchcase )* 
+	: MATCH (symbol) WITH matchcase ( OR matchcase )* 
 	
 	;
 
@@ -308,8 +307,8 @@ resultSelection [string ClassName]
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 @after { BuildXPTNode ($ctx) ; }
 	:
-	   DOT dataObjectEntryName // -> one data Object Entry Name
-	|  (DOT)? L_SQUARE_BRACKET ( dataObjectEntryName ( AND dataObjectEntryName )* )? R_SQUARE_BRACKET
+	   DOT identifier // -> one data Object Entry Name
+	|  (DOT)? L_SQUARE_BRACKET ( identifier ( AND identifier )* )? R_SQUARE_BRACKET
 	| // rule is optional -> means that the full object is the result
 	;
 
@@ -346,10 +345,11 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
  returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
  @after { BuildXPTNode ($ctx) ; }
     :	 
-	    ( NOT )? L_SQUARE_BRACKET {$keypos = 1;} selectConditions [$keypos]  R_SQUARE_BRACKET
+	    ( NOT )? L_SQUARE_BRACKET {$keypos= 1;} selectConditions [$keypos]  R_SQUARE_BRACKET
 	|   ( NOT )? LPAREN  selectConditions [$keypos]  RPAREN
 	// check if entryname is preceded with an object class here else we are not getting into this rule
-	|	( { IsDataObjectEntry(CurrentToken.Text, $ctx) | IsDataObjectClass(CurrentToken.Text, $ctx) }? dataObjectEntry=dataObjectEntryName Operator=compareOperator)? select=selectExpression 
+//	|	( { IsDataObjectEntry(CurrentToken.Text, $ctx) | IsDataObjectClass(CurrentToken.Text, $ctx) }? dataObjectEntry=dataObjectEntryName Operator=compareOperator)? select=selectExpression 
+	|   ( symbol Operator=compareOperator )? select = selectExpression
     ;
 
 /*
@@ -379,7 +379,7 @@ locals [ string defaultClassName ]
     : literal 
     | {IsParameterName(CurrentToken.Text, $ctx)}? parameterName
 	| {IsVariableName(CurrentToken.Text, $ctx)}? variableName
-	|  dataobject=dataObjectEntryName  { $ctx.XPTreeNode = $ctx.dataobject.XPTreeNode; } // who knows why we need that
+	|  dataobject=symbol  { $ctx.XPTreeNode = $ctx.dataobject.XPTreeNode; } // who knows why we need that
     | ( PLUS | MINUS ) selectExpression 
 	| logicalOperator_1 selectExpression 
 	| LPAREN selectExpression RPAREN
@@ -419,7 +419,7 @@ returns [ OnTrack.Rulez.Operator Operator  ]
 //
 dataObjectClass
 returns [ string ClassName ]
-//{this.Engine.Repository.HasDataObjectDefinition($ctx.identifier().GetText())}?
+//{this.Engine.Globals.HasDataObjectDefinition($ctx.identifier().GetText())}?
 @after{ $ClassName = $ctx.identifier().GetText() ;}
     :  identifier   
     ;
@@ -441,7 +441,7 @@ locals [ string entryname ]
 parameterName
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 @after { BuildXPTNode ($ctx) ; }
-    :   identifier 
+    :   symbol 
 	
     ;
 
@@ -452,7 +452,7 @@ variableName
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 @after { BuildXPTNode ($ctx) ; }
 
-    :    identifier 
+    :    symbol 
 	
     ;
 
@@ -471,6 +471,15 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
     | FALSE  { $ctx.XPTreeNode = new OnTrack.Rulez.eXPressionTree.Literal(false, otDataType.Bool); }
     | TRUE  { $ctx.XPTreeNode = new OnTrack.Rulez.eXPressionTree.Literal(true, otDataType.Bool); }
     ;
+
+/*
+ * define a symbol which might be a parametername, variablename, dataobjectentry name
+ *
+ */
+symbol
+	:
+	( (identifier DOT)* structurename=identifier DOT )? entryname = identifier 
+	;
 
 /*
  * identifier parsing rule

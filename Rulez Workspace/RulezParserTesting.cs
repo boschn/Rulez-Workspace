@@ -546,7 +546,7 @@ namespace OnTrack.Testing
             // 15
             "{Unit:{(SelectionRule) s14[<Variable:p1>]{ResultList:<DataObjectSymbol:TESTOBJECT1>}{{(SelectionStatementBlock) LIST<TESTOBJECT1?>[]{{Return LIST<TESTOBJECT1?> {(SelectionExpression) {ResultList:<DataObjectSymbol:TESTOBJECT1>}:{(LogicalExpression) 'ANDALSO':{(CompareExpression) '=':<DataObjectSymbol:testobject1.uid>,{(SelectionExpression) {ResultList:<DataObjectSymbol:deliverables.uid>}:{(CompareExpression) 'GE':<DataObjectSymbol:deliverables.date>,<DataObjectSymbol:testobject1.created>}}},{(CompareExpression) '=':<DataObjectSymbol:testobject1.VER>,<NUMBER:2>}}}}}}}}}",
         };
-        String[] negativSyntaxTest =
+        String[] negativeSyntaxTest =
         {
             "selection s1 as deliverables[100,1];", // automatic keycount wrong
             "selection s1a as delivarebles[\"100\"];", // wrong type of key
@@ -563,6 +563,11 @@ namespace OnTrack.Testing
                 for (uint i = 0; i < postiveSyntaxTest.GetUpperBound(0); i++)
                 {
                     RunPositiveSyntaxTest(i+1, postiveSyntaxTest[i], expected: expectedTree[i]);
+                }
+
+                for (uint i = 0; i < negativeSyntaxTest.GetUpperBound(0); i++)
+                {
+                    RunNegativeSyntaxTest(i + 1, negativeSyntaxTest[i]);
                 }
             }
             
@@ -586,7 +591,7 @@ namespace OnTrack.Testing
           
             Console.Out.WriteLine(DateTime.Now.ToString("s") + ": Syntax Test #" + id.ToString() + ":" + statement);
                 
-            INode theNode = _engine.Verifiy(statement);
+            INode theNode = _engine.Verify(statement);
 
             // check result
             if (theNode == null)
@@ -629,32 +634,45 @@ namespace OnTrack.Testing
         /// </summary>
         /// <param name="statement"></param>
         [TestMethod]
-        public void RunNegativeSyntaxTest(ulong id, string statement, string expected = null)
+        public void RunNegativeSyntaxTest(ulong id, string statement, string[] expectedMessages = null)
         {
             bool aResult = false;
             try
             {
-                INode theNode = _engine.Verifiy(statement);
+                Console.Out.WriteLine(DateTime.Now.ToString("s") + ": Syntax Test #" + id.ToString() + ":" + statement);
+
+                INode theNode = this.Engine.Verify(statement);
 
                 // check result
                 if (theNode == null)
                     aResult = false;
-                else if (theNode.Messages.Where(x => x.Type == MessageType.Error).Count() == 0)
+                else if (theNode.Messages.Where(x => x.Type == MessageType.Error).Count() != 0)
                 {
-                    if (String.IsNullOrEmpty(expected)) aResult = true;
-                    else if (String.Compare(theNode.ToString(), expected) == 00) aResult = true;
-                    else aResult = false;
+                    aResult = false;
+                    foreach (string msgtext in expectedMessages)
+                    {
+
+                    }
+
                 }
 
                 if (!aResult)
                 {
-                    Console.Out.Write(DateTime.Now.ToString("s") + ": Syntax Test #" + id.ToString() + " succeeded.");
-                    foreach (Message anError in theNode.Messages) Console.WriteLine(anError);
+                    Console.Out.WriteLine(DateTime.Now.ToString("s") + ": Syntax #" + id.ToString() + " failed as expected.");
+                    if (theNode != null)
+                    {
+                        Console.Out.WriteLine("Errors:");
+                        foreach (Message anError in theNode.Messages)
+                            Console.Out.WriteLine(anError.ToString());
+                        Console.Out.WriteLine();
+                        Console.Out.WriteLine("Result:");
+                        Console.Out.WriteLine(theNode.ToString());
+                    }
                 }
                 else
-                {
-                    Console.Out.Write(DateTime.Now.ToString("s") + ": Syntax Test #" + id.ToString() + " was not as a failure recognized.");
-                }
+                    Console.Out.WriteLine(DateTime.Now.ToString("s") + ": Syntax #" + id.ToString() + " not failed.");
+
+                // assert
                 Assert.IsFalse(aResult, DateTime.Now.ToString("s") + ": Syntax Test #" + id.ToString() + " failed.");
             }
 

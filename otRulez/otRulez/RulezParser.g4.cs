@@ -185,7 +185,7 @@ namespace OnTrack.Rulez
         bool IsDataObjectClass(string name, RuleContext context)
         {
             // check the name might be a full name
-            return Engine.Repository.HasDataObjectDefinition(CanonicalName.ClassName(name));
+            return Engine.Globals.HasDataObjectDefinition(CanonicalName.GetStructureName(name));
         }
         /// <summary>
         /// returns true if this a Data Object class
@@ -194,9 +194,9 @@ namespace OnTrack.Rulez
         bool IsDataObjectEntry(string name, RuleContext context)
         {
             // check the name might be a full name
-            CanonicalName aName = new CanonicalName(name);
-            string aClassname = aName.IsCanonical() ? aName.ClassName() : String.Empty;
-            string anEntryName = aName.EntryName();
+            EntryName aName = new EntryName(name);
+            string aClassname =  aName.ObjectName ;
+            string anEntryName = aName.EntryName;
 
             // if we are in the right context
             if (context is DataObjectEntryNameContext)
@@ -232,8 +232,8 @@ namespace OnTrack.Rulez
             }
                 
             // check if DataObjectEntry is there
-            if (!string.IsNullOrWhiteSpace(aClassname) && Engine.Repository.HasDataObjectDefinition(aClassname))
-                return (Engine.Repository.GetDataObjectDefinition(aClassname).HasEntry(anEntryName));
+            if (!string.IsNullOrWhiteSpace(aClassname) && Engine.Globals.HasDataObjectDefinition(aClassname))
+                return (Engine.Globals.GetDataObjectDefinition(aClassname).HasEntry(anEntryName));
             // no way to get classname and entryname
             return false;
         }
@@ -243,7 +243,7 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public bool CheckUniqueSelectionRuleId(string name)
         {
-            if (Engine.Repository.HasSelectionRule (name))
+            if (Engine.Globals.HasSelectionRule (name))
             {
                 this.NotifyErrorListeners(String.Format(Messages.RCM_7, name)); 
                 return false;
@@ -255,7 +255,7 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
-        RuleContext GetRootContext(RuleContext context, System.Type type)
+        public static RuleContext GetRootContext(RuleContext context, System.Type type)
         {
             if (context.GetType() == type) return context;
             if (context.Parent == null) return null;
@@ -267,7 +267,7 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
-        string GetDefaultClassName(RuleContext context)
+        public static string GetDefaultClassName(RuleContext context)
         {
             if (context.GetType() == typeof(SelectionContext)) return ((SelectionContext) context).dataObjectClass ().GetText ();
             if (context.Parent == null) return null;
@@ -283,7 +283,7 @@ namespace OnTrack.Rulez
         {
             if (this.Engine != null)
             {
-                return this.Engine.Repository.HasDataType(id);
+                return this.Engine.Globals.HasDataType(id);
             }
             return false;
         }
@@ -296,9 +296,9 @@ namespace OnTrack.Rulez
         {
             if (this.Engine != null)
             {
-                if (this.Engine.Repository.HasDataType(id))
+                if (this.Engine.Globals.HasDataType(id))
                 {
-                    IDataType aDatatype = this.Engine.Repository.GetDatatype(id);
+                    IDataType aDatatype = this.Engine.Globals.GetDatatype(id);
                     return (aDatatype.TypeId == otDataType.DataObject);
                 }
             }
@@ -313,9 +313,9 @@ namespace OnTrack.Rulez
         {
             if (this.Engine != null)
             {
-                if (this.Engine.Repository.HasDataType(id))
+                if (this.Engine.Globals.HasDataType(id))
                 {
-                    IDataType aDatatype = this.Engine.Repository.GetDatatype(id);
+                    IDataType aDatatype = this.Engine.Globals.GetDatatype(id);
                     return (aDatatype.TypeId == otDataType.Symbol);
                 }
             }
@@ -653,9 +653,9 @@ namespace OnTrack.Rulez
                  if (ctx.dataObjectEntry == null)
                  {
                      string aClassName = GetDefaultClassName(ctx);
-                     if (this.Engine.Repository.HasDataObjectDefinition(aClassName))
+                     if (this.Engine.Globals.HasDataObjectDefinition(aClassName))
                      {
-                         iObjectDefinition aObjectDefinition = this.Engine.GetDataObjectDefinition(aClassName);
+                         iObjectDefinition aObjectDefinition = this.Engine.GetDataObjectDefinitions(aClassName);
                          if (ctx.keypos <= aObjectDefinition.Keys.Count())
                              entryName = aClassName + "." + aObjectDefinition.Keys[ctx.keypos - 1];
                          else
@@ -678,7 +678,7 @@ namespace OnTrack.Rulez
                  // Operator
                  Operator anOperator;
                  // default operator is the EQ operator
-                 if (ctx.Operator == null) anOperator = Engine.GetOperator(new Token(Token.EQ));
+                 if (ctx.Operator == null) anOperator = Engine.GetOperators(new Token(Token.EQ));
                  else anOperator = ctx.Operator.Operator;
 
                  // build the comparer expression
@@ -1000,46 +1000,5 @@ namespace OnTrack.Rulez
         }
     }
 
-    /// <summary>
-    /// type of messages
-    /// </summary>
-    public enum MessageType : uint
-    {
-        Error = 1,
-        Warning
-    }
-    /// <summary>
-    /// structure for erors
-    /// </summary>
-    public struct Message
-    {
-        public DateTime Timestamp;
-        public MessageType Type;
-        public int Line;
-        public int Pos;
-        public string Text;
-        /// <summary>
-        /// constructor
-        /// </summary>
-        /// <param name="type"></param>
-        /// <param name="line"></param>
-        /// <param name="pos"></param>
-        /// <param name="message"></param>
-        public Message(MessageType type = MessageType.Error, int line = 0, int pos = 0, string message = null)
-        {
-            this.Timestamp = DateTime.Now;
-            this.Type = type;
-            this.Line = line;
-            this.Pos = pos;
-            this.Text = message;
-        }
-        /// <summary>
-        /// convert to string
-        /// </summary>
-        /// <returns></returns>
-        public override string ToString()
-        {
-            return String.Format("{0:s}: {1} [Line {2}, Position {3}] {4}", this.Timestamp, this.Type.ToString(), this.Line, this.Pos, this.Text);
-        }
-    }
+   
 }

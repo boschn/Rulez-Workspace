@@ -28,7 +28,7 @@ namespace OnTrack.Rulez
     /// </summary>
     public class Engine
     {
-        private Repository _repository; // the repository
+        private Scope _globalScope;
         private string _id; // handle of the engine
         private Context _context;
         private Dictionary<String, ICodeBit> _Code; // Code Dictionary
@@ -40,7 +40,7 @@ namespace OnTrack.Rulez
         {
             if (id == null) _id = System.Environment.MachineName  + "_" + DateTime.Now.ToString("o");
             else _id = id;
-            _repository = new Repository (engine:this);
+            _globalScope = new Scope(engine: this, id: CanonicalName.Global);
             _context = new Context(this);
             _dataobjectEngines = new List<iDataObjectEngine>();
             _Code = new Dictionary<string, ICodeBit>();
@@ -57,11 +57,15 @@ namespace OnTrack.Rulez
         public string Id { get { return _id; } }
 
         /// <summary>
-        /// returns the Repository of the Engine
+        /// returns the Toplevel Repository of the Engine
         /// </summary>
-        public Repository Repository { get { return _repository; } }
-
-        #endregion
+        public Repository Globals { get { return GlobalScope.Repository; } }
+        /// <summary>
+        /// returns the Toplevel Scope
+        /// </summary>
+        public Scope GlobalScope { get { return _globalScope; } }
+        
+#endregion
 
         /// <summary>
         /// Add a data object engine
@@ -76,7 +80,7 @@ namespace OnTrack.Rulez
                 throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { engine.ID , "DataEngines"});
 
             _dataobjectEngines.Add(engine);
-            result &= _repository .RegisterDataObjectRepository (engine.Objects );
+            result &= Globals .RegisterDataObjectRepository (engine.Objects );
             return result;
         }
         /// <summary>
@@ -94,9 +98,69 @@ namespace OnTrack.Rulez
 
 
             result &= _dataobjectEngines.Remove(aDataEngine);
-            result &= _repository.DeRegisterDataObjectRepository(aDataEngine.Objects);
+            result &= Globals.DeRegisterDataObjectRepository(aDataEngine.Objects);
             return result;
         }
+        /// <summary>
+        /// returns true if the scope Entries exists in the Global Scope
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public bool HasScope(string id)
+        {
+            if (String.Compare (GlobalScope.Id, id, true)==00) return true;
+            // define Visitor and return the REsult
+            Scope.Visitor<Boolean> aVisitor = new Scope.Visitor<Boolean>();
+            Scope.Visitor<Boolean>.Eventhandler aVisitingHandling = (o, e) =>
+            {
+                if (String.Compare(id, e.Current.Id , true) == 00) e.Result = true;
+            };
+            aVisitor.VisitedScope += aVisitingHandling;
+            aVisitor.Visit(GlobalScope);
+            return aVisitor.Result;
+        }
+        /// <summary>
+        /// returns the Scope Object of an given ID
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public Scope GetScope(string id)
+        {
+            if (String.Compare(GlobalScope.Id, id, true) == 00) return GlobalScope;
+            // define Visitor and return the REsult
+            Scope.Visitor<List<Scope>> aVisitor = new Scope.Visitor<List<Scope>>();
+            Scope.Visitor<List<Scope>>.Eventhandler aVisitingHandling = (o, e) =>
+            {
+                if (String.Compare(GlobalScope.Id, e.Current.Id, true) == 00) e.Result.Add(e.Current);
+            };
+            aVisitor.VisitedScope += aVisitingHandling;
+            aVisitor.Visit(GlobalScope);
+            return aVisitor.Result.FirstOrDefault ();
+        }
+        /// <summary>
+        /// create a scope in the scope tree by id
+        /// a.b.c -> will lead to create a with b as sub and c as sub to b
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public Scope CreateScope(string id)
+        {
+            string[] split = id.Split (CanonicalName.ConstDelimiter);
+            Scope aLevelScope = GlobalScope;
+            string aLevelScopeName = CanonicalName.Global;
+            for (uint i = 0; i <= split.GetUpperBound (0); i++)
+            {
+                // get or create the Scope
+                if (aLevelScope.HasSubScope(aLevelScopeName)) aLevelScope = aLevelScope.GetSubScope(aLevelScopeName);
+                else aLevelScope = aLevelScope.AddSubScope(aLevelScopeName);
+                // increase the levelscope name
+                if (!String.IsNullOrEmpty(aLevelScopeName)) aLevelScopeName += CanonicalName.ConstDelimiter + split[i];
+                else aLevelScopeName += split[i];
+            }
+
+            return aLevelScope;
+        }
+        #region Access
         /// <summary>
         /// gets the ICodeBit of an handle
         /// </summary>
@@ -119,48 +183,178 @@ namespace OnTrack.Rulez
              return true;
         }
         /// <summary>
-        /// returns a rule rule from the repository or creates a new one and returns this
+        /// returns all Rules of a certain id from the scope tree
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
-        public SelectionRule GetSelectionRule(string id = null)
+        public IList <SelectionRule > GetSelectionRules(string id = null)
         {
-            if (_repository .HasSelectionRule (id)) return _repository .GetSelectionRule (id);
-            SelectionRule aRule = new SelectionRule(id);
-            _repository.AddSelectionRule(aRule.ID, aRule);
-            return aRule;
-        }
+            if (GlobalScope.HasSelectionRule(id))
+            {
+                List<SelectionRule> aResult = new List<SelectionRule>();
+                aResult.Add(GlobalScope.GetSelectionRule(id));
+                return aResult;
+            }
 
+           // define Visitor and return the REsult
+           Scope.Visitor<List<SelectionRule>> aVisitor = new Scope.Visitor<List<SelectionRule>>();
+           Scope.Visitor<List<SelectionRule>>.Eventhandler aVisitingHandling = (o, e) => 
+           {
+                if (e.Current.HasSelectionRule (id))
+                    e.Result.Add(e.Current.GetSelectionRule (id));
+           };
+           aVisitor.VisitedScope += aVisitingHandling;
+           aVisitor.Visit(GlobalScope);
+           return aVisitor.Result;
+        }
         /// <summary>
-        /// gets the Operator definition for the Token ID
+        /// returns true if the id exists somewhere in the scope tree
         /// </summary>
-        /// <param name="handle"></param>
+        /// <param name="id"></param>
         /// <returns></returns>
-        public Operator GetOperator (Token id)
+        public bool HasSelectionRule(string id)
         {
-            if (_repository.HasOperator (id)) return _repository .GetOperator (id);
-            return null;
+            if (GlobalScope.HasSelectionRule(id)) return true;
+            // define Visitor and return the REsult
+            Scope.Visitor<Boolean> aVisitor = new Scope.Visitor<Boolean>();
+            Scope.Visitor<Boolean>.Eventhandler aVisitingHandling = (o, e) =>
+            {
+                if (e.Current.HasSelectionRule(id))  e.Result = true;
+            };
+            aVisitor.VisitedScope += aVisitingHandling;
+            aVisitor.Visit(GlobalScope);
+            return aVisitor.Result;
         }
         /// <summary>
         /// gets the Operator definition for the Token ID
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
-        public @Function GetFunction(Token id)
+        public IList<Operator> GetOperators (Token id)
         {
-            if (_repository.HasFunction(id)) return _repository.GetFunction(id);
-            return null;
+             if (GlobalScope.HasOperator(id))
+             {
+                 List<Operator> aResult = new List<Operator>();
+                 aResult.Add(GlobalScope.GetOperator(id));
+                 return aResult;
+             }
+
+             // define Visitor and return the REsult
+             Scope.Visitor<List<Operator>> aVisitor = new Scope.Visitor<List<Operator>>();
+             Scope.Visitor<List<Operator>>.Eventhandler aVisitingHandling = (o, e) =>
+             {
+                 if (e.Current.HasOperator(id))
+                     e.Result.Add(e.Current.GetOperator(id));
+             };
+             aVisitor.VisitedScope += aVisitingHandling;
+             aVisitor.Visit(GlobalScope);
+             return aVisitor.Result;
+        }
+        /// <summary>
+        /// returns true if the id exists somewhere in the scope tree
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public bool HasOperator(Token id)
+        {
+            if (GlobalScope.HasOperator(id)) return true;
+            // define Visitor and return the REsult
+            Scope.Visitor<Boolean> aVisitor = new Scope.Visitor<Boolean>();
+            Scope.Visitor<Boolean>.Eventhandler aVisitingHandling = (o, e) =>
+            {
+                if (e.Current.HasOperator(id)) e.Result = true;
+            };
+            aVisitor.VisitedScope += aVisitingHandling;
+            aVisitor.Visit(GlobalScope);
+            return aVisitor.Result;
         }
         /// <summary>
         /// gets the Operator definition for the Token ID
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
-        public iObjectDefinition GetDataObjectDefinition(string id)
+        public IList<@Function> GetFunctions(Token id)
         {
-            if (_repository.HasDataObjectDefinition(id)) return _repository.GetDataObjectDefinition(id);
-            return null;
+            if (GlobalScope.HasFunction(id))
+            {
+                List<@Function> aResult = new List<@Function>();
+                aResult.Add(GlobalScope.GetFunction(id));
+                return aResult;
+            }
+
+            // define Visitor and return the REsult
+            Scope.Visitor<List<@Function>> aVisitor = new Scope.Visitor<List<@Function>>();
+            Scope.Visitor<List<@Function>>.Eventhandler aVisitingHandling = (o, e) =>
+            {
+                if (e.Current.HasFunction(id))
+                    e.Result.Add(e.Current.GetFunction(id));
+            };
+            aVisitor.VisitedScope += aVisitingHandling;
+            aVisitor.Visit(GlobalScope);
+            return aVisitor.Result;
         }
+        /// <summary>
+        /// returns true if the id exists somewhere in the scope tree
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public bool HasFunction(Token id)
+        {
+            if (GlobalScope.HasFunction(id)) return true;
+            // define Visitor and return the REsult
+            Scope.Visitor<Boolean> aVisitor = new Scope.Visitor<Boolean>();
+            Scope.Visitor<Boolean>.Eventhandler aVisitingHandling = (o, e) =>
+            {
+                if (e.Current.HasFunction(id)) e.Result = true;
+            };
+            aVisitor.VisitedScope += aVisitingHandling;
+            aVisitor.Visit(GlobalScope);
+            return aVisitor.Result;
+        }
+        /// <summary>
+        /// gets the Operator definition for the Token ID
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <returns></returns>
+        public IList<iObjectDefinition> GetDataObjectDefinitions(string id)
+        {
+            if (GlobalScope.HasDataObjectDefinition (id))
+            {
+                List<iObjectDefinition> aResult = new List<iObjectDefinition>();
+                aResult.Add(GlobalScope.GetDataObjectDefinition(id));
+                return aResult;
+            }
+
+            // define Visitor and return the REsult
+            Scope.Visitor<List<iObjectDefinition>> aVisitor = new Scope.Visitor<List<iObjectDefinition>>();
+            Scope.Visitor<List<iObjectDefinition>>.Eventhandler aVisitingHandling = (o, e) =>
+            {
+                if (e.Current.HasDataObjectDefinition (id))
+                    e.Result.Add(e.Current.GetDataObjectDefinition(id));
+            };
+            aVisitor.VisitedScope += aVisitingHandling;
+            aVisitor.Visit(GlobalScope);
+            return aVisitor.Result;
+        }
+        /// <summary>
+        /// returns true if the id exists somewhere in the scope tree
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public bool HasDataObjectDefinition(string id)
+        {
+            if (GlobalScope.HasDataObjectDefinition(id)) return true;
+            // define Visitor and return the REsult
+            Scope.Visitor<Boolean> aVisitor = new Scope.Visitor<Boolean>();
+            Scope.Visitor<Boolean>.Eventhandler aVisitingHandling = (o, e) =>
+            {
+                if (e.Current.HasDataObjectDefinition(id)) e.Result = true;
+            };
+            aVisitor.VisitedScope += aVisitingHandling;
+            aVisitor.Visit(GlobalScope);
+            return aVisitor.Result;
+        }
+        #endregion
 
         /// <summary>
         /// generate from a source string a rule and store it
@@ -176,7 +370,7 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="source"></param>
         /// <returns></returns>
-        public INode Verifiy(string source)
+        public INode Verify(string source)
         {
             RulezParser.MessageListener aListener = new RulezParser.MessageListener();
             RulezParser.RulezUnitContext aCtx = null;
@@ -190,7 +384,15 @@ namespace OnTrack.Rulez
                 aParser.Trace = true;
                 aParser.Engine = this;
                 aParser.AddErrorListener(aListener);
+                // step 1: parse
                 aCtx = aParser.rulezUnit();
+                // step 2: generate the declarations
+                XPTDeclarationGenerator theDeclGen = new XPTDeclarationGenerator(aParser);
+                Antlr4.Runtime.Tree.ParseTreeWalker.Default.Walk(theDeclGen, aCtx);
+                // step 3: generate the XPTree of the code
+                XPTGenerator theXPTGen = new XPTGenerator(aParser);
+                Antlr4.Runtime.Tree.ParseTreeWalker.Default.Walk(theXPTGen, aCtx);
+                // return the XPTree
                 if (aCtx != null) return aCtx.XPTreeNode;
                 return null;
             }
@@ -322,7 +524,7 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public IEnumerable <iDataObject > RunSelectionRule (string ruleid, params object[] parameters)
         {
-            SelectionRule aRule = this.GetSelectionRule(id: ruleid);
+            SelectionRule aRule = this.GetSelectionRules(id: ruleid).First();
             // search the rule
             if (aRule == null)
                 throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[] { ruleid, "SelectionRule" });

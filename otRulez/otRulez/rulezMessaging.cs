@@ -26,6 +26,55 @@ using System.Diagnostics;
 namespace OnTrack.Rulez
 {
     /// <summary>
+    /// type of messages
+    /// </summary>
+    public enum MessageType : uint
+    {
+        Error = 1,
+        Warning
+    }
+    /// <summary>
+    /// structure for erors
+    /// </summary>
+    public struct Message
+    {
+        public DateTime Timestamp;
+        public MessageType Type;
+        public int Line;
+        public int Pos;
+        public string Text;
+        public string ID;
+        /// <summary>
+        /// constructor
+        /// </summary>
+        /// <param name="type"></param>
+        /// <param name="line"></param>
+        /// <param name="pos"></param>
+        /// <param name="message"></param>
+        public Message(MessageType type = MessageType.Error, int line = 0, int pos = 0, string id = null, string message = null)
+        {
+            this.Timestamp = DateTime.Now;
+            this.Type = type;
+            this.Line = line;
+            this.Pos = pos;
+            this.ID = id;
+            if (String.IsNullOrEmpty(message)) message = String.Empty;
+            if (ID != null && !String.IsNullOrEmpty(Messages.ResourceManager.GetString (id))) 
+                message = Messages.ResourceManager.GetString(id) + " " + message;
+                
+            this.Text = message;
+            
+        }
+        /// <summary>
+        /// convert to string
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return String.Format("{0:s}: {1} [Line {2}, Position {3}] {4}", this.Timestamp, this.Type.ToString(), this.Line, this.Pos, this.Text);
+        }
+    }
+    /// <summary>
     /// defines the exception
     /// </summary>
     public class RulezException : Exception

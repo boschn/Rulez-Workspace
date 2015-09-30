@@ -871,13 +871,13 @@ namespace OnTrack.Rulez
         public static SymbolType GetDataType(Engine engine, otDataType innerTypeId = otDataType.Number, string name = null, bool isNullable = false)
         {
             string sig = CreateSignature(structure: new IDataType[] { PrimitiveType.GetPrimitiveType(innerTypeId) }, isNullable: isNullable);
-            if (!String.IsNullOrEmpty(name) && engine.Repository.HasDataType(name))
+            if (!String.IsNullOrEmpty(name) && engine.Globals.HasDataType(name))
             {
-                IDataType aDatatype = engine.Repository.GetDatatype(name);
+                IDataType aDatatype = engine.Globals.GetDatatype(name);
                 if (aDatatype.TypeId == otDataType.Symbol) return (SymbolType)aDatatype;
                 throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { name, aDatatype.Name });
             }
-            if (engine.Repository.HasDataTypeSignature(sig)) return (SymbolType)engine.Repository.GetDatatypeBySignature(sig).FirstOrDefault();
+            if (engine.Globals.HasDataTypeSignature(sig)) return (SymbolType)engine.Globals.GetDatatypeBySignature(sig).FirstOrDefault();
             // create new one
             return new SymbolType(innerTypeId: innerTypeId, isNullable: isNullable, name:name, engine: engine);
         }
@@ -988,14 +988,14 @@ namespace OnTrack.Rulez
         public static DecimalUnitType GetDataType(SymbolType unit, Engine engine, string name = null, bool isNullable = false)
         {
             string sig = CreateSignature(structure: new IDataType[] { PrimitiveType.GetPrimitiveType(otDataType.DecimalUnit), unit }, isNullable: isNullable);
-            if (!String.IsNullOrEmpty(name) && engine.Repository.HasDataType(name))
+            if (!String.IsNullOrEmpty(name) && engine.Globals.HasDataType(name))
             {
-                IDataType aDatatype = engine.Repository.GetDatatype(name);
+                IDataType aDatatype = engine.Globals.GetDatatype(name);
                 if (aDatatype.TypeId == otDataType.DecimalUnit) return (DecimalUnitType)aDatatype;
                 throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { name, aDatatype.Name });
             }
 
-            if (engine.Repository.HasDataTypeSignature(sig)) return (DecimalUnitType)engine.Repository.GetDatatypeBySignature(sig).FirstOrDefault();
+            if (engine.Globals.HasDataTypeSignature(sig)) return (DecimalUnitType)engine.Globals.GetDatatypeBySignature(sig).FirstOrDefault();
             // create new one
             return new DecimalUnitType(unit: unit, isNullable: isNullable, name:name, engine: engine);
         }
@@ -1037,14 +1037,14 @@ namespace OnTrack.Rulez
         public new static TupleType GetDataType(IDataType[] structure, Engine engine, string[] memberNames = null, string name = null, bool isNullable = false)
         {
             string sig = CreateSignature(structure: structure, typename: ConstTypeName, isNullable: isNullable);
-            if (!String.IsNullOrEmpty(name) && engine.Repository.HasDataType(name))
+            if (!String.IsNullOrEmpty(name) && engine.Globals.HasDataType(name))
             {
-                IDataType aDatatype = engine.Repository.GetDatatype(name);
+                IDataType aDatatype = engine.Globals.GetDatatype(name);
                 if (aDatatype.TypeId == otDataType.Tuple) return (TupleType)aDatatype;
                 throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { name, aDatatype.Name });
             }
 
-            if (engine.Repository.HasDataTypeSignature(sig)) return (TupleType)engine.Repository.GetDatatypeBySignature(sig).FirstOrDefault();
+            if (engine.Globals.HasDataTypeSignature(sig)) return (TupleType)engine.Globals.GetDatatypeBySignature(sig).FirstOrDefault();
             // create new one
             return new TupleType(structure: structure, isNullable: isNullable, memberNames: memberNames, name: name, engine: engine);
         }
@@ -1104,14 +1104,14 @@ namespace OnTrack.Rulez
         public static LanguageTextType GetDataType(SymbolType cultural, Engine engine, string name = null, bool isNullable = false)
         {
             string sig = CreateSignature(structure: new IDataType[] { PrimitiveType.GetPrimitiveType(otDataType.Text), cultural }, isNullable: isNullable);
-            if (!String.IsNullOrEmpty(name) && engine.Repository.HasDataType(name))
+            if (!String.IsNullOrEmpty(name) && engine.Globals.HasDataType(name))
             {
-                IDataType aDatatype = engine.Repository.GetDatatype(name);
+                IDataType aDatatype = engine.Globals.GetDatatype(name);
                 if (aDatatype.TypeId == otDataType.LanguageText) return (LanguageTextType) aDatatype;
                 throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { name, aDatatype.Name  });
             }
 
-            if (engine.Repository.HasDataTypeSignature(sig)) return (LanguageTextType)engine.Repository.GetDatatypeBySignature(sig).FirstOrDefault();
+            if (engine.Globals.HasDataTypeSignature(sig)) return (LanguageTextType)engine.Globals.GetDatatypeBySignature(sig).FirstOrDefault();
             // create new one
             return new LanguageTextType(cultural: cultural, isNullable: isNullable, name:name, engine: engine);
         }
@@ -1304,13 +1304,13 @@ namespace OnTrack.Rulez
         public static ListType GetDataType (IDataType innerDataType,  Engine engine, string name = null, bool isNullable = false)
         {
             string sig = CreateSignature(innerDataType, isNullable);
-            if (!String.IsNullOrEmpty(name) && engine.Repository.HasDataType(name))
+            if (!String.IsNullOrEmpty(name) && engine.Globals.HasDataType(name))
             {
-                IDataType aDatatype = engine.Repository.GetDatatype(name);
+                IDataType aDatatype = engine.Globals.GetDatatype(name);
                 if (aDatatype.TypeId == otDataType.List) return (ListType)aDatatype;
                 throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { name, aDatatype.Name });
             }
-            if (engine.Repository.HasDataTypeSignature (sig)) return (ListType) engine.Repository.GetDatatypeBySignature (sig).FirstOrDefault();
+            if (engine.Globals.HasDataTypeSignature (sig)) return (ListType) engine.Globals.GetDatatypeBySignature (sig).FirstOrDefault();
             // create new one
             return new ListType(innerDataType: innerDataType, isNullable: isNullable, name:name, engine: engine);
         }
@@ -1326,13 +1326,13 @@ namespace OnTrack.Rulez
         {
             IDataType innerDataType = PrimitiveType.GetPrimitiveType(innerTypeId);
             string sig = CreateSignature(innerDataType, isNullable);
-            if (!String.IsNullOrEmpty(name) && engine.Repository.HasDataType(name))
+            if (!String.IsNullOrEmpty(name) && engine.Globals.HasDataType(name))
             {
-                IDataType aDatatype = engine.Repository.GetDatatype(name);
+                IDataType aDatatype = engine.Globals.GetDatatype(name);
                 if (aDatatype.TypeId == otDataType.List) return (ListType)aDatatype;
                 throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { name, aDatatype.Name });
             }
-            if (engine.Repository.HasDataTypeSignature(sig)) return (ListType)engine.Repository.GetDatatypeBySignature(sig).FirstOrDefault();
+            if (engine.Globals.HasDataTypeSignature(sig)) return (ListType)engine.Globals.GetDatatypeBySignature(sig).FirstOrDefault();
             // create new one
             return new ListType(innerDataType: innerDataType, isNullable: isNullable, name: name, engine: engine);
         }
@@ -1456,9 +1456,9 @@ namespace OnTrack.Rulez
         /// </summary>
         public static DataObjectType GetDataType(string name, Engine engine)
         {
-            if (engine.Repository.HasDataType(name))  
+            if (engine.Globals.HasDataType(name))  
             {
-                IDataType aDatatype = engine.Repository.GetDatatype(name);
+                IDataType aDatatype = engine.Globals.GetDatatype(name);
                 if (aDatatype.TypeId ==  otDataType.DataObject || aDatatype.TypeId == (otDataType.IsNullable | otDataType.DataObject)) return (DataObjectType)aDatatype;
                 // not found as dataobject
                 throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { name, "not a data object type" });
@@ -1496,7 +1496,7 @@ namespace OnTrack.Rulez
             {
                 if (!ExistsInEngine.HasValue && this.Engine != null)
                 {
-                    _objectdefinition = this.Engine.Repository.GetDataObjectDefinition(id:this.Name);
+                    _objectdefinition = this.Engine.Globals.GetDataObjectDefinition(id:this.Name);
                     this.ExistsInEngine = (_objectdefinition != null) ? true : false;
                 }
                 return _objectdefinition;

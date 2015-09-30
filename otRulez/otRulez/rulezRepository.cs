@@ -20,6 +20,8 @@ using System.Text;
 using System.Threading.Tasks;
 using OnTrack.Core;
 using OnTrack.Rulez.eXPressionTree;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 
 namespace OnTrack.Rulez
 {
@@ -516,7 +518,298 @@ namespace OnTrack.Rulez
         }
     }
     /// <summary>
-    /// a repository for the rulez engine
+    
+
+    
+    /// <summary>
+    /// a scope repository unit
+    /// 
+    /// design requirements:
+    /// 
+    /// 1) scopes are nested in a 1:n tree (which are subscopes)
+    /// 2) a scope as an id in canonical form with the special Name CanonicalName.Global as root
+    /// 3) queries for objects in the scopes are upbound travel through the tree to the root
+    /// 4) scope id are independent from the tree (but in the engine created in this order)
+    /// </summary>
+    public class Scope : System.ComponentModel.INotifyPropertyChanged
+    {
+        /// <summary>
+        /// vistor pattern class for the rulez scope tree.
+        /// make the stack of the visitor
+        /// </summary>
+        public class Visitor<T> : IVisitor where T : new()
+        {
+            /// Event Args for Visitor 
+            /// </summary>
+            public class EventArgs<T> : System.EventArgs where T : new()
+            {
+                /// <summary>
+                /// constructor
+                /// </summary>
+                /// <param name="currentNode"></param>
+                public EventArgs(Scope current = null)
+                {
+                    if (current != null) this.Current = current;
+                    this.Result = new T();
+                }
+                /// <summary>
+                /// returns Current Node
+                /// </summary>
+                public Scope Current { get; set; }
+                /// <summary>
+                /// returns the Result
+                /// </summary>
+                public T Result { get; set; }
+            }
+            // declare events
+            public delegate void Eventhandler(object o, EventArgs<T> e);
+            public event Eventhandler VisitingScope;
+            public event Eventhandler VisitedScope;
+            //
+            private T _result = new T();
+            /// <summary>
+            /// return the Result of a run
+            /// </summary>
+            public T Result { get { return _result; } }
+            /// <summary>
+            /// visit scope
+            /// </summary>
+            /// <param name="expression"></param>
+            public void Visit(Scope scope)
+            {
+                EventArgs<T> args = new EventArgs<T>(current: scope);
+
+                // visit subnodes from left to right
+                if (VisitingScope != null) VisitingScope(scope, args);
+                foreach (Scope aScope in scope.Children) Visit(aScope);
+                if (VisitedScope != null) VisitedScope(scope, args);
+            }
+        }
+
+        private string _id; // scope id
+        private Scope _parent; // parent scope
+        private ObservableCollection<Scope> _children = new ObservableCollection<Scope>(); // children scopes
+        private Repository _current; // this scope;
+        private Engine _engine; // my engine
+        // event
+        protected event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
+        // constants
+        private const string ConstPropertyEngine = "Engine";
+        private const string ConstPropertyRepository = "Repository";
+        private const string ConstPropertyParent = "Parent";
+         /// <summary>
+        /// constructor of an scope hierachy
+        /// </summary>
+        public Scope(Engine engine, string id = null)
+        {
+            if (id == null) _id = Guid.NewGuid().ToString();
+            else _id = id;
+            _engine = engine;
+            this.Children.CollectionChanged += Scope_CollectionChanged;
+            this.PropertyChanged += Scope_PropertyChanged;
+        }
+
+        #region "Properties"
+        /// <summary>
+        /// gets the unique id of this scope level
+        /// </summary>
+        public string Id { get { return _id; } }
+        public Scope Parent { get { return _parent; } set { _parent = value; RaisePropertyChanged(ConstPropertyParent); } }
+        public ObservableCollection<Scope> Children { get { return _children;} }
+        /// <summary>
+        /// gets or sets the repository of this scope
+        /// </summary>
+        public Repository Repository
+        {
+            get
+            {
+                return _current;
+            }
+            set
+            {
+                _current = value;
+                RaisePropertyChanged(ConstPropertyRepository);
+            }
+        }
+        /// <summary>
+        /// gets or sets the Engine
+        /// </summary>
+        public Engine Engine
+        {
+            get
+            {
+                return _engine;
+            }
+            set
+            {
+                _engine = value;
+                RaisePropertyChanged(ConstPropertyEngine);
+            }
+        }
+
+        #endregion
+        /// <summary>
+        /// raise the property changed event
+        /// </summary>
+        /// <param name="name"></param>
+        protected void RaisePropertyChanged(string name)
+        {
+            if (PropertyChanged != null)
+                PropertyChanged(this, new PropertyChangedEventArgs(name));
+        }
+        /// <summary>
+        /// PropertyChanged Event
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        protected virtual void Scope_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            // set the engine property also to the nodes
+            if (e.PropertyName == ConstPropertyEngine)
+            {
+                foreach (Scope aScope in Children) if (aScope != null) aScope.Engine = this.Engine;
+            }
+        }
+        /// <summary>
+        /// handler for changing the nodes list
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        protected virtual void Scope_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            // set the parent
+            if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
+                foreach (Scope aScope in e.NewItems) { if (aScope != null) { aScope.Parent = this; aScope.Engine = this.Engine; } }
+        }
+        /// <summary>
+        /// returns true if the Children have an ID
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public bool HasSubScope(string id)
+        {
+            if (this.Children.Where(x => String.Compare(x.Id, id, true) == 00).FirstOrDefault() != null) return true;
+            else return false;
+        }
+        /// <summary>
+        /// returns a Subscope of an given id or null
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public Scope GetSubScope(string id)
+        {
+            return this.Children.Where(x => String.Compare(x.Id, id, true) == 00).FirstOrDefault() ;
+        }
+        /// <summary>
+        /// create an Subscope of an given id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public Scope AddSubScope(string id)
+        {
+            // add the scope
+            if (!HasSubScope (id))
+            {
+                this.Children.Add(new Scope(engine: this.Engine, id: id));
+            }
+            // return the last scope
+            return this.GetSubScope(id);
+        }
+        /// <summary>
+        /// returns a rule rule from the repository or creates a new one and returns this
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <returns></returns>
+        public SelectionRule GetSelectionRule(string id = null)
+        {
+            if (Repository.HasSelectionRule(id)) return Repository.GetSelectionRule(id);
+            else if (Parent != null && Parent.Repository.HasSelectionRule(id)) return Parent.Repository.GetSelectionRule(id);
+            // create a selection rule and return
+            SelectionRule aRule = new SelectionRule(id);
+            Repository.AddSelectionRule(aRule.ID, aRule);
+            return aRule;
+        }
+        /// <summary>
+        /// returns true if the selection rule by id is found in this Scope
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public bool HasSelectionRule(string id)
+        {
+            if (Repository.HasSelectionRule(id)) return true;
+            else if (Parent != null) return Parent.HasSelectionRule(id);
+            return false;
+        }
+        /// <summary>
+        /// gets the Operator definition for the Token ID
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <returns></returns>
+        public Operator GetOperator(Token id)
+        {
+            if (Repository.HasOperator(id)) return Repository.GetOperator(id);
+            else if (Parent != null && Parent.Repository.HasOperator(id)) return Parent.Repository.GetOperator(id);
+            return null;
+        }
+        /// <summary>
+        /// return true if the operator is found here
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public bool HasOperator(Token id)
+        {
+            if (Repository.HasOperator(id)) return true;
+            else if (Parent != null) return Parent.Repository.HasOperator(id);
+            return false;
+        }
+        /// <summary>
+        /// gets the Operator definition for the Token ID
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <returns></returns>
+        public @Function GetFunction(Token id)
+        {
+            if (Repository.HasFunction(id)) return Repository.GetFunction(id);
+            else if (Parent != null && Parent.Repository.HasFunction(id)) return Parent.Repository.GetFunction(id);
+            return null;
+        }
+        /// <summary>
+        /// returns true if the function is in scope
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public bool HasFunction(Token id)
+        {
+            if (Repository.HasFunction(id)) return true;
+            else if (Parent != null) return Parent.Repository.HasFunction(id);
+            return false;
+        }
+        /// <summary>
+        /// gets the Operator definition for the ID
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <returns></returns>
+        public iObjectDefinition GetDataObjectDefinition(string id)
+        {
+            if (Repository.HasDataObjectDefinition(id)) return Repository.GetDataObjectDefinition(id);
+            else if (Parent != null && Parent.Repository.HasDataObjectDefinition(id)) return Parent.Repository.GetDataObjectDefinition(id);
+            return null;
+        }
+        /// <summary>
+        /// returns true if the data object is in scope
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public bool HasDataObjectDefinition(string id)
+        {
+            if (Repository.HasDataObjectDefinition(id)) return true;
+            else if (Parent != null) return Parent.Repository.HasDataObjectDefinition(id);
+            return false;
+        }
+
+    }
+    /// <summary>
+    /// a repository
     /// </summary>
     public class Repository 
     {
@@ -865,7 +1158,7 @@ namespace OnTrack.Rulez
             Initialize();
             foreach (iDataObjectRepository aRepository in _dataobjectRepositories)
             {
-                if (aRepository.HasObjectDefinition(CanonicalName.ClassName (id))) return true;
+                if (aRepository.HasObjectDefinition(CanonicalName.GetStructureName (id))) return true;
             }
             return false;
         }
@@ -879,7 +1172,7 @@ namespace OnTrack.Rulez
             Initialize();
             foreach (iDataObjectRepository aRepository in _dataobjectRepositories)
             {
-                iObjectDefinition aDefinition = aRepository.GetIObjectDefinition(CanonicalName.ClassName(id));
+                iObjectDefinition aDefinition = aRepository.GetIObjectDefinition(CanonicalName.GetStructureName(id));
                 if (aDefinition != null) return aDefinition;
             }
             throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[] { id, "DataObjectEntrySymbol Repositories" });

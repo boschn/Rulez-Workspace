@@ -77,7 +77,7 @@ namespace OnTrack.Rulez.eXPressionTree
     /// <summary>
     /// defines a node of the AST
     /// </summary>
-    public interface INode : IEnumerable <INode>
+    public interface INode : IEnumerable <INode>, System.ComponentModel.INotifyPropertyChanged 
     {
         /// <summary>
         /// gets the type of the node
@@ -104,11 +104,15 @@ namespace OnTrack.Rulez.eXPressionTree
         /// returns the Errors of the Node
         /// </summary>
         IList<Rulez.Message> Messages { get; }
+        /// <summary>
+        /// Scope id of the node
+        /// </summary>
+        CanonicalName ScopeId { get; set; }
     }
     /// <summary>
     /// describes an abstract syntax tree
     /// </summary>
-    public interface IXPTree: INode, System.ComponentModel.INotifyPropertyChanged 
+    public interface IXPTree: INode
     {
         /// <summary>
         /// gets and sets the list of nodes
