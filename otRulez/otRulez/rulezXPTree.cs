@@ -36,9 +36,9 @@ namespace OnTrack.Rulez.eXPressionTree
         protected otXPTNodeType _nodeType;
         protected IXPTree _parent;
         protected List<Rulez.Message> _errorlist = new List<Message>();
-        private CanonicalName _scopeid = new CanonicalName(CanonicalName.Global);
+        private CanonicalName _scopeName = new CanonicalName(CanonicalName.GlobalID);
         // event
-        protected event PropertyChangedEventHandler PropertyChanged;
+        public  event PropertyChangedEventHandler PropertyChanged;
         // constants
         public const string ConstPropertyParent = "Parent";
         public const string ConstPropertyEngine = "Engine";
@@ -76,11 +76,11 @@ namespace OnTrack.Rulez.eXPressionTree
         /// accept the visitor
         /// </summary>
         /// <param name="visitor"></param>
-        public bool Accept(IVisitor visitor) { visitor.Visit(this); return true; }
+        public bool Accept(IVisitor<INode, object> visitor) { visitor.Visit(this); return true; }
         /// <summary>
         /// Scope id of the node
         /// </summary>
-        public CanonicalName ScopeId { get { return _scopeid; } set { _scopeid = value; RaiseOnPropertyChanged(this, ConstPropertyScopeID); } }
+        public string ScopeId { get { return _scopeName.ToString(); } set { _scopeName = new CanonicalName (value); RaiseOnPropertyChanged(this, ConstPropertyScopeID); } }
         /// <summary>
         /// returns an IEnumerator
         /// </summary>
@@ -202,7 +202,7 @@ namespace OnTrack.Rulez.eXPressionTree
         private otXPTNodeType _nodeType;
         private IXPTree _parent;
         private List<Message> _errorlist = new List<Message>();
-        private CanonicalName _scopeid = new CanonicalName(CanonicalName.Global);
+        private XPTScope _scope; 
         // constants
         public const string ConstPropertyParent = "Parent";
         public const string ConstPropertyEngine = "Engine";
@@ -217,8 +217,11 @@ namespace OnTrack.Rulez.eXPressionTree
         {
             // default engine
             if (engine == null) engine = OnTrack.Rules.Engine;
+            _scope = new XPTScope(engine);
+            
             this.Nodes.CollectionChanged += _Nodes_CollectionChanged;
             this.PropertyChanged += XPTree_PropertyChanged;
+
         }
         /// <summary>
         /// PropertyChanged Event
@@ -275,6 +278,23 @@ namespace OnTrack.Rulez.eXPressionTree
         /// returns the Errors of the Node
         /// </summary>
         public IList<Rulez.Message> Messages { get { return _errorlist; } }
+
+        /// <summary>
+        /// Scope id of the node
+        /// </summary>
+        /// <value></value>
+        string INode.ScopeId
+        {
+            get
+            {
+                return _scope.Id ;
+            }
+            set
+            {
+                _scope = new XPTScope(Engine, value);
+            }
+        }
+
         /// <summary>
         /// returns the engine
         /// </summary>
@@ -290,15 +310,27 @@ namespace OnTrack.Rulez.eXPressionTree
                 RaiseOnPropertyChanged(this, ConstPropertyEngine);
             }
         }
+        
         /// <summary>
-        /// Scope id of the node
+        /// Scope of the XPTree
         /// </summary>
-        public CanonicalName ScopeId { get { return _scopeid; } set { _scopeid = value; RaiseOnPropertyChanged(this, ConstPropertyScopeID); } }
+        public XPTScope Scope
+        {
+            get
+            {
+                return _scope;
+            }
+            set
+            {
+                _scope = value;
+            }
+        }
+
         /// <summary>
         /// accept the visitor
         /// </summary>
-        /// <param name="visitor"></param>
-        public bool Accept(IVisitor visitor) { visitor.Visit(this); return true; }
+        /// <param id="visitor"></param>
+        public bool Accept(IVisitor<INode, object> visitor) { visitor.Visit(this); return true; }
         /// <summary>
         /// returns an IEnumerator
         /// </summary>
@@ -323,7 +355,7 @@ namespace OnTrack.Rulez.eXPressionTree
             Visitor<String>.Eventhandler aVisitingHandling 
                 = (o, e) => {
                 if (e.CurrentNode.GetType() == typeof(DataObjectEntrySymbol))
-                    e.Stack.Push((e.CurrentNode as DataObjectEntrySymbol).ID);
+                        e.Stack.Push((e.CurrentNode as DataObjectEntrySymbol).Name.ToString());
                };
             aVistor.VisitingDataObjectSymbol += aVisitingHandling; // register
             aVistor.Visit(this); // run
@@ -359,6 +391,19 @@ namespace OnTrack.Rulez.eXPressionTree
             aString += "}";
             return aString;
         }
+
+
+        IScope IXPTree.Scope
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+            set
+            {
+                throw new NotImplementedException();
+            }
+        }
     }
 
     /// <summary>
@@ -377,7 +422,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// constructor
         /// </summary>
-        /// <param name="handle"></param>
+        /// <param id="handle"></param>
         public Rule( string id = null,  Engine engine = null): base(engine: engine)
         {
             this.NodeType = otXPTNodeType.Rule;
@@ -444,7 +489,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// gets or sets the ID
         /// </summary>
-        public string ID { get { return _id; } set { _id = value; RaiseOnPropertyChanged(this, "ID"); } }
+        public string Id { get { return _id; } set { _id = value; RaiseOnPropertyChanged(this, "ID"); } }
         /// <summary>
         /// gets or sets the Type of the variable
         /// </summary>
@@ -470,8 +515,8 @@ namespace OnTrack.Rulez.eXPressionTree
             {
                 if (Scope != null)
                 {
-                    if (Scope is StatementBlock) return ((StatementBlock)Scope).HasVariable (this.ID);
-                    if (Scope is SelectionRule) return ((SelectionRule)Scope).HasParameter(this.ID);
+                    if (Scope is StatementBlock) return ((StatementBlock)Scope).HasVariable (this.Id);
+                    if (Scope is SelectionRule) return ((SelectionRule)Scope).HasParameter(this.Id);
                 }
                 return null;
 
@@ -483,7 +528,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <returns></returns>
         public override string ToString()
         {
-            return String.Format("<{0}:{1}>", NodeType.ToString(), this.ID);
+            return String.Format("<{0}:{1}>", NodeType.ToString(), this.Id);
         }
     }
     /// <summary>
@@ -493,7 +538,7 @@ namespace OnTrack.Rulez.eXPressionTree
     {
         private IXPTree _scope;
         private iObjectDefinition _objectdefinition;
-        private string _id;
+        private ObjectName _name;
         private bool? _isChecked = false;
         // constants
         public const string ConstPropertyID = "ID";
@@ -510,32 +555,46 @@ namespace OnTrack.Rulez.eXPressionTree
             : base(engine: engine)
         {
             _engine = engine; // first
-            this.ID = id;
+            this.Name = new ObjectName(id);
             _scope = null;
             this.NodeType = otXPTNodeType.DataObjectSymbol;
         }
-
+        public DataObjectSymbol(ObjectName name, Engine engine = null)
+            : base(engine: engine)
+        {
+            _engine = engine; // first
+            this.Name = name;
+            _scope = null;
+            this.NodeType = otXPTNodeType.DataObjectSymbol;
+        }
         /// <summary>
         /// gets or sets the ID
         /// </summary>
-        public string ID
+        public ObjectName Name
         {
-            get { return _id; }
+            get { return _name; }
             set
             {
-                if (String.Compare(_id, value) != 0)
+                if (_name != value)
                 {
-                    _id = value;
+                    _name = value;
                     _isChecked = null; // reset
                     _objectdefinition = null;
                 }
             }
         }
-
+        /// <summary>
+        /// returns the Id of the Symbol
+        /// </summary>
+        public string Id
+        {
+            get { return _name.FullId; }
+            set { _name.FullId = value; }
+        }
         /// <summary>
         /// returns the ObjectID of the entry
         /// </summary>
-        public String ObjectID { get { return _objectdefinition.Objectname; } }
+        public String ObjectID { get { return _objectdefinition.Id; } }
         /// <summary>
         /// returns the IObjectDefinition
         /// </summary>
@@ -561,7 +620,18 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// gets the Datatype
         /// </summary>
-        public Core.IDataType DataType { get { return DataObjectType.GetDataType(name:ID, engine:this.Engine); } set { throw new InvalidOperationException(); } }
+        public Core.IDataType DataType
+        {
+            get
+            {
+                return DataObjectType.GetDataType(id: Name.FullId, engine:this.Engine);
+            }
+            set
+            {
+                throw new InvalidOperationException();
+            }
+        }
+
         /// <summary>
         /// returns true if node is a leaf
         /// </summary>
@@ -588,32 +658,30 @@ namespace OnTrack.Rulez.eXPressionTree
             if (this.Engine == null) return _isChecked.HasValue;
 
             /// get the data object definition
-            if (ID.Contains('.'))
+            if (Name.IsCanonical())
             {
-                string[] names = ID.Split('.');
-                if (Engine.Globals.HasDataObjectDefinition(names[0]))
+                if (Engine.Globals.HasDataObjectDefinition(Name))
                 {
-                    _objectdefinition = Engine.Globals.GetDataObjectDefinition(names[0]);
+                    _objectdefinition = Engine.Globals.GetDataObjectDefinition(Name);
                     if (_objectdefinition == null)
                     {
                         throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[]
                         {
-                            names[1],
-                            names[0]
+                           Name.Id, Name.ModuleId
                         });
                     }
 
                 }
                 else
-                { throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[] { names[0], "data object repository" }); }
+                { throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[] { Name.ModuleId, "data object repository" }); }
 
             }
             else
             {
-                if (Engine.Globals.HasDataObjectDefinition(ID))
-                    _objectdefinition = Engine.Globals.GetDataObjectDefinition(ID);
+                if (Engine.Globals.HasDataObjectDefinition(Name))
+                    _objectdefinition = Engine.Globals.GetDataObjectDefinition(Name);
                 else
-                    throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[] { ID, "data object repository" });
+                    throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[] { Name.FullId, "data object repository" });
             }
             _isChecked = true;
             return _isChecked;
@@ -624,7 +692,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <returns></returns>
         public override string ToString()
         {
-            return String.Format("<{0}:{1}>", NodeType.ToString(), this.ID.ToUpper());
+            return String.Format("<{0}:{1}>", NodeType.ToString(), this.Name.FullId.ToUpper());
         }
     }
     /// <summary>
@@ -634,7 +702,7 @@ namespace OnTrack.Rulez.eXPressionTree
     {
         private IXPTree _scope;
         private iObjectEntryDefinition _entrydefinition;
-        private string _id = null;
+        private EntryName _name = null;
         private bool? _isChecked = false;
         // constants
         public const string ConstPropertyID = "ID";
@@ -652,14 +720,14 @@ namespace OnTrack.Rulez.eXPressionTree
            
             _scope = null;
             _engine = engine;
-            this.ID = id;
+            this.Name = new EntryName ( id);
             this.NodeType = otXPTNodeType.DataObjectSymbol;
         }
-        public DataObjectEntrySymbol( string objectid, string entryname,  Engine engine = null): base()
+        public DataObjectEntrySymbol( EntryName entryname, Engine engine = null): base()
         {
             // default engine
             _engine = engine;
-            this.ID = objectid + "." + entryname;
+            this.Name = entryname;
             _scope = null;
           
             this.NodeType = otXPTNodeType.DataObjectSymbol;
@@ -668,19 +736,27 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// gets or sets the ID
         /// </summary>
-        public string ID
+        public EntryName Name
         {
-            get { return _id ; }
+            get { return _name ; }
             set
             {
-                if (String.Compare(_id, value) != 0)
+                if (_name != value)
                 {
-                    _id = value;
+                    _name = value;
                     _isChecked = null; // reset
                     _entrydefinition = null;
                     RaiseOnPropertyChanged(this, ConstPropertyID);
                 }
             }
+        }
+        /// <summary>
+        /// returns the Id of the Symbol
+        /// </summary>
+        public string Id
+        {
+            get { return _name.FullId; }
+            set { _name.FullId = value; }
         }
         /// <summary>
         /// returns the IObjectDefinition
@@ -693,11 +769,11 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// returns the ObjectID of the entry
         /// </summary>
-        public String ObjectID { get { CheckValidity();  return _entrydefinition.Objectname; } }
+        public String ObjectID { get { CheckValidity();  return _entrydefinition.ObjectId; } }
         /// <summary>
         /// returns the ObjectID of the entry
         /// </summary>
-        public String Entryname { get { CheckValidity(); return _entrydefinition.Entryname; } }
+        public String Entryname { get { CheckValidity(); return _entrydefinition.EntryId; } }
         /// <summary>
         /// gets or sets the Type of the variable
         /// </summary>
@@ -736,30 +812,28 @@ namespace OnTrack.Rulez.eXPressionTree
             if (this.Engine == null) return _isChecked.HasValue;
 
             /// get the data object definition
-            if (ID.Contains('.'))
+            if (Name.IsCanonical())
             {
-                string[] names = ID.Split('.');
-                if (Engine.Globals.HasDataObjectDefinition(names[0]))
+                if (Engine.Globals.HasDataObjectDefinition(Name.ObjectName) )
                 {
-                    Core.iObjectDefinition aDefinition = Engine.Globals.GetDataObjectDefinition(names[0]);
-                    _entrydefinition = aDefinition.GetiEntryDefinition(names[1]);
+                    Core.iObjectDefinition aDefinition = Engine.Globals.GetDataObjectDefinition(Name.ObjectName);
+                    _entrydefinition = aDefinition.GetiEntryDefinition(Name.Id);
                     if (_entrydefinition == null)
                     {
                         throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[]
                         {
-                            names[1],
-                            names[0]
+                           Name.ObjectId, Name.Id
                         });
                     }
 
                 }
                 else
-                { throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[] { names[0], "data object repository" }); }
+                { throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[] { Name.FullId, "data object repository" }); }
 
             }
             else
             {
-                throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[] { ID, "data object repository (malformed object entry name)" });
+                throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[] { Name.ObjectId, "data object repository (malformed object entry name)" });
             }
             _isChecked = true;
             return _isChecked;
@@ -770,7 +844,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <returns></returns>
         public override string ToString()
         {
-            return String.Format ("<{0}:{1}>", NodeType.ToString(), this.ID );
+            return String.Format ("<{0}:{1}>", NodeType.ToString(), this.Name );
         }
     }
     /// <summary>
@@ -818,8 +892,8 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// handler for changing the nodes list
         /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
+        /// <param id="sender"></param>
+        /// <param id="e"></param>
         protected override void _Nodes_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
             base._Nodes_CollectionChanged(sender, e);
@@ -963,7 +1037,7 @@ namespace OnTrack.Rulez.eXPressionTree
         public bool HasVariable(string id)
         { return _variables.ContainsKey(id); }
         /// <summary>
-        /// gets the parameter by name
+        /// gets the parameter by id
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
@@ -982,7 +1056,7 @@ namespace OnTrack.Rulez.eXPressionTree
                 throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { id, this.ID });
             }
             Variable aVar = new Variable(id: id, typeID: typeId, scope: this);
-            _variables.Add(aVar.ID, aVar);
+            _variables.Add(aVar.Id, aVar);
 
             return aVar;
         }
@@ -993,7 +1067,7 @@ namespace OnTrack.Rulez.eXPressionTree
                 throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { id, this.ID });
             }
             Variable aVar = new Variable(id: id, datatype: datatype, scope: this);
-            _variables.Add(aVar.ID, aVar);
+            _variables.Add(aVar.Id, aVar);
 
             return aVar;
         }
@@ -1184,11 +1258,11 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// gets the Datatype of this Expression
         /// </summary>
-        public IDataType DataType { get { return this.Engine.GetFunctions(this.TokenID).ReturnType; } set { throw new InvalidOperationException(); } }
+        public IDataType DataType { get { return Scope.GetFunction(this.TokenID).ReturnType; } set { throw new InvalidOperationException(); } }
         /// <summary>
         /// gets the typeId of this Expression
         /// </summary>
-        public otDataType TypeId { get { return this.Engine.GetFunctions(this.TokenID).ReturnType.TypeId; ; } set { throw new InvalidOperationException(); } }
+        public otDataType TypeId { get { return Scope.GetFunction(this.TokenID).ReturnType.TypeId; ; } set { throw new InvalidOperationException(); } }
         #endregion
         /// <summary>
         /// handler for changing the nodes list
@@ -1930,7 +2004,7 @@ namespace OnTrack.Rulez.eXPressionTree
                 // get a Datatype according to the structure
                 List<IDataType> structure = new List<IDataType>();
                 List<string> names = new List<string>();
-                foreach (ISymbol aResult in Nodes) { names.Add(aResult.ID);  structure.Add(aResult.DataType);}
+                foreach (ISymbol aResult in Nodes) { names.Add(aResult.Id);  structure.Add(aResult.DataType);}
                 IDataType innerType = TupleType.GetDataType(structure: structure.ToArray(), memberNames: names.ToArray(), engine: this.Engine);
                 return ListType.GetDataType(innerDataType: innerType, engine: this.Engine);
             }
@@ -1948,8 +2022,8 @@ namespace OnTrack.Rulez.eXPressionTree
             foreach (INode aNode in this.Nodes)
             {
                 string aName = String.Empty;
-                if (aNode is DataObjectEntrySymbol) aName = ((DataObjectEntrySymbol)aNode).ID;
-                if (aNode is DataObjectSymbol) aName = ((DataObjectSymbol)aNode).ID;
+                if (aNode is DataObjectEntrySymbol) aName = ((DataObjectEntrySymbol)aNode).Name.FullId;
+                if (aNode is DataObjectSymbol) aName = ((DataObjectSymbol)aNode).Name.FullId;
 
                 if ( !String.IsNullOrEmpty (aName) && !aList.Contains(aName)) aList.Add(aName);
             }
@@ -2105,7 +2179,7 @@ namespace OnTrack.Rulez.eXPressionTree
                 throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { id, this.ID });
             }
             Variable aVar = new Variable(id:id, typeID:typeId, scope:this);
-             _parameters.Add(aVar.ID,aVar);
+             _parameters.Add(aVar.Id,aVar);
 
              return aVar;
         }
@@ -2122,7 +2196,7 @@ namespace OnTrack.Rulez.eXPressionTree
                 throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { id, this.ID });
             }
             Variable aVar = new Variable(id: id, datatype: datatype, scope: this);
-            _parameters.Add(aVar.ID, aVar);
+            _parameters.Add(aVar.Id, aVar);
 
             return aVar;
         }

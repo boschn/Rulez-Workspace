@@ -28,19 +28,26 @@ namespace OnTrack.Core
     /// <summary>
     /// static class Datatype
     /// </summary>
-    public abstract class DataType : IDataType
+    public abstract class DataType : IDataType, INotifyPropertyChanged
     {
         public const Char ConstDelimiter = '|';
         public const String ConstNullTimestampString = "1900-01-01T00:00:00";
         
         // magic numbers
         protected const uint PrimitiveTypeMaxRange = 15; // magic number as the maximum of the otDataType Enumeration for Value Types
+        public const string ConstPropertyName = "Name";
+        public const string ConstPropertyDefaultId = "id";
+        public const string ConstPropertySignature = "Signature";
+        public const string ConstPropertyDefaultValue = "DefaultValue";
         // Instance data
         private otDataType _type = otDataType.@Null; // datatype
         private Rulez.Engine _engine;
         private object _defaultvalue;
-        private string _name;
+       
+        private Rulez.ObjectName _name;
         protected string _signature = String.Empty;
+        // event
+        public event PropertyChangedEventHandler PropertyChanged;
         /// <summary>
         /// DataType Event Args
         /// </summary>
@@ -163,7 +170,7 @@ namespace OnTrack.Core
         /// <summary>
         /// returns a default value for the OnTrack Datatypes
         /// </summary>
-        /// <param name="typeId"></param>
+        /// <param id="typeId"></param>
         /// <returns></returns>
         public static object GetDefaultValue(otDataType typeId)
         {
@@ -261,7 +268,7 @@ namespace OnTrack.Core
          /// <summary>
          /// returns true if the value is of otDataType.Date
          /// </summary>
-         /// <param name="value"></param>
+         /// <param id="value"></param>
          /// <returns></returns>
          public static bool IsBinary(object value)
          {
@@ -270,7 +277,7 @@ namespace OnTrack.Core
          /// <summary>
          /// convert a value to otDataType.Date and return the value
          /// </summary>
-         /// <param name="value"></param>
+         /// <param id="value"></param>
          /// <returns></returns>
          public static byte[] ToBinary(object value)
          {
@@ -279,7 +286,7 @@ namespace OnTrack.Core
          /// <summary>
          /// returns true if the value is of otDataType.Date
          /// </summary>
-         /// <param name="value"></param>
+         /// <param id="value"></param>
          /// <returns></returns>
          public static bool IsDate(object value)
          {
@@ -297,7 +304,7 @@ namespace OnTrack.Core
          /// <summary>
          /// returns true if the value is of otDataType.Timespan
          /// </summary>
-         /// <param name="value"></param>
+         /// <param id="value"></param>
          /// <returns></returns>
          public static bool IsTimespan(object value)
          {
@@ -315,7 +322,7 @@ namespace OnTrack.Core
          /// <summary>
          /// returns true if the value is of otDataType.TimeStamp
          /// </summary>
-         /// <param name="value"></param>
+         /// <param id="value"></param>
          /// <returns></returns>
          public static bool IsTimeStamp(object value)
          {
@@ -342,7 +349,7 @@ namespace OnTrack.Core
          /// <summary>
          /// convert a value to otDataType.Double and return the value
          /// </summary>
-         /// <param name="value"></param>
+         /// <param fullname="value"></param>
          /// <returns></returns>
          public static Double ToDecimal(object value)
          {
@@ -387,7 +394,7 @@ namespace OnTrack.Core
          /// <summary>
          /// returns true if the value is of otDataType.Text
          /// </summary>
-         /// <param name="value"></param>
+         /// <param id="value"></param>
          /// <returns></returns>
          public static bool IsMemo(object value)
          {
@@ -396,7 +403,7 @@ namespace OnTrack.Core
          /// <summary>
          /// convert a value to otDataType.Text and return the value
          /// </summary>
-         /// <param name="value"></param>
+         /// <param id="value"></param>
          /// <returns></returns>
          public static String ToMemo(object value)
          {
@@ -456,7 +463,7 @@ namespace OnTrack.Core
         /// <summary>
         /// converts a string of "|aa|bb|" to a list {"aa", "bb"}
         /// </summary>
-        /// <param name="input"></param>
+        /// <param id="input"></param>
         /// <returns></returns>
         public static List<String> ToList(String input)
         {
@@ -491,11 +498,18 @@ namespace OnTrack.Core
         /// <summary>
         /// constructor
         /// </summary>
-        /// <param name="typeId"></param>
-        protected DataType(otDataType typeId, bool isNullable = false, object defaultvalue = null, string name = null, Rulez.Engine engine = null)
+        /// <param id="typeId"></param>
+        protected DataType(otDataType typeId, bool isNullable = false, object defaultvalue = null, string id = null, Rulez.Engine engine = null)
         {
             _type = isNullable ? typeId | otDataType.IsNullable : typeId;
-            _name = (String.IsNullOrWhiteSpace(name)) ? this.Signature : name.ToUpper() + (isNullable ? "?" : String.Empty);
+            _name = new Rulez.ObjectName ((String.IsNullOrWhiteSpace(id)) ? this.Signature : id.ToUpper() + (isNullable ? "?" : String.Empty));
+            _engine = engine;
+            _defaultvalue = defaultvalue;
+        }
+        protected DataType(otDataType typeId, bool isNullable = false, object defaultvalue = null, Rulez.ObjectName name = null, Rulez.Engine engine = null)
+        {
+            _type = isNullable ? typeId | otDataType.IsNullable : typeId;
+            _name = name;
             _engine = engine;
             _defaultvalue = defaultvalue;
         }
@@ -514,13 +528,18 @@ namespace OnTrack.Core
         {
             get { return _engine; }
         }
-        /// <summary>
-        /// gets the Name of the  Datatype
-        /// </summary>
-        public string Name
+        public Rulez.ObjectName Name
         {
             get { return _name; }
-            protected set { _name = (value!= null) ? value.ToUpper () : System.Guid.NewGuid().ToString ();}
+            set { _name = value; RaiseOnPropertyChanged(this, ConstPropertyName); }
+        }
+        /// <summary>
+        /// gets the Id of the  Datatype
+        /// </summary>
+        public string Id
+        {
+            get { return _name.FullId; }
+            protected set { _name.FullId = (value != null) ? value.ToUpper() : System.Guid.NewGuid().ToString(); RaiseOnPropertyChanged(this, ConstPropertyDefaultId); }
         }
         /// <summary>
         /// gets the Signature of the  Datatype
@@ -528,7 +547,7 @@ namespace OnTrack.Core
         public virtual string Signature
         {
             get { return _signature; }
-            protected set { _signature = value; }
+            protected set { _signature = value; RaiseOnPropertyChanged(this, ConstPropertySignature); }
         }
         /// <summary>
         /// return true if the type is Nullable
@@ -547,7 +566,7 @@ namespace OnTrack.Core
         public Object DefaultValue 
         { 
             get { return _defaultvalue; }
-            protected set { _defaultvalue = value;}
+            protected set { _defaultvalue = value; RaiseOnPropertyChanged(this, ConstPropertyDefaultValue); }
         }
         /// <summary>
         /// gets the Category
@@ -597,7 +616,7 @@ namespace OnTrack.Core
          /// <param name="x"></param>
          /// <param name="y"></param>
          /// <returns></returns>
-           bool Equals(object y)
+         public override bool Equals(object y)
          {
              if (y.GetType().GetInterface(typeof(IDataType).Name, false) == null) return false;
              return Equals(this, (IDataType) y);
@@ -619,7 +638,7 @@ namespace OnTrack.Core
          /// <returns></returns>
           int System.Collections.Generic.IEqualityComparer<IDataType>.GetHashCode(IDataType obj)
          {
-             return this.Name.GetHashCode();
+             return this.Id.GetHashCode();
          }
           /// <summary>
           /// == comparerer on datatypes
@@ -662,6 +681,15 @@ namespace OnTrack.Core
         public override string  ToString()
         {
             return this.Signature ;
+        }
+        /// <summary>
+        /// raise the Property Changed Event
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="property"></param>
+        protected void RaiseOnPropertyChanged(object sender, string property)
+        {
+            if (PropertyChanged != null) PropertyChanged(sender, new PropertyChangedEventArgs(property));
         }
     }
     /// <summary>
@@ -755,7 +783,7 @@ namespace OnTrack.Core
         /// <summary>
         /// return a timestamp in the localTime
         /// </summary>
-        /// <param name="datevalue"></param>
+        /// <param id="datevalue"></param>
         /// <returns></returns>
         /// <remarks></remarks>
         public static string DateTime2LocaleDateTimeString(DateTime datevalue)

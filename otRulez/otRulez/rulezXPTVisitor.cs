@@ -52,7 +52,7 @@ namespace OnTrack.Rulez.eXPressionTree
     /// vistor pattern class for the rulez xpression tree.
     /// make the stack of the visitor
     /// </summary>
-    public class Visitor<T> : IVisitor
+    public class Visitor<T> : IVisitor<INode, T>
     {
         // declare events
         public delegate void Eventhandler(object o, VisitorEventArgs<T> e);
@@ -80,12 +80,12 @@ namespace OnTrack.Rulez.eXPressionTree
         public event Eventhandler VisitingDataObjectSymbol;
         //
         private Stack<T> _stack = new Stack <T>();
-        private object _result;
+        private T _result;
 
         /// <summary>
         /// return the Result of a run
         /// </summary>
-        public Object Result { get { return _result; } }
+        public T Result { get { return _result; } }
         /// <summary>
         /// returns the stack of the visitor
         /// </summary>

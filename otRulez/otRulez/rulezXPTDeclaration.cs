@@ -60,19 +60,19 @@ namespace OnTrack.Rulez.eXPressionTree
     }
 
     /// <summary>
-    /// defines a tree visitor
+    /// defines a tree visitor of nodes T and Result R
     /// </summary>
-    public interface IVisitor
+    public interface IVisitor<T, R>
     {
         /// <summary>Rulez Workspace
         /// returns the whatever result
         /// </summary>
-        Object Result { get; }
+        R Result { get; }
         /// <summary>
         /// generic visit to a node
         /// </summary>
         /// <param name="node"></param>
-        void Visit(INode node);
+        void Visit(T node);
     }
     /// <summary>
     /// defines a node of the AST
@@ -99,7 +99,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// accepts a visitor
         /// </summary>
         /// <param name="visitor"></param>
-        bool Accept(IVisitor visitor);
+        bool Accept(IVisitor<INode,object> visitor);
         /// <summary>
         /// returns the Errors of the Node
         /// </summary>
@@ -107,7 +107,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// Scope id of the node
         /// </summary>
-        CanonicalName ScopeId { get; set; }
+        string ScopeId { get; set; }
     }
     /// <summary>
     /// describes an abstract syntax tree
@@ -118,6 +118,10 @@ namespace OnTrack.Rulez.eXPressionTree
         /// gets and sets the list of nodes
         /// </summary>
         ObservableCollection<INode> Nodes { get; set; }
+        /// <summary>
+        /// gets or sets the scope
+        /// </summary>
+        IScope Scope { get; set; }
     }
     /// <summary>
     /// executable rule statement(s)
@@ -178,7 +182,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// gets or sets the ID of the variable
         /// </summary>
-        String ID { get; set; }
+        String Id { get; set; }
         
         /// <summary>
         /// defines the IeXPressionTree scope of the symbol

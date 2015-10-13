@@ -277,7 +277,7 @@ namespace OnTrack.Rulez
         /// <summary>
         /// implementation of comparable
         /// </summary>
-        /// <param name="obj"></param>
+        /// <param id="obj"></param>
         /// <returns></returns>
         public int CompareTo(@Function obj)
         {
@@ -389,7 +389,7 @@ namespace OnTrack.Rulez
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="types"></param>
+        /// <param id="types"></param>
         /// <returns></returns>
         public static string CreateSignature(Token token, UInt16 arguments, UInt16 priority, IDataType returnType)
         {
@@ -398,9 +398,9 @@ namespace OnTrack.Rulez
         /// <summary>
         /// constructor
         /// </summary>
-        /// <param name="Token"></param>
-        /// <param name="arguments"></param>
-        /// <param name="priority"></param>
+        /// <param id="Token"></param>
+        /// <param id="arguments"></param>
+        /// <param id="priority"></param>
         public Operator(Token token, UInt16 arguments, UInt16 priority, otDataType? returnTypeId, otOperatorType type)
         {
             _token = token;
@@ -457,7 +457,7 @@ namespace OnTrack.Rulez
         /// <summary>
         /// Equals
         /// </summary>
-        /// <param name="obj"></param>
+        /// <param id="obj"></param>
         /// <returns></returns>
         public override bool Equals(Object obj)
         {
@@ -469,7 +469,7 @@ namespace OnTrack.Rulez
         /// <summary>
         /// implementation of comparable
         /// </summary>
-        /// <param name="obj"></param>
+        /// <param id="obj"></param>
         /// <returns></returns>
         public  int CompareTo(Operator obj)
         {
@@ -517,9 +517,8 @@ namespace OnTrack.Rulez
             return this.Token.ToString();
         }
     }
-    /// <summary>
-    
 
+    /// <summary>
     
     /// <summary>
     /// a scope repository unit
@@ -527,17 +526,17 @@ namespace OnTrack.Rulez
     /// design requirements:
     /// 
     /// 1) scopes are nested in a 1:n tree (which are subscopes)
-    /// 2) a scope as an id in canonical form with the special Name CanonicalName.Global as root
+    /// 2) a scope as an id in canonical form with the special Id CanonicalName.Global as root
     /// 3) queries for objects in the scopes are upbound travel through the tree to the root
     /// 4) scope id are independent from the tree (but in the engine created in this order)
     /// </summary>
-    public class Scope : System.ComponentModel.INotifyPropertyChanged
+    public class Scope : System.ComponentModel.INotifyPropertyChanged, IScope
     {
         /// <summary>
         /// vistor pattern class for the rulez scope tree.
         /// make the stack of the visitor
         /// </summary>
-        public class Visitor<T> : IVisitor where T : new()
+        public class Visitor<T> : IVisitor<IScope, T> where T : new()
         {
             /// Event Args for Visitor 
             /// </summary>
@@ -547,79 +546,136 @@ namespace OnTrack.Rulez
                 /// constructor
                 /// </summary>
                 /// <param name="currentNode"></param>
-                public EventArgs(Scope current = null)
+                public EventArgs(IScope current = null)
                 {
-                    if (current != null) this.Current = current;
+                    if (current != null)
+                        this.Current = current;
                     this.Result = new T();
                 }
+
                 /// <summary>
                 /// returns Current Node
                 /// </summary>
-                public Scope Current { get; set; }
+                public IScope Current { get; set; }
+
                 /// <summary>
                 /// returns the Result
                 /// </summary>
                 public T Result { get; set; }
             }
+
             // declare events
             public delegate void Eventhandler(object o, EventArgs<T> e);
+
             public event Eventhandler VisitingScope;
             public event Eventhandler VisitedScope;
+
             //
             private T _result = new T();
+
             /// <summary>
             /// return the Result of a run
             /// </summary>
-            public T Result { get { return _result; } }
+            public T Result
+            {
+                get
+                {
+                    return _result;
+                }
+            }
+
             /// <summary>
             /// visit scope
             /// </summary>
             /// <param name="expression"></param>
-            public void Visit(Scope scope)
+            public void Visit(IScope scope)
             {
                 EventArgs<T> args = new EventArgs<T>(current: scope);
 
                 // visit subnodes from left to right
-                if (VisitingScope != null) VisitingScope(scope, args);
-                foreach (Scope aScope in scope.Children) Visit(aScope);
-                if (VisitedScope != null) VisitedScope(scope, args);
+                if (VisitingScope != null)
+                    VisitingScope(scope, args);
+                foreach (Scope aScope in scope.Children)
+                    Visit(aScope);
+                if (VisitedScope != null)
+                    VisitedScope(scope, args);
             }
         }
 
         private string _id; // scope id
-        private Scope _parent; // parent scope
-        private ObservableCollection<Scope> _children = new ObservableCollection<Scope>(); // children scopes
-        private Repository _current; // this scope;
+        private IScope _parent; // parent scope
+        private ObservableCollection<IScope> _children = new ObservableCollection<IScope>(); // children scopes
+        private IRepository _current; // this scope;
         private Engine _engine; // my engine
+
         // event
-        protected event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
+        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
+
         // constants
         private const string ConstPropertyEngine = "Engine";
         private const string ConstPropertyRepository = "Repository";
         private const string ConstPropertyParent = "Parent";
-         /// <summary>
+
+        /// <summary>
         /// constructor of an scope hierachy
         /// </summary>
         public Scope(Engine engine, string id = null)
         {
-            if (id == null) _id = Guid.NewGuid().ToString();
-            else _id = id;
+            if (id == null)
+                _id = Guid.NewGuid().ToString();
+            else
+                _id = id;
             _engine = engine;
             this.Children.CollectionChanged += Scope_CollectionChanged;
             this.PropertyChanged += Scope_PropertyChanged;
+            // Register with Data types
+            DataType.OnCreation += Scope_DataTypeOnCreation;
+            DataType.OnRemoval += Scope_DataTypeOnRemoval;
         }
 
         #region "Properties"
+        
         /// <summary>
         /// gets the unique id of this scope level
         /// </summary>
-        public string Id { get { return _id; } }
-        public Scope Parent { get { return _parent; } set { _parent = value; RaisePropertyChanged(ConstPropertyParent); } }
-        public ObservableCollection<Scope> Children { get { return _children;} }
+        public virtual string Id
+        {
+            get
+            {
+                return _id;
+            }
+            set { _id = value; }
+        }
+        /// <summary>
+        /// gets or sets the parent scope
+        /// </summary>
+        public virtual IScope Parent
+        {
+            get
+            {
+                return _parent;
+            }
+            set
+            {
+                _parent = value;
+                RaisePropertyChanged(ConstPropertyParent);
+            }
+        }
+        /// <summary>
+        /// gets the children scope
+        /// </summary>
+        public virtual ObservableCollection<IScope> Children
+        {
+            get
+            {
+                return _children;
+            }
+        }
+        
         /// <summary>
         /// gets or sets the repository of this scope
         /// </summary>
-        public Repository Repository
+        public virtual IRepository Repository
         {
             get
             {
@@ -631,10 +687,11 @@ namespace OnTrack.Rulez
                 RaisePropertyChanged(ConstPropertyRepository);
             }
         }
+        
         /// <summary>
         /// gets or sets the Engine
         /// </summary>
-        public Engine Engine
+        public virtual Engine Engine
         {
             get
             {
@@ -646,57 +703,123 @@ namespace OnTrack.Rulez
                 RaisePropertyChanged(ConstPropertyEngine);
             }
         }
-
+        
         #endregion
+        
         /// <summary>
         /// raise the property changed event
         /// </summary>
         /// <param name="name"></param>
-        protected void RaisePropertyChanged(string name)
+        protected virtual void RaisePropertyChanged(string name)
         {
             if (PropertyChanged != null)
                 PropertyChanged(this, new PropertyChangedEventArgs(name));
         }
+        
         /// <summary>
         /// PropertyChanged Event
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        protected virtual void Scope_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        internal virtual void Scope_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             // set the engine property also to the nodes
             if (e.PropertyName == ConstPropertyEngine)
             {
-                foreach (Scope aScope in Children) if (aScope != null) aScope.Engine = this.Engine;
+                // add the known data object repositories
+                foreach (iDataObjectEngine anEngine in this.Engine.DataObjectEngines)
+                    this.Repository.RegisterDataObjectRepository(anEngine.Objects);
+                this.Engine.DataObjectRepositoryAdded += Scope_DataObjectRepositoryAdded;
+                // add the engine also to the children
+                foreach (IScope aScope in Children) 
+                    if (aScope != null)
+                        aScope.Engine = this.Engine;
             }
         }
+        
         /// <summary>
         /// handler for changing the nodes list
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        protected virtual void Scope_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        internal virtual void Scope_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
             // set the parent
             if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add)
-                foreach (Scope aScope in e.NewItems) { if (aScope != null) { aScope.Parent = this; aScope.Engine = this.Engine; } }
+                foreach (IScope aScope in e.NewItems)
+                {
+                    if (aScope != null)
+                    {
+                        aScope.Parent = this;
+                        aScope.Engine = this.Engine;
+                    }
+                }
+        }
+        
+        /// <summary>
+        /// handle added Event
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        public virtual void Scope_DataObjectRepositoryAdded(object sender, Engine.EventArgs e)
+        {
+            this.Repository.RegisterDataObjectRepository(e.DataObjectRepository);
+        }
+        
+        /// <summary>
+        /// handle removed Event
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        public virtual void Scope_DataObjectRepositoryRemoved(object sender, Engine.EventArgs e)
+        {
+            this.Repository.DeRegisterDataObjectRepository(e.DataObjectRepository);
+        }
+        
+        /// <summary>
+        /// event Handling routine of Datatype On Creation Event
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
+        public virtual void Scope_DataTypeOnCreation(object sender, Core.DataType.EventArgs args)
+        {
+            // if we are in the same scope than create
+            if ((args.Engine == null || args.Engine == this.Engine) && String.Compare(args.DataType.Name.ModuleId, this.Id, true) == 00)
+            {
+                this.Repository.AddDataType(args.DataType);
+            }
+        }
+        
+        /// <summary>
+        ///  event Handling routine of Datatype On Removal Event
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
+        public virtual void Scope_DataTypeOnRemoval(object sender, Core.DataType.EventArgs args)
+        {
+            // remove
+            if ((args.Engine == null || args.Engine == this.Engine) && String.Compare(args.DataType.Name.ModuleId, this.Id, true) == 00)
+                this.Repository.RemoveDataType(args.DataType);
         }
         /// <summary>
         /// returns true if the Children have an ID
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public bool HasSubScope(string id)
+        public virtual bool HasSubScope(string id)
         {
-            if (this.Children.Where(x => String.Compare(x.Id, id, true) == 00).FirstOrDefault() != null) return true;
-            else return false;
+            if (this.Children.Where(x => String.Compare(x.Id, id, true) == 00).FirstOrDefault() != null)
+                return true;
+            else
+                return false;
         }
+        
         /// <summary>
         /// returns a Subscope of an given id or null
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public Scope GetSubScope(string id)
+        public virtual IScope GetSubScope(string id)
         {
             return this.Children.Where(x => String.Compare(x.Id, id, true) == 00).FirstOrDefault() ;
         }
@@ -705,127 +828,151 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public Scope AddSubScope(string id)
+        public virtual IScope AddSubScope(string id)
         {
             // add the scope
-            if (!HasSubScope (id))
+            if (!HasSubScope(id))
             {
                 this.Children.Add(new Scope(engine: this.Engine, id: id));
             }
             // return the last scope
             return this.GetSubScope(id);
         }
+        
         /// <summary>
         /// returns a rule rule from the repository or creates a new one and returns this
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
-        public SelectionRule GetSelectionRule(string id = null)
+        public virtual SelectionRule GetSelectionRule(string id = null)
         {
-            if (Repository.HasSelectionRule(id)) return Repository.GetSelectionRule(id);
-            else if (Parent != null && Parent.Repository.HasSelectionRule(id)) return Parent.Repository.GetSelectionRule(id);
+            if (Repository.HasSelectionRule(id))
+                return Repository.GetSelectionRule(id);
+            else if (Parent != null && Parent.HasSelectionRule(id))
+                return Parent.GetSelectionRule(id);
             // create a selection rule and return
             SelectionRule aRule = new SelectionRule(id);
             Repository.AddSelectionRule(aRule.ID, aRule);
             return aRule;
         }
+        
         /// <summary>
         /// returns true if the selection rule by id is found in this Scope
         /// </summary>
-        /// <param name="id"></param>
+        /// <param id="id"></param>
         /// <returns></returns>
-        public bool HasSelectionRule(string id)
+        public virtual bool HasSelectionRule(string id)
         {
-            if (Repository.HasSelectionRule(id)) return true;
-            else if (Parent != null) return Parent.HasSelectionRule(id);
+            if (Repository.HasSelectionRule(id))
+                return true;
+            else if (Parent != null)
+                return Parent.HasSelectionRule(id);
             return false;
         }
+        
         /// <summary>
         /// gets the Operator definition for the Token ID
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
-        public Operator GetOperator(Token id)
+        public virtual Operator GetOperator(Token id)
         {
-            if (Repository.HasOperator(id)) return Repository.GetOperator(id);
-            else if (Parent != null && Parent.Repository.HasOperator(id)) return Parent.Repository.GetOperator(id);
+            if (Repository.HasOperator(id))
+                return Repository.GetOperator(id);
+            else if (Parent != null && Parent.HasOperator(id))
+                return Parent.GetOperator(id);
             return null;
         }
+        
         /// <summary>
         /// return true if the operator is found here
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public bool HasOperator(Token id)
+        public virtual  bool HasOperator(Token id)
         {
-            if (Repository.HasOperator(id)) return true;
-            else if (Parent != null) return Parent.Repository.HasOperator(id);
+            if (Repository.HasOperator(id))
+                return true;
+            else if (Parent != null)
+                return Parent.HasOperator(id);
             return false;
         }
+        
         /// <summary>
         /// gets the Operator definition for the Token ID
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
-        public @Function GetFunction(Token id)
+        public virtual  @Function GetFunction(Token id)
         {
-            if (Repository.HasFunction(id)) return Repository.GetFunction(id);
-            else if (Parent != null && Parent.Repository.HasFunction(id)) return Parent.Repository.GetFunction(id);
+            if (Repository.HasFunction(id))
+                return Repository.GetFunction(id);
+            else if (Parent != null && Parent.HasFunction(id))
+                return Parent.GetFunction(id);
             return null;
         }
+        
         /// <summary>
         /// returns true if the function is in scope
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public bool HasFunction(Token id)
+        public virtual bool HasFunction(Token id)
         {
-            if (Repository.HasFunction(id)) return true;
-            else if (Parent != null) return Parent.Repository.HasFunction(id);
+            if (Repository.HasFunction(id))
+                return true;
+            else if (Parent != null)
+                return Parent.HasFunction(id);
             return false;
         }
+        
         /// <summary>
         /// gets the Operator definition for the ID
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
-        public iObjectDefinition GetDataObjectDefinition(string id)
+        public virtual iObjectDefinition GetDataObjectDefinition(string id)
         {
-            if (Repository.HasDataObjectDefinition(id)) return Repository.GetDataObjectDefinition(id);
-            else if (Parent != null && Parent.Repository.HasDataObjectDefinition(id)) return Parent.Repository.GetDataObjectDefinition(id);
+            if (Repository.HasDataObjectDefinition(id))
+                return Repository.GetDataObjectDefinition(id);
+            else if (Parent != null && Parent.HasDataObjectDefinition(id))
+                return Parent.GetDataObjectDefinition(id);
             return null;
         }
+        
         /// <summary>
         /// returns true if the data object is in scope
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public bool HasDataObjectDefinition(string id)
+        public virtual bool HasDataObjectDefinition(string id)
         {
-            if (Repository.HasDataObjectDefinition(id)) return true;
-            else if (Parent != null) return Parent.Repository.HasDataObjectDefinition(id);
+            if (Repository.HasDataObjectDefinition(new ObjectName(moduleid: this.Id, objectid: id)))
+                return true;
+            else if (Parent != null)
+                return Parent.HasDataObjectDefinition(id);
             return false;
         }
-
     }
+
     /// <summary>
     /// a repository
     /// </summary>
-    public class Repository 
+    public class Repository : IRepository 
     {
         private string _id; // ID of the Repository
         private Engine _engine; // my engine
         // Dictionary of operators
-        private Dictionary<Token, Operator> _Operators = new Dictionary<Token, Operator>();
+        protected Dictionary<Token, Operator> _Operators = new Dictionary<Token, Operator>();
         // Dictionary of functions
-        private Dictionary<Token, @Function> _Functions = new Dictionary<Token, @Function>();
+        protected Dictionary<Token, @Function> _Functions = new Dictionary<Token, @Function>();
         // Dictionary of the rule rules
-        private Dictionary<String, SelectionRule> _selectionrules = new Dictionary<string, SelectionRule>();
+        protected Dictionary<String, SelectionRule> _selectionrules = new Dictionary<string, SelectionRule>();
         // Stack of dataObject Repositories
-        private List<iDataObjectRepository> _dataobjectRepositories = new List<iDataObjectRepository> ();
+        protected List<iDataObjectRepository> _dataobjectRepositories = new List<iDataObjectRepository>();
         // dictionary of types
-        private Dictionary<string, IDataType> _datatypes = new Dictionary<string, IDataType>();
-        private Dictionary<string, List<IDataType>> _datatypesSignature = new Dictionary<string, List<IDataType>>();
+        protected Dictionary<string, IDataType> _datatypes = new Dictionary<string, IDataType>();
+        protected Dictionary<string, List<IDataType>> _datatypesSignature = new Dictionary<string, List<IDataType>>();
 
         // initialize Flag
         private bool _IsInitialized = false;
@@ -835,82 +982,132 @@ namespace OnTrack.Rulez
         /// </summary>
         public Repository(Engine engine, string id = null)
         {
-            if (id == null) _id = Guid.NewGuid().ToString();
-            else _id = id;
+            if (id == null)
+                _id = Guid.NewGuid().ToString();
+            else
+                _id = id;
             _engine = engine;
         }
 
-
         #region "Properties"
+        
         /// <summary>
         /// gets the unique handle of the engine
         /// </summary>
-        public string Id { get { return _id; } }
+        public string Id
+        {
+            get
+            {
+                return _id;
+            }
+        }
+        
         /// <summary>
         /// returns the Engine
         /// </summary>
-        public Engine Engine { get { return _engine;  } }
+        public Engine Engine
+        {
+            get
+            {
+                return _engine;
+            }
+        }
+        
         /// <summary>
         /// gets all the rule rules in the repository
         /// </summary>
-        public List<SelectionRule> SelectionRules { get { return _selectionrules.Values.ToList() ; } }
+        public List<SelectionRule> SelectionRules
+        {
+            get
+            {
+                return _selectionrules.Values.ToList() ;
+            }
+        }
+        
         /// <summary>
         /// gets all rule rule IDs in the repository
         /// </summary>
-        public List<String> SelectionRuleIDs { get { return _selectionrules.Keys.ToList (); } }
-
+        public List<String> SelectionRuleIDs
+        {
+            get
+            {
+                return _selectionrules.Keys.ToList();
+            }
+        }
+        
         /// <summary>
         /// gets all the operators in the repository
         /// </summary>
-        public List<Operator> Operators { get { return _Operators.Values.ToList(); } }
+        public List<Operator> Operators
+        {
+            get
+            {
+                return _Operators.Values.ToList();
+            }
+        }
+        
         /// <summary>
         /// gets all operator tokens rule IDs in the repository
         /// </summary>
-        public List<Token> OperatorTokens { get { return _Operators.Keys.ToList(); } }
+        public List<Token> OperatorTokens
+        {
+            get
+            {
+                return _Operators.Keys.ToList();
+            }
+        }
+        
         /// <summary>
         /// return true if initialized
         /// </summary>
-        public bool IsInitialized { get { return _IsInitialized; } }
-
+        public bool IsInitialized
+        {
+            get
+            {
+                return _IsInitialized;
+            }
+        }
+        
         #endregion
-
+        
         /// <summary>
         /// register the DataObjectEntrySymbol Repository
         /// </summary>
         /// <param name="repository"></param>
         /// <returns></returns>
-        public bool RegisterDataObjectRepository(iDataObjectRepository repository)
+        public virtual bool RegisterDataObjectRepository(iDataObjectRepository repository)
         {
             _dataobjectRepositories.Add(repository);
             return true;
         }
+        
         /// <summary>
         /// register the DataObjectEntrySymbol Repository
         /// </summary>
         /// <param name="repository"></param>
         /// <returns></returns>
-        public bool DeRegisterDataObjectRepository(iDataObjectRepository repository)
+        public virtual bool DeRegisterDataObjectRepository(iDataObjectRepository repository)
         {
             _dataobjectRepositories.Remove(repository);
             return true;
         }
+        
         /// <summary>
         /// lazy initialize
         /// </summary>
         /// <returns></returns>
         private bool Initialize()
         {
-            if (_IsInitialized) return false;
-            // Register with Data types
-            DataType.OnCreation += Repository_DataTypeOnCreation;
-            DataType.OnRemoval += Repository_DataTypeOnRemoval;
+            if (_IsInitialized)
+                return false;
+            
             // operator
             foreach (Operator anOperator in Operator.BuildInOperators())
             {
                 if (! _Operators.ContainsKey(anOperator.Token)) 
                     _Operators.Add(anOperator.Token, anOperator);
             }
-
+            
             // Functions
             foreach (@Function aFunction in @Function.BuildInFunctions())
             {
@@ -920,13 +1117,14 @@ namespace OnTrack.Rulez
             // primitve Datatypes
             foreach (IDataType aDatatype in PrimitiveType.DataTypes)
             {
-                if (!_datatypes.ContainsKey(aDatatype.Name.ToUpper()))
+                if (!_datatypes.ContainsKey(aDatatype.Id.ToUpper()))
                 {
-                    _datatypes.Add(aDatatype.Name.ToUpper(), aDatatype);
-                    if (! _datatypesSignature.ContainsKey(aDatatype.Signature.ToUpper())) _datatypesSignature.Add(aDatatype.Signature.ToUpper(), new List<IDataType>());
+                    _datatypes.Add(aDatatype.Id.ToUpper(), aDatatype);
+                    if (! _datatypesSignature.ContainsKey(aDatatype.Signature.ToUpper()))
+                        _datatypesSignature.Add(aDatatype.Signature.ToUpper(), new List<IDataType>());
                     List<IDataType> aList = _datatypesSignature[aDatatype.Signature.ToUpper()];
                     // remove all existing
-                    aList.RemoveAll(x => x.Name == aDatatype.Name);
+                    aList.RemoveAll(x => x.Id == aDatatype.Id);
                     aList.Add(aDatatype);
                 }
             }
@@ -944,6 +1142,7 @@ namespace OnTrack.Rulez
             Initialize();
             return _selectionrules.ContainsKey(id);
         }
+        
         /// <summary>
         /// returns the selectionrule by handle
         /// </summary>
@@ -952,9 +1151,11 @@ namespace OnTrack.Rulez
         public SelectionRule GetSelectionRule(string id)
         {
             Initialize();
-            if (this.HasSelectionRule (id)) return _selectionrules[id];
+            if (this.HasSelectionRule(id))
+                return _selectionrules[id];
             throw new KeyNotFoundException(id + " was not found in repository");
         }
+        
         /// <summary>
         /// adds a rule rule to the repository by handle
         /// </summary>
@@ -964,22 +1165,26 @@ namespace OnTrack.Rulez
         public bool AddSelectionRule(string id, SelectionRule rule)
         {
             Initialize();
-            if (this.HasSelectionRule(id)) _selectionrules.Remove(id);
+            if (this.HasSelectionRule(id))
+                _selectionrules.Remove(id);
             _selectionrules.Add(id, rule);
             return true;
         }
+        
         /// <summary>
         /// adds a rule rule to the repository by handle
         /// </summary>
         /// <param name="handle"></param>
-        /// <param name="rule"></param>
+        /// <param id="rule"></param>
         /// <returns></returns>
         public bool RemoveSelectionRule(string id)
         {
             Initialize();
-            if (this.HasSelectionRule(id)) return _selectionrules.Remove(id);
+            if (this.HasSelectionRule(id))
+                return _selectionrules.Remove(id);
             return false;
         }
+        
         /// <summary>
         /// returns true if the repository has the function
         /// </summary>
@@ -990,6 +1195,7 @@ namespace OnTrack.Rulez
             Initialize();
             return _Functions.ContainsKey(id);
         }
+        
         /// <summary>
         /// returns the function by handle
         /// </summary>
@@ -998,9 +1204,11 @@ namespace OnTrack.Rulez
         public @Function GetFunction(Token id)
         {
             Initialize();
-            if (this.HasFunction(id)) return _Functions[id];
+            if (this.HasFunction(id))
+                return _Functions[id];
             throw new KeyNotFoundException(id + " was not found in repository");
         }
+        
         /// <summary>
         /// adds a function to the repository by handle
         /// </summary>
@@ -1010,10 +1218,12 @@ namespace OnTrack.Rulez
         public bool AddFunction(@Function function)
         {
             Initialize();
-            if (this.HasFunction(function.Token)) _Functions.Remove(function.Token);
+            if (this.HasFunction(function.Token))
+                _Functions.Remove(function.Token);
             _Functions.Add(function.Token, function);
             return true;
         }
+        
         /// <summary>
         /// returns true if the repository has the rule rule
         /// </summary>
@@ -1022,9 +1232,11 @@ namespace OnTrack.Rulez
         public bool HasOperator(Token id)
         {
             Initialize();
-            if (id != null) return _Operators.ContainsKey(id);
+            if (id != null)
+                return _Operators.ContainsKey(id);
             return false;
         }
+        
         /// <summary>
         /// returns the selectionrule by handle
         /// </summary>
@@ -1033,9 +1245,11 @@ namespace OnTrack.Rulez
         public Operator GetOperator(Token id)
         {
             Initialize();
-            if (this.HasOperator(id)) return _Operators[id];
-            throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[]{id.ToString (), "Operator"});
+            if (this.HasOperator(id))
+                return _Operators[id];
+            throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[] { id.ToString(), "Operator" });
         }
+        
         /// <summary>
         /// adds a rule rule to the repository by handle
         /// </summary>
@@ -1045,10 +1259,12 @@ namespace OnTrack.Rulez
         public bool AddOperator(Operator Operator)
         {
             Initialize();
-            if (this.HasOperator(Operator.Token)) _Operators.Remove(Operator.Token);
+            if (this.HasOperator(Operator.Token))
+                _Operators.Remove(Operator.Token);
             _Operators.Add(Operator.Token, Operator);
             return true;
         }
+        
         /// <summary>
         /// adds a rule rule to the repository by handle
         /// </summary>
@@ -1058,9 +1274,11 @@ namespace OnTrack.Rulez
         public bool RemoveOperator(Token id)
         {
             Initialize();
-            if (this.HasOperator(id)) return _Operators.Remove(id);
+            if (this.HasOperator(id))
+                return _Operators.Remove(id);
             return false;
         }
+        
         /// <summary>
         /// returns true if the repository has the function
         /// </summary>
@@ -1069,8 +1287,9 @@ namespace OnTrack.Rulez
         public bool HasDataType(string name)
         {
             Initialize();
-            return _datatypes.ContainsKey(name.ToUpper() );
+            return _datatypes.ContainsKey(name.ToUpper());
         }
+        
         /// <summary>
         /// returns true if the repository has the function
         /// </summary>
@@ -1078,8 +1297,9 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public bool HasDataType(IDataType datatype)
         {
-            return HasDataType(datatype.Name);
+            return HasDataType(datatype.Id);
         }
+        
         /// <summary>
         /// returns true if the repository has the function
         /// </summary>
@@ -1090,6 +1310,7 @@ namespace OnTrack.Rulez
             Initialize();
             return _datatypesSignature.ContainsKey(signature.ToUpper());
         }
+        
         /// <summary>
         /// returns the datatype by name
         /// </summary>
@@ -1098,9 +1319,11 @@ namespace OnTrack.Rulez
         public IDataType GetDatatype(string Name)
         {
             Initialize();
-            if (this.HasDataType(Name)) return _datatypes[Name.ToUpper()];
+            if (this.HasDataType(Name))
+                return _datatypes[Name.ToUpper()];
             throw new RulezException(RulezException.Types.DataTypeNotFound, arguments: new object[] { Name.ToUpper() });
         }
+        
         /// <summary>
         /// returns the datatype by name
         /// </summary>
@@ -1109,9 +1332,11 @@ namespace OnTrack.Rulez
         public List<IDataType> GetDatatypeBySignature(string signature)
         {
             Initialize();
-            if (this.HasDataTypeSignature(signature)) return _datatypesSignature[signature.ToUpper()];
+            if (this.HasDataTypeSignature(signature))
+                return _datatypesSignature[signature.ToUpper()];
             throw new RulezException(RulezException.Types.DataTypeNotFound, arguments: new object[] { signature.ToUpper() });
         }
+        
         /// <summary>
         /// adds a datatype to the repository by handle
         /// </summary>
@@ -1121,15 +1346,18 @@ namespace OnTrack.Rulez
         public bool AddDataType(IDataType datatype)
         {
             Initialize();
-            if (this.HasDataType(datatype.Name)) _datatypes.Remove(datatype.Name.ToUpper());
-            _datatypes.Add(datatype.Name.ToUpper(), datatype);
-            if (!this.HasDataTypeSignature(datatype.Signature)) _datatypesSignature.Add(datatype.Signature.ToUpper(), new List<IDataType>());
+            if (this.HasDataType(datatype.Id))
+                _datatypes.Remove(datatype.Id.ToUpper());
+            _datatypes.Add(datatype.Id.ToUpper(), datatype);
+            if (!this.HasDataTypeSignature(datatype.Signature))
+                _datatypesSignature.Add(datatype.Signature.ToUpper(), new List<IDataType>());
             List<IDataType> aList = _datatypesSignature[datatype.Signature.ToUpper()];
             // remove all existing
-            aList.RemoveAll(x => x.Name.ToUpper() == datatype.Name.ToUpper());
+            aList.RemoveAll(x => x.Id.ToUpper() == datatype.Id.ToUpper());
             aList.Add(datatype);
             return true;
         }
+        
         /// <summary>
         /// adds a datatype to the repository by handle
         /// </summary>
@@ -1139,15 +1367,17 @@ namespace OnTrack.Rulez
         public bool RemoveDataType(IDataType datatype)
         {
             Initialize();
-            if (this.HasDataType(datatype.Name)) _datatypes.Remove(datatype.Name.ToUpper());
+            if (this.HasDataType(datatype.Id))
+                _datatypes.Remove(datatype.Id.ToUpper());
             if (this.HasDataTypeSignature(datatype.Signature))
             {
                 List<IDataType> aList = _datatypesSignature[datatype.Signature.ToUpper()];
                 // remove all existing
-                aList.RemoveAll(x => x.Name.ToUpper() == datatype.Name.ToUpper());
+                aList.RemoveAll(x => x.Id.ToUpper() == datatype.Id.ToUpper());
             }
             return true;
         }
+        
         /// <summary>
         /// returns true if the id exists in the Repository
         /// </summary>
@@ -1155,13 +1385,24 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public bool HasDataObjectDefinition(string id)
         {
+            return HasDataObjectDefinition(new ObjectName(id));
+        }
+        /// <summary>
+        /// returns true if the name exits in the repository
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public bool HasDataObjectDefinition(ObjectName name)
+        {
             Initialize();
             foreach (iDataObjectRepository aRepository in _dataobjectRepositories)
             {
-                if (aRepository.HasObjectDefinition(CanonicalName.GetStructureName (id))) return true;
+                if (aRepository.HasObjectDefinition(name))
+                    return true;
             }
             return false;
         }
+        
         /// <summary>
         /// returns the selectionrule by handle
         /// </summary>
@@ -1169,31 +1410,18 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public iObjectDefinition GetDataObjectDefinition(String id)
         {
+            return GetDataObjectDefinition(new ObjectName(id));
+        }
+        
+        public iObjectDefinition GetDataObjectDefinition(ObjectName name)
+        {
             Initialize();
             foreach (iDataObjectRepository aRepository in _dataobjectRepositories)
             {
-                iObjectDefinition aDefinition = aRepository.GetIObjectDefinition(CanonicalName.GetStructureName(id));
+                iObjectDefinition aDefinition = aRepository.GetIObjectDefinition(name);
                 if (aDefinition != null) return aDefinition;
             }
-            throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[] { id, "DataObjectEntrySymbol Repositories" });
-        }
-        /// <summary>
-        /// event Handling routine of Datatype On Creation Event
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="args"></param>
-        private void Repository_DataTypeOnCreation(object sender, Core.DataType.EventArgs args)
-        {
-            if (( args.Engine == null || args.Engine == this.Engine) && !this.HasDataType (args.DataType)) this.AddDataType(args.DataType);
-        }
-        /// <summary>
-        ///  event Handling routine of Datatype On Removal Event
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="args"></param>
-        private void Repository_DataTypeOnRemoval(object sender, Core.DataType.EventArgs args)
-        {
-            if ((args.Engine == null || args.Engine == this.Engine) && this.HasDataType(args.DataType)) this.RemoveDataType(args.DataType);
+            throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[] { name, "DataObjectEntrySymbol Repositories" });
         }
     }
 }

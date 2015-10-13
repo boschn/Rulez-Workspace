@@ -28,7 +28,7 @@ using System.Collections.Generic;
 rulezUnit
 returns [OnTrack.Rulez.eXPressionTree.Unit XPTreeNode ]
 @init { $XPTreeNode = new OnTrack.Rulez.eXPressionTree.Unit(this.Engine);  RegisterMessages($XPTreeNode);}
-@after { BuildXPTNode ($ctx) ;  DeRegisterMessages($XPTreeNode);}
+@after {  DeRegisterMessages($XPTreeNode);}
 
     : oneRulez ( EOS+ oneRulez )* EOS* EOF
     ;
@@ -37,18 +37,22 @@ returns [OnTrack.Rulez.eXPressionTree.Unit XPTreeNode ]
  */
 oneRulez
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
-@after { BuildXPTNode ($ctx) ; }
     : selectionRulez
 	| typeDeclaration 
-	
+	| moduleDeclaration
     ;
 
+/*
+ * namespace declaration
+ */
+moduleDeclaration
+	: MODULE canonicalName
+	;
 /*
  * type Definition
  */
 typeDeclaration
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
-@after { BuildXPTNode ($ctx) ; }
 	: TYPE typeid AS typeDefinition [$ctx.typeid().GetText()]
 	
 	;
@@ -60,9 +64,9 @@ typeid
 /*
  * different type definition
  */
-typeDefinition [string name]
+typeDefinition [string id]
 	:
-		dataType [$name]
+		dataType [$id]
 	;
 
 /* datatype declaration
@@ -70,23 +74,23 @@ typeDefinition [string name]
  * if name = null then anonymous name else name is the name the type is saved under
  *
  */
-dataType [string name]
+dataType [string id]
 returns [ Core.IDataType datatype]
 	: primitiveType { $datatype = Rulez.PrimitiveType.GetPrimitiveType($ctx.primitiveType().typeId);}
-	| datastructureType [$name] {$datatype = $ctx.datastructureType().datatype;}
-	| compositeType [$name] {$datatype = $ctx.compositeType().datatype;}
+	| datastructureType [$id] {$datatype = $ctx.datastructureType().datatype;}
+	| compositeType [$id] {$datatype = $ctx.compositeType().datatype;}
 
 	// defined data types by name such as data objects, if the save name is null
-	|  {$name == null && IsDataTypeName($ctx.GetText())}? identifier { $datatype = this.Engine.Globals.GetDatatype($ctx.identifier().GetText());}
+	|  {$id == null && IsDataTypeName($ctx.GetText())}? identifier { $datatype = this.Engine.Globals.GetDatatype($ctx.identifier().GetText());}
 	;
 
 /* structure types
  * LIST? of DATE, LIST of deliverables
  */
-datastructureType [string name]
+datastructureType [string id]
 returns [ Core.IDataType datatype ]
 locals [ bool isnullable = false]
-	: LIST (isNullable {$isnullable = true;})? OF dataType[null] { $datatype = Rulez.ListType.GetDataType (innerDataType:$ctx.dataType().datatype, name: name, engine: this.Engine, isNullable: $isnullable);}
+	: LIST (isNullable {$isnullable = true;})? OF dataType[null] { $datatype = Rulez.ListType.GetDataType (innerDataType:$ctx.dataType().datatype, id: id, engine: this.Engine, isNullable: $isnullable);}
 	;
 
 /*
@@ -94,11 +98,11 @@ locals [ bool isnullable = false]
  * if name = null then anonymous name else name is the name the type is saved under
  *
  */
-compositeType  [string name]
+compositeType  [string id]
 returns [ Core.IDataType datatype ]
-    : symbolTypeDeclaration  [$name] 
-	| decimalUnitDeclaration [$name]
-	| languageTextDeclaration [$name]
+    : symbolTypeDeclaration  [$id] 
+	| decimalUnitDeclaration [$id]
+	| languageTextDeclaration [$id]
     ;
 
 /*
@@ -108,11 +112,11 @@ returns [ Core.IDataType datatype ]
  * DecimalUnit of Currency 
  * DecimalUnit of ( EUR | USD | CHF )
  */
-decimalUnitDeclaration [string name]
+decimalUnitDeclaration [string id]
 returns [ Core.IDataType datatype ]
-	: DECIMALUNIT OF symboldecl=symbolTypeDeclaration[null] {$datatype = Rulez.DecimalUnitType.GetDataType( unit: (SymbolType) $ctx.symbol.datatype, name: name, engine: this.Engine);  }
+	: DECIMALUNIT OF symboldecl=symbolTypeDeclaration[null] {$datatype = Rulez.DecimalUnitType.GetDataType( unit: (SymbolType) $ctx.symboldecl.datatype, id: id, engine: this.Engine);  }
 	 {IsSymbolType($ctx.identifier().GetText())}? LANGUAGETEXT OF identifier 
-		{$datatype = Rulez.DecimalUnitType.GetDataType(unit: (SymbolType) this.Engine.Globals.GetDatatype($ctx.identifier().GetText()), name: name, engine: this.Engine);}
+		{$datatype = Rulez.DecimalUnitType.GetDataType(unit: (SymbolType) this.Engine.Globals.GetDatatype($ctx.identifier().GetText()), id: id, engine: this.Engine);}
 
 	;
 
@@ -123,27 +127,27 @@ returns [ Core.IDataType datatype ]
  * LanguageText of Cultural
  * LanguageText of ( DE_de | EN_en )
  */
-languageTextDeclaration [string name]
+languageTextDeclaration [string id]
 returns [ Core.IDataType datatype ]
-	: LANGUAGETEXT OF symboldecl=symbolTypeDeclaration[null] {$datatype = Rulez.LanguageTextType.GetDataType( cultural: (SymbolType) $ctx.symbol.datatype, name: name, engine: this.Engine);  }
+	: LANGUAGETEXT OF symboldecl=symbolTypeDeclaration[null] {$datatype = Rulez.LanguageTextType.GetDataType( cultural: (SymbolType) $ctx.symboldecl.datatype, id: id, engine: this.Engine);  }
 	| {IsSymbolType($ctx.identifier().GetText())}? LANGUAGETEXT OF identifier 
-		{$datatype = Rulez.LanguageTextType.GetDataType(cultural: (SymbolType) this.Engine.Globals.GetDatatype($ctx.identifier().GetText()), name: name,engine: this.Engine);}
+		{$datatype = Rulez.LanguageTextType.GetDataType(cultural: (SymbolType) this.Engine.Globals.GetDatatype($ctx.identifier().GetText()), id: id,engine: this.Engine);}
 	;
 /*
- * anonymous symbol declaration
+ * anonymous canonicalName declaration
  * if name = null then anonymous name else name is the name the type is saved under
  *
  * ( orange | apple | peach )
  */
-symbolTypeDeclaration [string name]
+symbolTypeDeclaration [string id]
 returns [ Core.IDataType datatype ]
 locals  [uint pos = 1]
-@init {$datatype = Rulez.SymbolType.GetDataType(name:name, innerTypeId: otDataType.Number, engine: this.Engine); } 
+@init {$datatype = Rulez.SymbolType.GetDataType(id:$id, innerTypeId: otDataType.Number, engine: this.Engine); } 
 	: 
 	  LPAREN symbolDeclaration[(SymbolType)$datatype, $pos] ( OR {$pos ++;} symbolDeclaration[(SymbolType)$datatype,$pos] )* RPAREN
 	;
 
-/* symbol declaration
+/* canonicalName declaration
  *
  *
  */
@@ -179,18 +183,19 @@ isNullable
 *	selection s as deliverables[uid=p1 as number? default 100]; -> implicit defines a parameter p1 
 */
 selectionRulez
-returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
-locals [ // parameteres
+returns [  OnTrack.Rulez.Scope Scope, OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
+locals [ 
+		// parameters
 		 Dictionary<string,ParameterDefinition> names = new Dictionary<string,ParameterDefinition>() ]
 @init{ $XPTreeNode = new SelectionRule(); RegisterMessages($XPTreeNode);}
-@after { BuildXPTNode ($ctx) ; DeRegisterMessages($XPTreeNode);}
+@after { DeRegisterMessages($XPTreeNode);}
 
-    : SELECTION ruleid {((SelectionRule)$XPTreeNode).ID = $ctx.ruleid().GetText();} (LPAREN parameters RPAREN)? AS ( selectStatementBlock | selection ) 
+    : SELECTION id = ruleid {((SelectionRule)$XPTreeNode).ID = $ctx.id.GetText();  $Scope = new Scope(engine:this.Engine, id: $ctx.id.GetText());} (LPAREN parameters RPAREN)? AS ( selectStatementBlock | selection ) 
 	
     ;
 // rulename
 ruleid
-    : identifier 
+    : canonicalName 
 	{ CheckUniqueSelectionRuleId ($ctx.GetText()); }
     ;
 /* Parameterdefinition
@@ -209,13 +214,15 @@ parameterdefinition  [uint pos]
 /* SelectStatementBlock
  */
 selectStatementBlock
-returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
+returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode,  OnTrack.Rulez.Scope Scope ]
 locals [
 		 // local variables
 		Dictionary<string,VariableDefinition> names = new Dictionary<string,VariableDefinition>() 
 		]
-@init {$XPTreeNode = new OnTrack.Rulez.eXPressionTree.SelectionStatementBlock(); RegisterMessages($XPTreeNode);}
-@after { BuildXPTNode ($ctx) ; DeRegisterMessages($XPTreeNode); }
+@init {$XPTreeNode = new OnTrack.Rulez.eXPressionTree.SelectionStatementBlock(); 
+	   $Scope = new Scope(engine:this.Engine);
+	   RegisterMessages($XPTreeNode);}
+@after {  DeRegisterMessages($XPTreeNode); }
 
 	: L_BRACKET selectStatement (EOS+ selectStatement)* R_BRACKET
 	
@@ -225,7 +232,6 @@ locals [
  */
 selectStatement
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
-@after { BuildXPTNode ($ctx) ; }
 	: selection 
 	| variableDeclaration
 	| assignment  
@@ -237,9 +243,8 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
  */
 assignment
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
-@after { BuildXPTNode ($ctx) ; }
 
-	: symbol EQ selectExpression
+	: canonicalName EQ selectExpression
 	
 	;
 
@@ -254,15 +259,13 @@ variableDeclaration
  */
 match
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
-@after { BuildXPTNode ($ctx) ; }
 
-	: MATCH (symbol) WITH matchcase ( OR matchcase )* 
+	: MATCH (canonicalName) WITH matchcase ( OR matchcase )* 
 	
 	;
 
 matchcase
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
-@after { BuildXPTNode ($ctx) ; }
 
 	: selectExpression DO selectStatement
 	;
@@ -272,7 +275,6 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 
 return
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
-@after { BuildXPTNode ($ctx) ; }
 
 	: RETURN selectExpression
 	
@@ -294,10 +296,9 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 selection
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 locals [ string ClassName ]
-@after { BuildXPTNode ($ctx) ; }
 	// Note: $ClassName will be used from GetDefaultClassname () as workaround for providing the classname by rule argument
 	//
-    :   dataObject=dataObjectClass {$ClassName = $ctx.dataObject.GetText();}  L_SQUARE_BRACKET (Conditions=selectConditions[1])?  R_SQUARE_BRACKET  resultSelection [$ClassName]
+    :   dataObject=objectName {$ClassName = $ctx.dataObject.GetText();}  L_SQUARE_BRACKET (Conditions=selectConditions[1])?  R_SQUARE_BRACKET  resultSelection [$ClassName]
 	;
 
 /* data object entry selection of the results
@@ -305,7 +306,6 @@ locals [ string ClassName ]
  */
 resultSelection [string ClassName]
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
-@after { BuildXPTNode ($ctx) ; }
 	:
 	   DOT identifier // -> one data Object Entry Name
 	|  (DOT)? L_SQUARE_BRACKET ( identifier ( AND identifier )* )? R_SQUARE_BRACKET
@@ -325,7 +325,6 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
  */
 selectConditions[uint keypos] // argument keypos as keyposition
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
-@after { BuildXPTNode ($ctx) ; }
     :	L_SQUARE_BRACKET  R_SQUARE_BRACKET // all
 	|	( NOT )? selectCondition [$keypos] (logicalOperator_2 { incIncreaseKeyNo($ctx); } ( NOT )? selectCondition [$keypos])* 
 	    ;
@@ -343,13 +342,12 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
  */
  selectCondition [uint keypos]
  returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
- @after { BuildXPTNode ($ctx) ; }
     :	 
 	    ( NOT )? L_SQUARE_BRACKET {$keypos= 1;} selectConditions [$keypos]  R_SQUARE_BRACKET
 	|   ( NOT )? LPAREN  selectConditions [$keypos]  RPAREN
 	// check if entryname is preceded with an object class here else we are not getting into this rule
 //	|	( { IsDataObjectEntry(CurrentToken.Text, $ctx) | IsDataObjectClass(CurrentToken.Text, $ctx) }? dataObjectEntry=dataObjectEntryName Operator=compareOperator)? select=selectExpression 
-	|   ( symbol Operator=compareOperator )? select = selectExpression
+	|   ( dataObjectEntry=canonicalName Operator=compareOperator )? select = selectExpression
     ;
 
 /*
@@ -374,17 +372,17 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 selectExpression  
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 locals [ string defaultClassName ]
-@after { BuildXPTNode ($ctx) ; }
 
     : literal 
     | {IsParameterName(CurrentToken.Text, $ctx)}? parameterName
 	| {IsVariableName(CurrentToken.Text, $ctx)}? variableName
-	|  dataobject=symbol  { $ctx.XPTreeNode = $ctx.dataobject.XPTreeNode; } // who knows why we need that
     | ( PLUS | MINUS ) selectExpression 
 	| logicalOperator_1 selectExpression 
 	| LPAREN selectExpression RPAREN
     | selectExpression (arithmeticOperator selectExpression)+
 	| selection
+	// last resort -> unresolved canonical name
+	| canonicalName  { $ctx.XPTreeNode = $ctx.canonicalName().XPTreeNode; } // who knows why we need that
 	
     ;
 
@@ -417,22 +415,20 @@ returns [ OnTrack.Rulez.Operator Operator  ]
 
 // Object Class
 //
-dataObjectClass
-returns [ string ClassName ]
-//{this.Engine.Globals.HasDataObjectDefinition($ctx.identifier().GetText())}?
-@after{ $ClassName = $ctx.identifier().GetText() ;}
-    :  identifier   
+objectName
+returns [  OnTrack.Rulez.eXPressionTree.INode XPTreeNode , ObjectName Name ]
+@after{ $Name = GetCanonicalObjectName($ctx, $ctx.identifier()) ;}
+    :   (identifier DOT )* identifier
     ;
 
 // Object Entry Name
 //
 // ClassName will be handled in BuildXPTNode
 dataObjectEntryName 
-returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode , string ClassName  ]
-locals [ string entryname ]
-@after { BuildXPTNode ($ctx) ; }
-    : { IsDataObjectClass(CurrentToken.Text, $ctx)}? Class=dataObjectClass { $ClassName = $ctx.Class.GetText();} DOT {IsDataObjectEntry(CurrentToken.Text, $ctx)}?   identifier 
-	| {IsDataObjectEntry(CurrentToken.Text, $ctx)}?  identifier
+returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode , EntryName Name  ]
+@after{ $Name = GetCanonicalEntryName($ctx, $ctx.identifier()) ;}
+    : 
+	(identifier DOT )* identifier
     ;
 
 // parameter name
@@ -440,9 +436,7 @@ locals [ string entryname ]
 // IsParameterName(CurrentToken.Text,$ctx)
 parameterName
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
-@after { BuildXPTNode ($ctx) ; }
-    :   symbol 
-	
+    :   identifier 
     ;
 
 // variable name
@@ -450,10 +444,7 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 // IsVariableName(CurrentToken.Text,$ctx)
 variableName
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
-@after { BuildXPTNode ($ctx) ; }
-
-    :    symbol 
-	
+    :    canonicalName 
     ;
 
 /* Literals
@@ -473,12 +464,14 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
     ;
 
 /*
- * define a symbol which might be a parametername, variablename, dataobjectentry name
+ * define a canonicalName which might be a parametername, variablename, dataobjectentry name
  *
  */
-symbol
+canonicalName
+returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode , CanonicalName Name  ]
+@after{ $Name = GetCanonicalEntryName($ctx, $ctx.identifier()) ;}
 	:
-	( (identifier DOT)* structurename=identifier DOT )? entryname = identifier 
+	 identifier (DOT identifier)*
 	;
 
 /*
@@ -487,7 +480,7 @@ symbol
  identifier
     :
 	// keywords
-	  TYPE | SELECTION | AS | DEFAULT | NULLABLE | OF | MATCH | WITH | RETURN | DO 
+	  TYPE | SELECTION | AS | DEFAULT | NULLABLE | OF | MATCH | WITH | RETURN | DO  | MODULE
 	// types
 	| NUMBER | DECIMAL | TEXT | MEMO | TIMESTAMP | LIST | DATE | DECIMALUNIT | LANGUAGETEXT | SYMBOL
 	// named literals

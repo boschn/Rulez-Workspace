@@ -41,7 +41,7 @@ namespace OnTrack.IO.CSV
         /// <summary>
         /// Creator from a text reader 
         /// </summary>
-        /// <param name="buffer"></param>
+        /// <param id="buffer"></param>
         public Reader(System.IO.TextReader reader, String delimiter = null)
         {
             _input = new Antlr4.Runtime.AntlrInputStream(reader);
@@ -50,7 +50,7 @@ namespace OnTrack.IO.CSV
         /// <summary>
         /// Creator from a stream reader 
         /// </summary>
-        /// <param name="buffer"></param>
+        /// <param id="buffer"></param>
         public Reader(System.IO.StreamReader reader, String delimiter = null)
         {
             _input = new Antlr4.Runtime.AntlrInputStream (reader);
@@ -159,12 +159,12 @@ namespace OnTrack.IO.CSV
         /// <summary>
         /// process the SyntaxError
         /// </summary>
-        /// <param name="recognizer"></param>
-        /// <param name="offendingSymbol"></param>
-        /// <param name="line"></param>
-        /// <param name="charPositionInLine"></param>
-        /// <param name="msg"></param>
-        /// <param name="e"></param>
+        /// <param id="recognizer"></param>
+        /// <param id="offendingSymbol"></param>
+        /// <param id="line"></param>
+        /// <param id="charPositionInLine"></param>
+        /// <param id="msg"></param>
+        /// <param id="e"></param>
         public override  void SyntaxError(IRecognizer recognizer, IToken offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e) 
         {
             if (charPositionInLine != 00) Console.WriteLine(String.Format("ERROR <{0},{1:D2}>:{2}", line, charPositionInLine, msg));

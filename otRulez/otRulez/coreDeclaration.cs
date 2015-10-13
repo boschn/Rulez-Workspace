@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.ComponentModel;
 using OnTrack.Rulez.eXPressionTree;
+using OnTrack.Rulez;
 
 namespace OnTrack.Core
 {
@@ -33,15 +34,15 @@ namespace OnTrack.Core
         /// <summary>
         /// gets the object name
         /// </summary>
-        String Objectname { get; }
+        String Id { get; }
         /// <summary>
         /// gets the System.Type of the object implementation class
         /// </summary>
         System.Type ObjectType { get;  }
         /// <summary>
-        /// gets the module name space
+        /// gets the module id space
         /// </summary>
-        String Modulename { get; set; }
+        String ModuleId { get; set; }
         /// <summary>
         /// gets the .net class name
         /// </summary>
@@ -75,7 +76,7 @@ namespace OnTrack.Core
         /// </summary>
         /// <param name="onlyActive"></param>
         /// <returns></returns>
-        IList<String> Entrynames(bool onlyActive = true);
+        IList<String> EntryNameIds(bool onlyActive = true);
         /// <summary>
         /// returns an EntryDefinition or null
         /// </summary>
@@ -140,7 +141,8 @@ namespace OnTrack.Core
         /// <summary>
         /// gets the name of the data type
         /// </summary>
-        string Name { get; }
+        string Id { get; }
+        ObjectName Name { get;  }
         /// <summary>
         /// gets the signature of the data type
         /// </summary>
@@ -204,14 +206,14 @@ namespace OnTrack.Core
         /// <value></value>
         /// <returns></returns>
         /// <remarks></remarks>
-        String Objectname {get;set;}
+        String ObjectId {get;set;}
         /// <summary>
         /// returns the name of the entry
         /// </summary>
         /// <value></value>
         /// <returns></returns>
         /// <remarks></remarks>
-        String Entryname {get;set;}
+        String EntryId {get;set;}
         /// <summary>
         /// returns the field data type
         /// </summary>
@@ -254,11 +256,11 @@ namespace OnTrack.Core
         /// <value></value>
         /// <returns></returns>
         /// <remarks></remarks>
-        long  PrimaryKeyOrdinal  {get;set;}
+        long?  PrimaryKeyOrdinal  {get;set;}
         /// <summary>
         /// returns the inner data type
         /// </summary>
-        otDataType? InnerDatatype {get;set;}
+        // otDataType? InnerDatatype {get;set;}
         /// <summary>
         /// returns the ordinal
         /// </summary>
@@ -296,7 +298,7 @@ namespace OnTrack.Core
         /// <summary>
         /// generate a rule
         /// </summary>
-        /// <param name="rule"></param>
+        /// <param id="rule"></param>
         /// <returns></returns>
         bool Generate(IRule rule, out OnTrack.Rulez.ICodeBit result);
 
@@ -313,12 +315,19 @@ namespace OnTrack.Core
     /// </summary>
     public interface iDataObjectRepository
     {
+       
         /// <summary>
-        /// returns a object definition
+        /// returns an object definition by object name
         /// </summary>
-        /// <param name="handle"></param>
+        /// <param name="name"></param>
         /// <returns></returns>
-        iObjectDefinition GetIObjectDefinition(string id);
+        iObjectDefinition GetIObjectDefinition(ObjectName name);
+        /// <summary>
+        /// retuns an object definition by canonical name in string
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        iObjectDefinition GetIObjectDefinition(string name);
         /// <summary>
         /// returns a object definition
         /// </summary>
@@ -326,29 +335,24 @@ namespace OnTrack.Core
         /// <returns></returns>
         iObjectDefinition GetIObjectDefinition(Type type);
         /// <summary>
-        /// returns the objectname from a type
+        /// returns the object id from a type
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
-        String GetObjectname(Type type);
+        String GetObjectId(Type type);
         /// <summary>
         /// returns the objectname from a type name
         /// </summary>
-        /// <param name="type"></param>
+        /// <param fullname="type"></param>
         /// <returns></returns>
-        String GetObjectname(String typefullname);
+        System.Type GetObjectType(ObjectName name);
         /// <summary>
-        /// returns the objectname from a type name
-        /// </summary>
-        /// <param name="type"></param>
-        /// <returns></returns>
-        System.Type GetObjectType(String objectname);
-        /// <summary>
-        /// returns true if the object handle exists
+        /// returns true if the object exists
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
-        bool HasObjectDefinition(string id);
+        bool HasObjectDefinition(ObjectName objectname);
+        bool HasObjectDefinition(string name);
         bool HasObjectDefinition(System.Type type);
         /// <summary>
         /// returns a list of ObjectDefinitions
@@ -358,6 +362,10 @@ namespace OnTrack.Core
         /// returns an enumerable of Data Object providers
         /// </summary>
         IEnumerable<iDataObjectProvider> DataObjectProviders { get; }
+        /// <summary>
+        /// returns the list of module names handled in this repository
+        /// </summary>
+        IEnumerable<CanonicalName> ModuleNames { get; }
     }
  
     /// <summary>
@@ -463,7 +471,7 @@ namespace OnTrack.Core
         /// <summary>
         /// Returns a hash code for the specified object.
         /// </summary>
-        /// <param name="obj">The <see cref="T:System.Object" /> for which a hash code is
+        /// <param id="obj">The <see cref="T:System.Object" /> for which a hash code is
         /// to be returned.</param>
         /// <exception cref="T:System.ArgumentNullException">The type of <paramref name="obj" />
         /// is a reference type and <paramref name="obj" /> is null.</exception>

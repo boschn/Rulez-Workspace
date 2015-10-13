@@ -19,6 +19,7 @@ MATCH: M A T C H;
 WITH: W I T H;
 RETURN: R E T U R N;
 DO: D O;
+MODULE: M O D U L E;
 
 // datatypes
 NUMBER : N U M B E R ;

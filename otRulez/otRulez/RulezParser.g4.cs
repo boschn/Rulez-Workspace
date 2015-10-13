@@ -47,7 +47,7 @@ namespace OnTrack.Rulez
             /// <param name="name"></param>
             /// <param name="datatype"></param>
             /// <param name="pos"></param>
-            /// <param name="defaultvalue"></param>
+            /// <param id="defaultvalue"></param>
             public ParameterDefinition(string name, IDataType datatype, uint pos, IExpression defaultvalue = null)
             { this.name = name; this.datatype = datatype; this.pos = pos; this.defaultvalue = defaultvalue; }
 
@@ -159,11 +159,11 @@ namespace OnTrack.Rulez
             {
                 return ((SelectionRulezContext)root).names.ContainsKey(name);
             }
-            // this.NotifyErrorListeners(String.Format(Messages.RCM_4, name, "SelectionRule"));
+            // this.NotifyErrorListeners(String.Format(Messages.RCM_4, id, "SelectionRule"));
             return false;
         }
         /// <summary>
-        /// checks if the name is a parameter name and throws an error
+        /// checks if the id is a parameter id and throws an error
         /// </summary>
         /// <returns></returns>
         bool CheckParameterName(string name, RuleContext context)
@@ -185,7 +185,7 @@ namespace OnTrack.Rulez
         bool IsDataObjectClass(string name, RuleContext context)
         {
             // check the name might be a full name
-            return Engine.Globals.HasDataObjectDefinition(CanonicalName.GetStructureName(name));
+            return Engine.Globals.HasDataObjectDefinition(ObjectName.GetObjectID(name));
         }
         /// <summary>
         /// returns true if this a Data Object class
@@ -195,45 +195,45 @@ namespace OnTrack.Rulez
         {
             // check the name might be a full name
             EntryName aName = new EntryName(name);
-            string aClassname =  aName.ObjectName ;
-            string anEntryName = aName.EntryName;
+            string aClassId =  aName.ObjectId ;
+            string anEntryId = aName.Id;
 
             // if we are in the right context
             if (context is DataObjectEntryNameContext)
             {
                 DataObjectEntryNameContext ctx = (DataObjectEntryNameContext)context;
-                if (string.IsNullOrEmpty(ctx.ClassName)) aClassname = GetDefaultClassName(context);
-                else if (!String.IsNullOrWhiteSpace(ctx.ClassName))
+                if (!ctx.Name.IsEntryName() || String.IsNullOrEmpty (ctx.Name.ObjectId )) aClassId = GetDefaultClassName(context);
+                else
                 {
                     // if classname differs than it is not allowed
-                    if (! String.IsNullOrEmpty (aClassname) && string.Compare(ctx.ClassName, aClassname, true) != 00)
-                        this.NotifyErrorListeners(String.Format (Messages.RCM_12, ctx.ClassName));
-                    else aClassname = ctx.ClassName;
+                    if (! String.IsNullOrEmpty (aClassId) && string.Compare(ctx.Name.ObjectId, aClassId, true) != 00)
+                        this.NotifyErrorListeners(String.Format (Messages.RCM_12, ctx.Name.ObjectId));
+                    else aClassId = ctx.Name.ObjectId;
                 }
             }
             else if (context is SelectExpressionContext)
             {
                 SelectExpressionContext ctx = (SelectExpressionContext)context;
                 string aDefaultname = GetDefaultClassName(ctx);
-                if (!(String.IsNullOrEmpty(aDefaultname))) aClassname = aDefaultname;
+                if (!(String.IsNullOrEmpty(aDefaultname))) aClassId = aDefaultname;
             }
             else if (context is SelectConditionContext)
             {
                 SelectConditionContext ctx = (SelectConditionContext)context;
                 string aDefaultname = GetDefaultClassName(ctx);
-                if (!(String.IsNullOrEmpty(aDefaultname))) aClassname = aDefaultname;
+                if (!(String.IsNullOrEmpty(aDefaultname))) aClassId = aDefaultname;
             }
             else if (context is ResultSelectionContext)
             {
                 ResultSelectionContext ctx = (ResultSelectionContext)context;
                 string aDefaultname = GetDefaultClassName(ctx);
-                if (string.IsNullOrEmpty(ctx.ClassName)) aClassname = GetDefaultClassName(context);
-                else if (!String.IsNullOrWhiteSpace(ctx.ClassName)) aClassname = ctx.ClassName;
+                if (string.IsNullOrEmpty(ctx.ClassName)) aClassId = GetDefaultClassName(context);
+                else if (!String.IsNullOrWhiteSpace(ctx.ClassName)) aClassId = ctx.ClassName;
             }
                 
             // check if DataObjectEntry is there
-            if (!string.IsNullOrWhiteSpace(aClassname) && Engine.Globals.HasDataObjectDefinition(aClassname))
-                return (Engine.Globals.GetDataObjectDefinition(aClassname).HasEntry(anEntryName));
+            if (!string.IsNullOrWhiteSpace(aClassId) && Engine.Globals.HasDataObjectDefinition(aClassId))
+                return (Engine.Globals.GetDataObjectDefinition(aClassId).HasEntry(anEntryId));
             // no way to get classname and entryname
             return false;
         }
@@ -263,16 +263,91 @@ namespace OnTrack.Rulez
             return GetRootContext(context.Parent, type);
         }
         /// <summary>
+        /// returns an Objectname from an array of contexts texts
+        /// </summary>
+        /// <param name="contexts"></param>
+        /// <returns></returns>
+        public CanonicalName GetCanonicalName(RuleContext current, RuleContext[] contexts)
+        {
+            string anID = String.Empty;
+            if (contexts != null)
+                for (uint i = 0; i < contexts.Length; i++)
+                {
+                    if (String.IsNullOrEmpty(anID)) anID = contexts[i].GetText();
+                    else anID += CanonicalName.ConstDelimiter + contexts[i].GetText();
+                }
+
+            return new CanonicalName(anID);
+        }
+        /// <summary>
+        /// returns an Objectname from an array of contexts texts
+        /// </summary>
+        /// <param name="contexts"></param>
+        /// <returns></returns>
+        public ObjectName GetCanonicalObjectName(RuleContext current,RuleContext[] contexts)
+        {
+            string anID = String.Empty;
+           
+            if (contexts != null)
+            for ( uint i = 0; i < contexts.Length; i++)
+            {
+                if (String.IsNullOrEmpty(anID)) anID = contexts[i].GetText();
+                else anID += CanonicalName.ConstDelimiter + contexts[i].GetText();
+            }
+
+            ObjectName aName = new ObjectName(anID);
+            if (aName.IsObjectName()) return aName;
+            // we need a modulename
+            string aModuleID = GetCurrentScopeID(current);
+            aName.ModuleId = aModuleID;
+            return aName;
+        }
+        /// <summary>
+        /// returns an Objectname from an array of contexts texts
+        /// </summary>
+        /// <param name="contexts"></param>
+        /// <returns></returns>
+        public EntryName GetCanonicalEntryName(RuleContext current, RuleContext[] contexts)
+        {
+            string anID = String.Empty;
+            if (contexts != null)
+                for (uint i = 0; i < contexts.Length; i++)
+                {
+                    if (String.IsNullOrEmpty(anID)) anID = contexts[i].GetText();
+                    else anID += CanonicalName.ConstDelimiter + contexts[i].GetText();
+                }
+
+            EntryName aName = new EntryName(anID);
+            if (aName.IsEntryName()) return aName;
+            // we need a modulename
+            string aModuleID = GetCurrentScopeID(current);
+            aName.ModuleId = aModuleID;
+            return aName;
+        }
+        /// <summary>
         /// returns the ancestor node context of a certain type of root from this context
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
         public static string GetDefaultClassName(RuleContext context)
         {
-            if (context.GetType() == typeof(SelectionContext)) return ((SelectionContext) context).dataObjectClass ().GetText ();
+            if (context.GetType() == typeof(SelectionContext)) return ((SelectionContext) context).dataObject.GetText ();
             if (context.Parent == null) return null;
 
             return GetDefaultClassName(context.Parent);
+        }
+        /// <summary>
+        /// returns the ancestor node context of a certain type of root from this context
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
+        public static string GetCurrentScopeID(RuleContext context)
+        {
+            // select a context where a scope id can be found 
+            // if (context.GetType() == typeof(SelectionContext)) return ((SelectionContext)context).dataObject.GetText();
+            if (context.Parent == null) return CanonicalName.GlobalID;
+
+            return GetCurrentScopeID(context.Parent);
         }
         /// <summary>
         /// returns true if the id is a data type name
@@ -322,272 +397,6 @@ namespace OnTrack.Rulez
             return false;
         }
         /// <summary>
-        /// define nodes
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <returns></returns>
-        public bool BuildXPTNode(RulezUnitContext ctx)
-        {
-            // selection Rulez
-            if (ctx.oneRulez() != null && ctx.oneRulez ().Count() > 0)
-            {
-                if (ctx.XPTreeNode == null) ctx.XPTreeNode = new eXPressionTree.Unit(this.Engine);
-                foreach (OneRulezContext aCtx in ctx.oneRulez()) ctx.XPTreeNode.Add((IXPTree)aCtx.XPTreeNode);
-                return true;
-            }
-            
-            return false;
-        }
-        /// <summary>
-        /// define nodes
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <returns></returns>
-        public bool BuildXPTNode(OneRulezContext ctx)
-        {
-            // selection Rulez
-            if (ctx.selectionRulez() != null)
-            {
-                ctx.XPTreeNode = ctx.selectionRulez().XPTreeNode;
-                return true;
-            }
-            if (ctx.typeDeclaration ()!= null)
-            {
-                ctx.XPTreeNode = null;
-                return true;
-            }
-            return false;
-        }
-        /// <summary>
-        /// define nodes
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <returns></returns>
-        public bool BuildXPTNode(TypeDeclarationContext ctx)
-        {
-            // selection Rulez
-            
-            return false;
-        }
-        /// <summary>
-        /// builds the XPT node of this
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <returns></returns>
-        public bool BuildXPTNode(SelectionRulezContext ctx)
-        {
-            // $ctx.XPTreeNode = (eXPressionTree.IeXPressionTree) new SelectionRule($ctx.ruleid().GetText(), engine: this.Engine);
-            // get the name
-            SelectionRule aRule = new SelectionRule(ctx.ruleid().GetText(), engine: this.Engine);
-            ctx.XPTreeNode = aRule;
-            
-            // add expression
-            if (ctx.selection() != null) {
-                aRule.Selection = new SelectionStatementBlock(engine: this.Engine);
-                aRule.Selection.Add(new @Return((SelectionExpression)ctx.selection().XPTreeNode)); 
-            }
-            else if (ctx.selectStatementBlock() != null) aRule.Selection = (SelectionStatementBlock)ctx.selectStatementBlock().XPTreeNode;
-            // add the parameters
-            foreach (ParameterDefinition aParameter in ctx.names.Values)
-            {
-                ISymbol symbol = aRule.AddNewParameter(aParameter.name, datatype: aParameter.datatype);
-                // defaultvalue assignment
-                if (aParameter.defaultvalue != null) aRule.Selection.Nodes.Insert(0, new eXPressionTree.IfThenElse(
-                    eXPressionTree.CompareExpression.EQ(symbol, new Literal(null, otDataType.@Null)),
-                    new eXPressionTree.Assignment(symbol, (IExpression)aParameter.defaultvalue)));
-            }
-            return true;
-        }
-        /// <summary>
-        /// build the XPTNode of a select statement block
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <returns></returns>
-        public bool BuildXPTNode(SelectStatementBlockContext ctx)
-        {
-            if (ctx.XPTreeNode == null) ctx.XPTreeNode = new OnTrack.Rulez.eXPressionTree.SelectionStatementBlock();
-            SelectionStatementBlock aBlock = (SelectionStatementBlock) ctx.XPTreeNode ;
-
-            // add the defined variables to the XPT
-            foreach (VariableDefinition aVariable in ctx.names.Values)
-            {
-                ISymbol symbol = aBlock.AddNewVariable(aVariable.name, datatype: aVariable.datatype);
-                // defaultvalue assignment
-                if (aVariable.defaultvalue != null) aBlock.Nodes.Add(new eXPressionTree.Assignment(symbol, (IExpression)aVariable.defaultvalue));
-            }
-            // add statements
-            foreach (SelectStatementContext statementCTX in ctx.selectStatement() )
-            {
-                // add it to the Block
-                aBlock.Nodes.Add((IStatement)statementCTX.XPTreeNode);
-            }
-
-            return true;
-        }
-        /// <summary>
-        /// build the XPTNode of a select statement 
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <returns></returns>
-        public bool BuildXPTNode(SelectStatementContext ctx)
-        {
-            
-            return true;
-        }
-        /// <summary>
-        /// build the XPTNode of an assignment context statement 
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <returns></returns>
-        public bool BuildXPTNode(AssignmentContext ctx)
-        {
-
-            return true;
-        }
-        /// <summary>
-        /// build the XPTNode of an assignment context statement 
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <returns></returns>
-        public bool BuildXPTNode(MatchContext ctx)
-        {
-
-            return false;
-        }
-        public bool BuildXPTNode(MatchcaseContext ctx)
-        {
-
-            return false;
-        }
-        /// <summary>
-        /// build the XPTNode of a return statement
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <returns></returns>
-        public bool BuildXPTNode(ReturnContext ctx)
-        {
-            if (ctx.selectExpression() != null)
-            {
-                ctx.XPTreeNode = new Return(@return: (IExpression) ctx.selectExpression().XPTreeNode, engine: this.Engine);
-                return true;
-            }
-            return false;
-        }
-        /// <summary>
-        /// build a XPT Node out of a selection
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <returns></returns>
-        public bool BuildXPTNode(SelectionContext ctx)
-        {
-            // extract the class name
-            if (String.IsNullOrEmpty(ctx.ClassName)) ctx.ClassName = ctx.dataObjectClass().GetText();
-
-            // create the result with the data object class name
-            eXPressionTree.ResultList Result = (ResultList) ctx.resultSelection().XPTreeNode;
-            
-            // create a selection expression with the result
-            eXPressionTree.SelectionExpression aSelection = new eXPressionTree.SelectionExpression(result: Result, engine: this.Engine);
-
-            //  L_SQUARE_BRACKET  R_SQUARE_BRACKET // all
-            if (ctx.selectConditions() == null)
-            {
-                // simple true operator
-                aSelection.Nodes.Add(LogicalExpression.TRUE()); 
-            }
-            else
-            {
-                // add the subtree to the selection
-                aSelection.Nodes.Add(ctx.selectConditions().XPTreeNode);
-            }
-            // add it to selection as XPTreeNode
-            ctx.XPTreeNode = aSelection;
-            return true;
-        }
-        /// <summary>
-        /// build an XPTree with the results
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <returns></returns>
-        public bool BuildXPTNode(ResultSelectionContext ctx)
-        {
-            List<INode> results = new List<INode>();
-
-            // add the class
-            if (ctx.dataObjectEntryName() == null || ctx.dataObjectEntryName().Count () == 0)
-                results.Add(new eXPressionTree.DataObjectSymbol(ctx.ClassName, engine: this.Engine));
-            else
-                // add the entries
-                foreach (DataObjectEntryNameContext anEntryCTX in ctx.dataObjectEntryName())
-                    results.Add(new eXPressionTree.DataObjectEntrySymbol(anEntryCTX.entryname, engine: this.Engine));
-
-            ctx.XPTreeNode = new ResultList(results);
-            return true;
-        }
-        /// <summary>
-        /// build a XPT Node out of a selection conditions
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <returns></returns>
-         public bool BuildXPTNode(SelectConditionsContext ctx)
-        {
-            //  L_SQUARE_BRACKET  R_SQUARE_BRACKET // all
-            if (ctx.selectCondition() == null || ctx.selectCondition().Count()==0)
-            {
-                // simple true operator
-                ctx.XPTreeNode = LogicalExpression.TRUE();
-                return true;
-            }
-            // only one condition
-            //    selectCondition [$ClassName, $keypos]
-     
-            if (ctx.selectCondition().Count() == 1)
-            {
-                if (ctx.NOT().Count() == 0) ctx.XPTreeNode = ctx.selectCondition()[0].XPTreeNode;
-                else ctx.XPTreeNode = LogicalExpression.NOT((IExpression)ctx.selectCondition()[0].XPTreeNode);
-                return true;
-            }
-            
-            // if we have more than this 
-            //|	selectCondition [$ClassName, $keypos] (logicalOperator_2 selectCondition [$ClassName, $keypos])* 
-            if (ctx.selectCondition().Count() > 1)
-            {
-               eXPressionTree.LogicalExpression theLogical = (LogicalExpression)ctx.selectCondition()[0].XPTreeNode;
-               if (theLogical == null) return false;
-
-               for(uint i = 0; i < ctx.selectCondition().Count()-1;i++)
-               {
-                   Operator anOperator = ctx.logicalOperator_2()[i].Operator;
-                  
-                    // x or y and z ->  ( x or  y) and z )
-                   if (theLogical.Priority >= anOperator.Priority)
-                   {
-                       if ((LogicalExpression)ctx.selectCondition()[i + 1].XPTreeNode != null)
-                            theLogical = new LogicalExpression(anOperator, theLogical, (LogicalExpression)ctx.selectCondition()[i + 1].XPTreeNode);
-                       else return false;
-                       // negate
-                       if (ctx.NOT().Count() >= i+1 && ctx.NOT()[i + 1] != null)
-                           theLogical = LogicalExpression.NOT((IExpression)theLogical);
-                   }
-                   else
-                   {   // x and y or z ->  x and ( y or z )
-                       // build the new (lower) operation in the higher level tree (right with the last operand)
-                       IExpression right = (IExpression)theLogical.RightOperand;
-                       theLogical.RightOperand = new LogicalExpression(anOperator, right, (IExpression)ctx.selectCondition()[i + 1].XPTreeNode);
-                       // negate
-                       if (ctx.NOT().Count() >= i + 1 &&  ctx.NOT()[i + 1] != null)
-                           theLogical.RightOperand = LogicalExpression.NOT((IExpression)theLogical.RightOperand);
-                    
-                   }
-                      
-               }
-               ctx.XPTreeNode = theLogical;
-               return true;
-           }
-            
-           return false;
-        }
-        /// <summary>
         /// increase the key position depending on the logical Operator
         /// </summary>
         /// <param name="ctx"></param>
@@ -629,235 +438,6 @@ namespace OnTrack.Rulez
 
          }
        
-         /// <summary>
-         /// build a XPT Node out of a selection condition
-         /// </summary>
-         /// <param name="ctx"></param>
-         /// <returns></returns>
-         public bool BuildXPTNode(SelectConditionContext ctx)
-         {
-             string entryName;
-             //|   RPAREN selectConditions [$ClassName, $keypos] LPAREN 
-             if (ctx.selectConditions() != null)
-             {
-                 if (ctx.NOT()==null) ctx.XPTreeNode = ctx.selectConditions().XPTreeNode;
-                 else ctx.XPTreeNode = LogicalExpression.NOT((IExpression)ctx.selectConditions().XPTreeNode);
-                 // set the max priority for disabling reshuffle
-                 ((OperationExpression)ctx.XPTreeNode).Priority = uint.MaxValue;
-                 return true;
-             }
-             else
-             {
-                 // determine the key name with the key is not provided by the key position
-                 //
-                 if (ctx.dataObjectEntry == null)
-                 {
-                     string aClassName = GetDefaultClassName(ctx);
-                     if (this.Engine.Globals.HasDataObjectDefinition(aClassName))
-                     {
-                         iObjectDefinition aObjectDefinition = this.Engine.GetDataObjectDefinitions(aClassName);
-                         if (ctx.keypos <= aObjectDefinition.Keys.Count())
-                             entryName = aClassName + "." + aObjectDefinition.Keys[ctx.keypos - 1];
-                         else
-                         {
-                             this.NotifyErrorListeners(String.Format(Messages.RCM_8, aClassName, aObjectDefinition.Keys.Count(), ctx.keypos));
-                             return false;
-                         }
-                     }else
-                     {
-                         this.NotifyErrorListeners(String.Format(Messages.RCM_9, aClassName));
-                         return false;
-                     }
-
-                 }
-                 else entryName = ctx.dataObjectEntry.entryname;
-
-                 // get the symbol
-                 DataObjectEntrySymbol aSymbol = new DataObjectEntrySymbol(entryName, engine: this.Engine);
-
-                 // Operator
-                 Operator anOperator;
-                 // default operator is the EQ operator
-                 if (ctx.Operator == null) anOperator = Engine.GetOperators(new Token(Token.EQ));
-                 else anOperator = ctx.Operator.Operator;
-
-                 // build the comparer expression
-                 CompareExpression aCompare = null;
-                 if (aSymbol != null && ctx.select.XPTreeNode != null) aCompare = new CompareExpression(anOperator, aSymbol, (IExpression)ctx.select.XPTreeNode);
-                 else return false;
-                 // set it
-                 ctx.XPTreeNode = aCompare;
-                 return true;
-             }
-             return false;
-         }
-        /// <summary>
-        /// build an XPTreeNode for a select expression
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <returns></returns>
-         public bool BuildXPTNode(SelectExpressionContext ctx)
-         { 
-             //  literal 
-             if (ctx.literal()!= null)
-             {
-                 ctx.XPTreeNode = ctx.literal().XPTreeNode;
-                 return true;
-             }
-             //| parameterName
-             if (ctx.parameterName() != null)
-             {
-                 ctx.XPTreeNode = ctx.parameterName().XPTreeNode;
-                 return true;
-             }
-             //| variableName
-             if (ctx.variableName() != null)
-             {
-                 ctx.XPTreeNode = ctx.variableName().XPTreeNode;
-                 return true;
-             }
-             if (ctx.selection () != null)
-             {
-                 ctx.XPTreeNode = ctx.selection().XPTreeNode;
-                 return true;
-             }
-             //| dataObjectEntryName
-             if (ctx.dataObjectEntryName()!= null)
-             {
-                 ctx.XPTreeNode = ctx.dataObjectEntryName().XPTreeNode;
-                 return true;
-             }
-             //| LPAREN selectExpression RPAREN
-             if (ctx.LPAREN() != null && ctx.selectExpression().Count() == 1)
-             {
-                 ctx.XPTreeNode =  (IExpression)ctx.selectExpression()[0].XPTreeNode;
-                 // set the max priority for disabling reshuffle
-                 if (ctx.XPTreeNode != null && ctx.XPTreeNode is OperationExpression) ((OperationExpression)ctx.XPTreeNode).Priority = uint.MaxValue;
-                 return true;
-             } 
-             //| ( PLUS | MINUS ) selectExpression
-             if (ctx.selectExpression().Count() == 1)
-             {
-                 if (ctx.selectExpression()[0].XPTreeNode != null)
-                 {
-                     if (ctx.MINUS() != null)
-                         ctx.XPTreeNode = new OperationExpression(new Token(Token.MINUS), new Literal(0), (IExpression)ctx.selectExpression()[0].XPTreeNode);
-                     else ctx.XPTreeNode = (IExpression)ctx.selectExpression()[0].XPTreeNode;
-                 }
-                 else return false;
-
-                 return true;
-             }
-             //| logicalOperator_1 selectExpression
-             if (ctx.logicalOperator_1() != null && ctx.selectExpression().Count() == 1)
-             {
-                 if (ctx.selectExpression()[0].XPTreeNode != null)
-                     ctx.XPTreeNode = new LogicalExpression(ctx.logicalOperator_1().Operator, (IExpression)ctx.selectExpression()[0].XPTreeNode);
-                 else return false;
-                 return true;
-             }
-             //| selectExpression arithmeticOperator selectExpression
-             if (ctx.arithmeticOperator().Count() > 0 && ctx.selectExpression().Count() > 1)
-             {
-                 IExpression theExpression = (IExpression)ctx.selectExpression()[0].XPTreeNode;
-                 if (theExpression == null) return false;
-
-
-               for(uint i = 0; i < ctx.selectExpression().Count()-1;i++)
-               {
-                   Operator anOperator = ctx.arithmeticOperator()[i].Operator;
-                   if (!(theExpression is OperationExpression))
-                   {
-                       if ((IExpression)ctx.selectExpression()[i + 1].XPTreeNode != null)
-                           theExpression = new OperationExpression(anOperator, theExpression, (IExpression)ctx.selectExpression()[i + 1].XPTreeNode);
-                       else return false;
-                   }
-                   else
-                   {
-
-                       // x * y + z ->  ( x *  y) + z )
-                       if (((OperationExpression)theExpression).Priority > anOperator.Priority)
-                       {
-                           if ((IExpression)ctx.selectExpression()[i + 1].XPTreeNode != null)
-                               theExpression = new OperationExpression(anOperator, theExpression, (IExpression)ctx.selectExpression()[i + 1].XPTreeNode);
-                           else return false;
-                       }
-                       else
-                       {   // x + y o* z ->  x + ( y * z )
-                           // build the new (lower) operation in the higher level tree (right with the last operand)
-                           IExpression right = (IExpression) ((OperationExpression)theExpression).RightOperand;
-                           if (right != null && (IExpression)ctx.selectExpression()[i + 1].XPTreeNode != null)
-                               ((OperationExpression)theExpression).RightOperand = new LogicalExpression(anOperator, right, (IExpression)ctx.selectExpression()[i + 1].XPTreeNode);
-                           else return false;
-                       }
-                   }
-               }
-               ctx.XPTreeNode = theExpression;
-               return true;
-           }
-             // return false
-             return false; 
-         }
-        /// <summary>
-        /// build a XPT Node for a parameter name
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <returns></returns>
-        public bool BuildXPTNode(ParameterNameContext ctx)
-         {
-             RuleContext root = GetRootContext(ctx, typeof(SelectionRulezContext));
-             if (root != null)
-             {
-                 if (((SelectionRulezContext)root).names.ContainsKey(ctx.GetText())) 
-                 {
-                     // set the XPTreeNode to the Symbol
-                     ctx.XPTreeNode = ((SelectionRule)((SelectionRulezContext)root).XPTreeNode).Parameters.Where(x => x.ID == ctx.GetText()).FirstOrDefault();
-                     return true;
-                 }
-             }else
-             this.NotifyErrorListeners(String.Format(Messages.RCM_4, ctx.GetText(), "SelectionRule"));
-             return false;
-         }
-        /// <summary>
-        /// build a XPT Node for a parameter name
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <returns></returns>
-        public bool BuildXPTNode(VariableNameContext ctx)
-        {
-            RuleContext root = GetRootContext(ctx, typeof(SelectStatementBlockContext));
-            if (root != null)
-            {
-                if (((SelectStatementBlockContext)root).names.ContainsKey(ctx.GetText()))
-                {
-                    // set the XPTreeNode to the Symbol
-                    ctx.XPTreeNode = ((StatementBlock)((SelectStatementBlockContext)root).XPTreeNode).Variables.Where(x => x.ID == ctx.GetText()).FirstOrDefault();
-                }
-            }
-            this.NotifyErrorListeners(String.Format(Messages.RCM_5, ctx.GetText(), "StatementBlock"));
-            return false;
-        }
-        /// <summary>
-        /// build a XPTree Node for a data object entry name 
-        /// </summary>
-        /// <param name="ctx"></param>
-        /// <returns></returns>
-        public bool BuildXPTNode(DataObjectEntryNameContext ctx)
-        {
-            string aClassName = String.Empty;
-
-            /// build the entry name
-            if (ctx.dataObjectClass() == null) aClassName = GetDefaultClassName (ctx);
-	        else aClassName = ctx.dataObjectClass().ClassName ;
-            // full entry name
-            ctx.entryname = aClassName + "." + ctx.identifier().GetText();
-            ctx.ClassName = aClassName;
-            // get the symbol from the engine
-            DataObjectEntrySymbol aSymbol = new DataObjectEntrySymbol(ctx.entryname, engine: this.Engine);
-            ctx.XPTreeNode = aSymbol;
-            if (aSymbol != null) return true;
-            return false;
-        }
         /// <summary>
         /// register a Messagehandler to the node
         /// </summary>
@@ -908,7 +488,7 @@ namespace OnTrack.Rulez
                 /// <summary>
                 /// constructor
                 /// </summary>
-                /// <param name="message"></param>
+                /// <param id="message"></param>
                 public EventArgs(Message message)
                 {
                     this.Message = message;

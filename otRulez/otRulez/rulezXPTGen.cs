@@ -32,7 +32,7 @@ namespace OnTrack.Rulez
     /// <summary>
     /// lister to generate all the declarations in a symbol table
     /// </summary>
-    public class XPTDeclarationGenerator : RulezParserBaseListener
+    public class XPTDeclGen : RulezParserBaseListener
     {
         private RulezParser _parser;
         private eXPressionTree.XPTree _xptree; // the output tree
@@ -41,8 +41,8 @@ namespace OnTrack.Rulez
         /// <summary>
         /// constructor
         /// </summary>
-        /// <param name="parser"></param>
-        public XPTDeclarationGenerator(RulezParser parser, Engine engine = null)
+        /// <param id="parser"></param>
+        public XPTDeclGen(RulezParser parser, Engine engine = null)
         {
             _parser = parser;
             if (engine == null) _engine = parser.Engine;
@@ -61,9 +61,9 @@ namespace OnTrack.Rulez
         /// <summary>
         /// define nodes
         /// </summary>
-        /// <param name="ctx"></param>
+        /// <param id="ctx"></param>
         /// <returns></returns>
-        public override void ExitTypeDeclarationContext(RulezParser.TypeDeclarationContext ctx)
+        public override void ExitTypeDeclaration(RulezParser.TypeDeclarationContext ctx)
         {
             // selection Rulez
 
@@ -96,16 +96,20 @@ namespace OnTrack.Rulez
             // get the name
             SelectionRule aRule = new SelectionRule(ctx.ruleid().GetText(), engine: this.Engine);
             ctx.XPTreeNode = aRule;
-
+            // create Scope
+            aRule.Scope = new XPTScope(engine: this.Engine, id: ctx.ruleid().GetText());
             
             // add the parameters
             foreach (RulezParser.ParameterDefinition aParameter in ctx.names.Values)
             {
                 ISymbol symbol = aRule.AddNewParameter(aParameter.name, datatype: aParameter.datatype);
+                // add scope
+                aRule.Scope.AddSymbol(symbol);
                 // defaultvalue assignment
                 if (aParameter.defaultvalue != null) aRule.Selection.Nodes.Insert(0, new eXPressionTree.IfThenElse(
                     eXPressionTree.CompareExpression.EQ(symbol, new Literal(null, otDataType.@Null)),
                     new eXPressionTree.Assignment(symbol, (IExpression)aParameter.defaultvalue)));
+
             }
             return ;
         }
@@ -124,7 +128,7 @@ namespace OnTrack.Rulez
             // add the defined variables to the XPT
             foreach (RulezParser.VariableDefinition aVariable in ctx.names.Values)
             {
-                ISymbol symbol = aBlock.Variables.Where ( X=> X.ID == aVariable.name).FirstOrDefault ();
+                ISymbol symbol = aBlock.Variables.Where ( X=> X.Id == aVariable.name).FirstOrDefault ();
                 if (symbol == null) 
                     symbol = aBlock.AddNewVariable(aVariable.name, datatype: aVariable.datatype);
                 // defaultvalue assignment
@@ -265,7 +269,7 @@ namespace OnTrack.Rulez
             // add the defined variables to the XPT
             foreach (RulezParser.VariableDefinition aVariable in ctx.names.Values)
             {
-                ISymbol symbol = aBlock.Variables.Where ( X=> X.ID == aVariable.name).FirstOrDefault ();
+                ISymbol symbol = aBlock.Variables.Where ( X=> X.Id == aVariable.name).FirstOrDefault ();
                 if (symbol == null) 
                     symbol = aBlock.AddNewVariable(aVariable.name, datatype: aVariable.datatype);
                 // defaultvalue assignment
@@ -337,7 +341,7 @@ namespace OnTrack.Rulez
         public override void ExitSelection(RulezParser.SelectionContext ctx)
         {
             // extract the class name
-            if (String.IsNullOrEmpty(ctx.ClassName)) ctx.ClassName = ctx.dataObjectClass().GetText();
+            if (String.IsNullOrEmpty(ctx.ClassName)) ctx.ClassName = ctx.dataObject.GetText();
 
             // create the result with the data object class name
             eXPressionTree.ResultList Result = (ResultList)ctx.resultSelection().XPTreeNode;
@@ -370,12 +374,12 @@ namespace OnTrack.Rulez
             List<INode> results = new List<INode>();
 
             // add the class
-            if (ctx.symbol() == null || ctx.dataObjectEntryName().Count() == 0)
+            if (ctx.identifier() == null || ctx.identifier().Count() == 0)
                 results.Add(new eXPressionTree.DataObjectSymbol(ctx.ClassName, engine: this.Engine));
             else
                 // add the entries
-                foreach (RulezParser.DataObjectEntryNameContext anEntryCTX in ctx.dataObjectEntryName())
-                    results.Add(new eXPressionTree.DataObjectEntrySymbol(anEntryCTX.entryname, engine: this.Engine));
+                foreach (RulezParser.IdentifierContext anEntryCTX in ctx.identifier())
+                    results.Add(new eXPressionTree.DataObjectEntrySymbol(anEntryCTX.GetText(), engine: this.Engine));
 
             ctx.XPTreeNode = new ResultList(results);
             return ;
@@ -465,7 +469,7 @@ namespace OnTrack.Rulez
             {
                 // determine the key name with the key is not provided by the key position
                 //
-                if (ctx.symbol  == null)
+                if (ctx.dataObjectEntry  == null)
                 {
                     string aClassName = RulezParser.GetDefaultClassName(ctx);
                     if (this.Engine.Globals.HasDataObjectDefinition(aClassName))
@@ -486,7 +490,7 @@ namespace OnTrack.Rulez
                     }
 
                 }
-                else entryName = ctx.dataObjectEntry.entryname;
+                else entryName = ctx.dataObjectEntry.GetText();
 
                 // get the symbol
                 DataObjectEntrySymbol aSymbol = new DataObjectEntrySymbol(entryName, engine: this.Engine);
@@ -494,7 +498,7 @@ namespace OnTrack.Rulez
                 // Operator
                 Operator anOperator;
                 // default operator is the EQ operator
-                if (ctx.Operator == null) anOperator = Engine.GetOperators(new Token(Token.EQ));
+                if (ctx.Operator == null) anOperator = Engine.GetOperators(new Token(Token.EQ)).FirstOrDefault();
                 else anOperator = ctx.Operator.Operator;
 
                 // build the comparer expression
@@ -537,9 +541,9 @@ namespace OnTrack.Rulez
                 return ;
             }
             //| dataObjectEntryName
-            if (ctx.dataObjectEntryName() != null)
+            if (ctx.canonicalName() != null)
             {
-                ctx.XPTreeNode = ctx.dataObjectEntryName().XPTreeNode;
+                ctx.XPTreeNode = ctx.canonicalName().XPTreeNode;
                 return ;
             }
             //| LPAREN selectExpression RPAREN
@@ -617,7 +621,7 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="ctx"></param>
         /// <returns></returns>
-        public override void ExitParameterNameContext(RulezParser.ParameterNameContext ctx)
+        public override void ExitParameterName(RulezParser.ParameterNameContext ctx)
         {
             RuleContext root = RulezParser.GetRootContext(ctx, typeof(RulezParser.SelectionRulezContext));
             if (root != null)
@@ -625,7 +629,7 @@ namespace OnTrack.Rulez
                 if (((RulezParser.SelectionRulezContext)root).names.ContainsKey(ctx.GetText()))
                 {
                     // set the XPTreeNode to the Symbol
-                    ctx.XPTreeNode = ((SelectionRule)((RulezParser.SelectionRulezContext)root).XPTreeNode).Parameters.Where(x => x.ID == ctx.GetText()).FirstOrDefault();
+                    ctx.XPTreeNode = ((SelectionRule)((RulezParser.SelectionRulezContext)root).XPTreeNode).Parameters.Where(x => x.Id == ctx.GetText()).FirstOrDefault();
                     return;
                 }
             }
@@ -645,7 +649,7 @@ namespace OnTrack.Rulez
                 if (((RulezParser.SelectStatementBlockContext)root).names.ContainsKey(ctx.GetText()))
                 {
                     // set the XPTreeNode to the Symbol
-                    ctx.XPTreeNode = ((StatementBlock)((RulezParser.SelectStatementBlockContext)root).XPTreeNode).Variables.Where(x => x.ID == ctx.GetText()).FirstOrDefault();
+                    ctx.XPTreeNode = ((StatementBlock)((RulezParser.SelectStatementBlockContext)root).XPTreeNode).Variables.Where(x => x.Id == ctx.GetText()).FirstOrDefault();
                 }
             }
             _parser.NotifyErrorListeners(String.Format(Messages.RCM_5, ctx.GetText(), "StatementBlock"));
@@ -660,13 +664,18 @@ namespace OnTrack.Rulez
             string aClassName = String.Empty;
 
             /// build the entry name
-            if (ctx.dataObjectClass() == null) aClassName = RulezParser.GetDefaultClassName(ctx);
-            else aClassName = ctx.dataObjectClass().ClassName;
+            if (ctx.identifier().Count() ==1) aClassName = RulezParser.GetDefaultClassName(ctx);
+            else
+            {
+                for (uint i = 0; i < ctx.identifier().Count() - 1; i++)
+                    if (String.IsNullOrEmpty(aClassName)) aClassName = ctx.identifier()[i].GetText();
+                    else aClassName += CanonicalName.ConstDelimiter + ctx.identifier()[i].GetText();
+
+            }
             // full entry name
-            ctx.entryname = aClassName + "." + ctx.identifier().GetText();
-            ctx.ClassName = aClassName;
+            EntryName anEntryName = new EntryName (aClassName + CanonicalName.ConstDelimiter + ctx.identifier().Last().GetText());
             // get the symbol from the engine
-            DataObjectEntrySymbol aSymbol = new DataObjectEntrySymbol(ctx.entryname, engine: this.Engine);
+            DataObjectEntrySymbol aSymbol = new DataObjectEntrySymbol(anEntryName, engine: this.Engine);
             ctx.XPTreeNode = aSymbol;
             if (aSymbol != null) return ;
         }

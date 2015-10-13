@@ -47,10 +47,10 @@ namespace OnTrack.Rulez
         /// <summary>
         /// constructor
         /// </summary>
-        /// <param name="type"></param>
-        /// <param name="line"></param>
-        /// <param name="pos"></param>
-        /// <param name="message"></param>
+        /// <param id="type"></param>
+        /// <param id="line"></param>
+        /// <param id="pos"></param>
+        /// <param id="message"></param>
         public Message(MessageType type = MessageType.Error, int line = 0, int pos = 0, string id = null, string message = null)
         {
             this.Timestamp = DateTime.Now;

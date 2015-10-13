@@ -261,7 +261,7 @@ namespace OnTrack.Rulez
         /// <summary>
         /// returns true if the value is of otDataType.bool
         /// </summary>
-        /// <param name="value"></param>
+        /// <param id="value"></param>
         /// <returns></returns>
         public new  static bool IsBool(object value)
         {
@@ -397,7 +397,7 @@ namespace OnTrack.Rulez
         /// <summary>
         /// returns true if the value is of otDataType.Timespan
         /// </summary>
-        /// <param name="value"></param>
+        /// <param id="value"></param>
         /// <returns></returns>
         public new static bool IsTimespan(object value)
         {
@@ -469,7 +469,7 @@ namespace OnTrack.Rulez
         /// <summary>
         /// convert a value to otDataType.Timestamp and return the value
         /// </summary>
-        /// <param name="value"></param>
+        /// <param id="value"></param>
         /// <returns></returns>
         public new static DateTime ToTimeStamp(object value)
         {
@@ -659,13 +659,14 @@ namespace OnTrack.Rulez
         /// <summary>
         /// constructor
         /// </summary
-        private PrimitiveType(otDataType typeId, bool isNullable = false) : base( typeId,  isNullable,  defaultvalue:GetDefaultValue(typeId), name: null, engine:null )
+        private PrimitiveType(otDataType typeId, bool isNullable = false) : base(typeId, isNullable, defaultvalue:GetDefaultValue(typeId), id: null, engine:null)
         {
             // check on type
             if ((uint) typeId > PrimitiveTypeMaxRange) 
                 throw new RulezException(RulezException.Types.DataTypeNotImplementedByClass,arguments: new object[]  {typeId.ToString (), "ValueType"});
             // no event for Primitives
         }
+
         /// <summary>
         /// gets the Category
         /// </summary>
@@ -753,13 +754,13 @@ namespace OnTrack.Rulez
         /// <summary>
         /// create a signature
         /// </summary>
-        /// <param name="typename"></param>
-        /// <param name="structure"></param>
-        /// <param name="name"></param>
+        /// <param id="typename"></param>
+        /// <param id="structure"></param>
+        /// <param id="id"></param>
         /// <returns></returns>
-        public static string CreateSignature(IEnumerable<IDataType> structure, bool isNullable = false, string typename = null, string name = null)
+        public static string CreateSignature(IEnumerable<IDataType> structure, bool isNullable = false, string typename = null, string id = null)
         {
-            if (!String.IsNullOrWhiteSpace(name)) return name.ToUpper();
+            if (!String.IsNullOrWhiteSpace(id)) return id.ToUpper();
             string sig = String.Empty;
             foreach (IDataType dt in structure)
             {
@@ -794,10 +795,8 @@ namespace OnTrack.Rulez
         /// <summary>
         /// constructor
         /// </summary
-        public CompositeType(string name, otDataType typeId, Boolean isNullable, Engine engine = null, object defaultvalue = null)
-            : base(typeId, isNullable:isNullable, defaultvalue: null, engine: engine, name: name)
+        public CompositeType(string id, otDataType typeId, Boolean isNullable, Engine engine = null, object defaultvalue = null) : base(typeId, isNullable:isNullable, defaultvalue: null, engine: engine, id: id)
         {
-            
         }
         /// <summary>
         /// gets the Category
@@ -814,7 +813,8 @@ namespace OnTrack.Rulez
         {
             get 
             {
-                if (String.IsNullOrEmpty(_signature )) _signature = CreateSignature(typename: ComplexTypeName, structure: _structure.Values, name: Name);
+                if (String.IsNullOrEmpty(_signature))
+                    _signature = CreateSignature(typename: ComplexTypeName, structure: _structure.Values, id: this.Id);
                 return _signature;
             } 
         }
@@ -868,32 +868,42 @@ namespace OnTrack.Rulez
         /// <summary>
         /// returns or creates an anonymous List type from the engine
         /// </summary>
-        public static SymbolType GetDataType(Engine engine, otDataType innerTypeId = otDataType.Number, string name = null, bool isNullable = false)
+        public static SymbolType GetDataType(Engine engine, otDataType innerTypeId = otDataType.Number, string id = null, bool isNullable = false)
         {
             string sig = CreateSignature(structure: new IDataType[] { PrimitiveType.GetPrimitiveType(innerTypeId) }, isNullable: isNullable);
-            if (!String.IsNullOrEmpty(name) && engine.Globals.HasDataType(name))
+            if (!String.IsNullOrEmpty(id))
             {
-                IDataType aDatatype = engine.Globals.GetDatatype(name);
-                if (aDatatype.TypeId == otDataType.Symbol) return (SymbolType)aDatatype;
-                throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { name, aDatatype.Name });
+                ObjectName aName = new ObjectName(id);
+                IDataType aDatatype = null;
+                if (aName.IsObjectName())
+                {
+                    // if we have the scope
+                    if (engine.HasScope (aName.ModuleId))
+                        aDatatype = engine.GetScope(aName.ModuleId).Repository.GetDatatype(aName.Id);
+                }
+                else if (engine.Globals.HasDataType(id)) aDatatype = engine.Globals.GetDatatype(id);
+
+                if (aDatatype != null && aDatatype.TypeId == otDataType.Symbol) return (SymbolType)aDatatype;
+                // throw error
+                if (aDatatype != null) throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { id, aDatatype.Id });
             }
             if (engine.Globals.HasDataTypeSignature(sig)) return (SymbolType)engine.Globals.GetDatatypeBySignature(sig).FirstOrDefault();
             // create new one
-            return new SymbolType(innerTypeId: innerTypeId, isNullable: isNullable, name:name, engine: engine);
+            return new SymbolType(innerTypeId: innerTypeId, isNullable: isNullable, id: id, engine: engine);
         }
+
         /// <summary>
         /// constructor
         /// </summary
-        public SymbolType( otDataType innerTypeId = otDataType.Number, Boolean isNullable= false, Engine engine = null, string name = null)
-            : base(typeId: otDataType.Symbol, isNullable: isNullable, defaultvalue: null, engine: engine, name: name)
+        public SymbolType( otDataType innerTypeId = otDataType.Number, Boolean isNullable= false, Engine engine = null, string id = null) : base(typeId: otDataType.Symbol, isNullable: isNullable, defaultvalue: null, engine: engine, id: id)
         {
             this.ComplexTypeName = ConstTypeName;
             // anonymous name
-            if (String.IsNullOrEmpty(name)) this.Name = Guid.NewGuid().ToString();
+            if (String.IsNullOrEmpty(id)) this.Id = Guid.NewGuid().ToString();
             // define the structure
             AddMember(ConstSYMBOL, DataType.GetDataType(otDataType.Text));
             AddMember(ConstValue, DataType.GetDataType(innerTypeId));
-            _signature = CreateSignature(_structure.Values, isNullable: isNullable, typename: ConstTypeName, name: name);
+            _signature = CreateSignature(_structure.Values, isNullable: isNullable, typename: ConstTypeName, id: id);
             // raise event
             RaiseOnCreation(this, datatype: this, engine: engine);
         }
@@ -985,33 +995,44 @@ namespace OnTrack.Rulez
         /// <summary>
         /// returns or creates a type from the engine
         /// </summary>
-        public static DecimalUnitType GetDataType(SymbolType unit, Engine engine, string name = null, bool isNullable = false)
+        public static DecimalUnitType GetDataType(SymbolType unit, Engine engine, string id = null, bool isNullable = false)
         {
             string sig = CreateSignature(structure: new IDataType[] { PrimitiveType.GetPrimitiveType(otDataType.DecimalUnit), unit }, isNullable: isNullable);
-            if (!String.IsNullOrEmpty(name) && engine.Globals.HasDataType(name))
+            if (!String.IsNullOrEmpty(id))
             {
-                IDataType aDatatype = engine.Globals.GetDatatype(name);
-                if (aDatatype.TypeId == otDataType.DecimalUnit) return (DecimalUnitType)aDatatype;
-                throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { name, aDatatype.Name });
-            }
+                ObjectName aName = new ObjectName(id);
+                IDataType aDatatype = null;
+                if (aName.IsObjectName())
+                {
+                    // if we have the scope
+                    if (engine.HasScope(aName.ModuleId))
+                        aDatatype = engine.GetScope(aName.ModuleId).Repository.GetDatatype(aName.Id);
+                }
+                else if (engine.Globals.HasDataType(id)) aDatatype = engine.Globals.GetDatatype(id);
 
+                if (aDatatype != null && aDatatype.TypeId == otDataType.DecimalUnit) return (DecimalUnitType)aDatatype;
+                // throw error
+                if (aDatatype != null) throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { id, aDatatype.Id });
+            }
+            // get it by signature
             if (engine.Globals.HasDataTypeSignature(sig)) return (DecimalUnitType)engine.Globals.GetDatatypeBySignature(sig).FirstOrDefault();
             // create new one
-            return new DecimalUnitType(unit: unit, isNullable: isNullable, name:name, engine: engine);
+            return new DecimalUnitType(unit: unit, isNullable: isNullable, id: id, engine: engine);
         }
+
         #endregion
         /// <summary>
         /// constructor
         /// </summary
-        public DecimalUnitType(SymbolType unit, string name = null, Boolean isNullable= false, Engine engine = null)
-            : base(typeId: otDataType.DecimalUnit, isNullable:isNullable, defaultvalue: null, engine: engine, name: name)
+        public DecimalUnitType(SymbolType unit, string id = null, Boolean isNullable= false, Engine engine = null) : base(typeId: otDataType.DecimalUnit, isNullable:isNullable, defaultvalue: null, engine: engine, id: id)
         {
             // anonymous name
-            if (String.IsNullOrEmpty(name)) this.Name = Guid.NewGuid().ToString();
-            this.ComplexTypeName = ConstTypeName; ;
+            if (String.IsNullOrEmpty(id)) this.Id = Guid.NewGuid().ToString();
+            this.ComplexTypeName = ConstTypeName;
+;
             AddMember(ConstValue, PrimitiveType.GetPrimitiveType(otDataType.Decimal));
             AddMember(ConstUnit, unit);
-            _signature = CreateSignature(_structure.Values, isNullable: isNullable, typename: ConstTypeName, name: name);
+            _signature = CreateSignature(_structure.Values, isNullable: isNullable, typename: ConstTypeName, id: id);
             // raise event
             RaiseOnCreation(this, datatype: this, engine: engine);
         }
@@ -1041,33 +1062,33 @@ namespace OnTrack.Rulez
             {
                 IDataType aDatatype = engine.Globals.GetDatatype(name);
                 if (aDatatype.TypeId == otDataType.Tuple) return (TupleType)aDatatype;
-                throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { name, aDatatype.Name });
+                throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { name, aDatatype.Id });
             }
 
             if (engine.Globals.HasDataTypeSignature(sig)) return (TupleType)engine.Globals.GetDatatypeBySignature(sig).FirstOrDefault();
             // create new one
-            return new TupleType(structure: structure, isNullable: isNullable, memberNames: memberNames, name: name, engine: engine);
+            return new TupleType(structure: structure, isNullable: isNullable, memberNames: memberNames, id: name, engine: engine);
         }
+
         #endregion
         /// <summary>
         /// constructor
         /// </summary
-        public TupleType(IDataType[] structure, string[] memberNames = null, string name = null, Boolean isNullable = false, Engine engine = null)
-            : base(typeId: otDataType.Tuple, isNullable: isNullable, defaultvalue: null, engine: engine, name: name)
+        public TupleType(IDataType[] structure, string[] memberNames = null, string id = null, Boolean isNullable = false, Engine engine = null) : base(typeId: otDataType.Tuple, isNullable: isNullable, defaultvalue: null, engine: engine, id: id)
         {
             // anonymous name
-            if (String.IsNullOrEmpty(name)) this.Name = Guid.NewGuid().ToString();
+            if (String.IsNullOrEmpty(id)) this.Id = Guid.NewGuid().ToString();
             this.ComplexTypeName = ConstTypeName;
             uint i = 0;
             foreach (IDataType aType in structure)
             {
-                string id;
-                if (memberNames != null && i <= memberNames.GetUpperBound(0)) id = memberNames[i];
-                else id = i.ToString();
-                AddMember(id, aType);
+                string anId;
+                if (memberNames != null && i <= memberNames.GetUpperBound(0)) anId = memberNames[i];
+                else anId = i.ToString();
+                AddMember(anId, aType);
                 i++;
             }
-            _signature = CreateSignature(structure: structure, isNullable: isNullable, typename: ConstTypeName, name: name);
+            _signature = CreateSignature(structure: structure, isNullable: isNullable, typename: ConstTypeName, id: id);
             // raise event
             RaiseOnCreation(this, datatype: this, engine: engine);
         }
@@ -1101,30 +1122,39 @@ namespace OnTrack.Rulez
         /// <summary>
         /// returns or creates an anonymous type from the engine
         /// </summary>
-        public static LanguageTextType GetDataType(SymbolType cultural, Engine engine, string name = null, bool isNullable = false)
+        public static LanguageTextType GetDataType(SymbolType cultural, Engine engine, string id = null, bool isNullable = false)
         {
             string sig = CreateSignature(structure: new IDataType[] { PrimitiveType.GetPrimitiveType(otDataType.Text), cultural }, isNullable: isNullable);
-            if (!String.IsNullOrEmpty(name) && engine.Globals.HasDataType(name))
+            if (!String.IsNullOrEmpty(id))
             {
-                IDataType aDatatype = engine.Globals.GetDatatype(name);
-                if (aDatatype.TypeId == otDataType.LanguageText) return (LanguageTextType) aDatatype;
-                throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { name, aDatatype.Name  });
-            }
+                ObjectName aName = new ObjectName(id);
+                IDataType aDatatype = null;
+                if (aName.IsObjectName())
+                {
+                    // if we have the scope
+                    if (engine.HasScope(aName.ModuleId))
+                        aDatatype = engine.GetScope(aName.ModuleId).Repository.GetDatatype(aName.Id);
+                }
+                else if (engine.Globals.HasDataType(id)) aDatatype = engine.Globals.GetDatatype(id);
 
+                if (aDatatype != null && aDatatype.TypeId == otDataType.LanguageText) return (LanguageTextType)aDatatype;
+                // throw error
+                if (aDatatype != null) throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { id, aDatatype.Id });
+            }
+            // get it by signature
             if (engine.Globals.HasDataTypeSignature(sig)) return (LanguageTextType)engine.Globals.GetDatatypeBySignature(sig).FirstOrDefault();
             // create new one
-            return new LanguageTextType(cultural: cultural, isNullable: isNullable, name:name, engine: engine);
+            return new LanguageTextType(cultural: cultural, isNullable: isNullable, name:id, engine: engine);
         }
         /// <summary>
         /// constructor
         /// </summary
-        public LanguageTextType(SymbolType cultural, string name = null,Boolean isNullable=false, Engine engine = null)
-            : base(typeId: otDataType.LanguageText, isNullable: isNullable, defaultvalue: null, engine: engine, name: name)
+        public LanguageTextType(SymbolType cultural, string name = null,Boolean isNullable=false, Engine engine = null) : base(typeId: otDataType.LanguageText, isNullable: isNullable, defaultvalue: null, engine: engine, id: name)
         {
             this.ComplexTypeName = ConstTypeName;
             AddMember(ConstText, PrimitiveType.GetPrimitiveType(otDataType.Text));
             AddMember(ConstCultural, cultural);
-            _signature = CreateSignature(_structure.Values, isNullable: isNullable, typename: ConstTypeName, name: name);
+            _signature = CreateSignature(_structure.Values, isNullable: isNullable, typename: ConstTypeName, id: name);
             // raise event
             RaiseOnCreation(this, datatype: this, engine: engine);
         }
@@ -1202,13 +1232,13 @@ namespace OnTrack.Rulez
         /// <summary>
         /// create a signature
         /// </summary>
-        /// <param name="typename"></param>
-        /// <param name="types"></param>
-        /// <param name="name"></param>
+        /// <param id="typename"></param>
+        /// <param id="types"></param>
+        /// <param id="id"></param>
         /// <returns></returns>
-        public static string CreateSignature(IEnumerable<IDataType> types, bool isNullable = false, string typename = null, string name = null)
+        public static string CreateSignature(IEnumerable<IDataType> types, bool isNullable = false, string typename = null, string id = null)
         {
-            if (!String.IsNullOrWhiteSpace(name)) return name.ToUpper();
+            if (!String.IsNullOrWhiteSpace(id)) return id.ToUpper();
             string sig = String.Empty;
             foreach (IDataType dt in types)
             {
@@ -1257,10 +1287,8 @@ namespace OnTrack.Rulez
          /// <summary>
         /// constructor
         /// </summary
-         public DataStructureType(otDataType typeId, string name = null, bool isNullable = false, Engine engine = null, object defaultvalue = null)
-             : base(typeId: typeId, isNullable: isNullable, defaultvalue: defaultvalue, name: name, engine: engine )
-         {
-             
+        public DataStructureType(otDataType typeId, string id = null, bool isNullable = false, Engine engine = null, object defaultvalue = null) : base(typeId: typeId, isNullable: isNullable, defaultvalue: defaultvalue, id: id, engine: engine)
+        {
          }
          /// <summary>
          /// gets the Category
@@ -1282,7 +1310,7 @@ namespace OnTrack.Rulez
              get
              {
                 if (String.IsNullOrEmpty(_signature))                   
-                    _signature = CreateSignature(typename: StructureTypeName, types: _innerTypes, name: Name);
+                    _signature = CreateSignature(typename: StructureTypeName, types: _innerTypes, id: Id);
                 return _signature;
              }
          }
@@ -1301,41 +1329,56 @@ namespace OnTrack.Rulez
         /// <summary>
         /// returns or creates an anonymous List type from the engine
         /// </summary>
-        public static ListType GetDataType (IDataType innerDataType,  Engine engine, string name = null, bool isNullable = false)
+        public static ListType GetDataType(IDataType innerDataType, Engine engine, string id = null, bool isNullable = false)
         {
             string sig = CreateSignature(innerDataType, isNullable);
-            if (!String.IsNullOrEmpty(name) && engine.Globals.HasDataType(name))
+            if (!String.IsNullOrEmpty(id))
             {
-                IDataType aDatatype = engine.Globals.GetDatatype(name);
-                if (aDatatype.TypeId == otDataType.List) return (ListType)aDatatype;
-                throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { name, aDatatype.Name });
+                ObjectName aName = new ObjectName(id);
+                IDataType aDatatype = null;
+                if (aName.IsObjectName())
+                {
+                    // if we have the scope
+                    if (engine.HasScope(aName.ModuleId))
+                        aDatatype = engine.GetScope(aName.ModuleId).Repository.GetDatatype(aName.Id);
+                }
+                else if (engine.Globals.HasDataType(id))
+                    aDatatype = engine.Globals.GetDatatype(id);
+           
+                aDatatype = engine.Globals.GetDatatype(id);
+                if (aDatatype != null && aDatatype.TypeId == otDataType.List) return (ListType)aDatatype;
+                // throw error
+                if (aDatatype != null) throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { id, aDatatype.Id });
             }
-            if (engine.Globals.HasDataTypeSignature (sig)) return (ListType) engine.Globals.GetDatatypeBySignature (sig).FirstOrDefault();
+            if (engine.Globals.HasDataTypeSignature(sig))
+                return (ListType)engine.Globals.GetDatatypeBySignature(sig).FirstOrDefault();
             // create new one
-            return new ListType(innerDataType: innerDataType, isNullable: isNullable, name:name, engine: engine);
+            return new ListType(innerDataType: innerDataType, isNullable: isNullable, id: id, engine: engine);
         }
+        
         /// <summary>
         /// returns a stored or new ListType object from otDataType
         /// </summary>
-        /// <param name="innerTypeId"></param>
-        /// <param name="engine"></param>
-        /// <param name="name"></param>
-        /// <param name="isNullable"></param>
+        /// <param id="innerTypeId"></param>
+        /// <param id="engine"></param>
+        /// <param id="id"></param>
+        /// <param id="isNullable"></param>
         /// <returns></returns>
-        public static ListType GetDataType(Engine engine, otDataType innerTypeId = otDataType.Text, string name = null, bool isNullable = false)
+        public static ListType GetDataType(Engine engine, otDataType innerTypeId = otDataType.Text, string id = null, bool isNullable = false)
         {
             IDataType innerDataType = PrimitiveType.GetPrimitiveType(innerTypeId);
             string sig = CreateSignature(innerDataType, isNullable);
-            if (!String.IsNullOrEmpty(name) && engine.Globals.HasDataType(name))
+            if (!String.IsNullOrEmpty(id) && engine.Globals.HasDataType(id))
             {
-                IDataType aDatatype = engine.Globals.GetDatatype(name);
+                IDataType aDatatype = engine.Globals.GetDatatype(id);
                 if (aDatatype.TypeId == otDataType.List) return (ListType)aDatatype;
-                throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { name, aDatatype.Name });
+                throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { id, aDatatype.Id });
             }
             if (engine.Globals.HasDataTypeSignature(sig)) return (ListType)engine.Globals.GetDatatypeBySignature(sig).FirstOrDefault();
             // create new one
-            return new ListType(innerDataType: innerDataType, isNullable: isNullable, name: name, engine: engine);
+            return new ListType(innerDataType: innerDataType, isNullable: isNullable, id: id, engine: engine);
         }
+
         /// <summary>
         /// returns the signature of the ListType
         /// </summary>
@@ -1416,8 +1459,7 @@ namespace OnTrack.Rulez
         /// <summary>
         /// constructor
         /// </summary
-        public ListType(IDataType innerDataType, string name = null, bool isNullable = false, Engine engine = null)
-            : base(typeId: otDataType.List, isNullable: isNullable, name: name, engine: engine, defaultvalue: null)
+        public ListType(IDataType innerDataType, string id = null, bool isNullable = false, Engine engine = null) : base(typeId: otDataType.List, isNullable: isNullable, id: id, engine: engine, defaultvalue: null)
         {
             // check on type
             this.StructureTypeName = ConstTypeName;
@@ -1454,24 +1496,33 @@ namespace OnTrack.Rulez
         /// <summary>
         /// returns or creates an anonymous type from the engine
         /// </summary>
-        public static DataObjectType GetDataType(string name, Engine engine)
+        public static DataObjectType GetDataType(string id, Engine engine)
         {
-            if (engine.Globals.HasDataType(name))  
+            if (!String.IsNullOrEmpty(id))
             {
-                IDataType aDatatype = engine.Globals.GetDatatype(name);
-                if (aDatatype.TypeId ==  otDataType.DataObject || aDatatype.TypeId == (otDataType.IsNullable | otDataType.DataObject)) return (DataObjectType)aDatatype;
-                // not found as dataobject
-                throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { name, "not a data object type" });
+                ObjectName aName = new ObjectName(id);
+                IDataType aDatatype = null;
+                if (aName.IsObjectName())
+                {
+                    // if we have the scope
+                    if (engine.HasScope(aName.ModuleId))
+                        aDatatype = engine.GetScope(aName.ModuleId).Repository.GetDatatype(aName.Id);
+                }
+                else if (engine.Globals.HasDataType(id)) aDatatype = engine.Globals.GetDatatype(id);
+
+                if (aDatatype.TypeId == otDataType.DataObject || aDatatype.TypeId == (otDataType.IsNullable | otDataType.DataObject)) return (DataObjectType)aDatatype;
+                // throw error
+                if (aDatatype != null) throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { id, "not a data object type" });
             }
+            
             // create new one
-            return new DataObjectType(name, engine: engine);
+            return new DataObjectType(id, engine: engine);
         }
        
         /// <summary>
         /// constructor
         /// </summary
-        public DataObjectType(string name, Engine engine=null)
-            : base(otDataType.DataObject, isNullable:true, defaultvalue: null, engine: engine, name: name)
+        public DataObjectType(string id, Engine engine=null) : base(otDataType.DataObject, isNullable:true, defaultvalue: null, engine: engine, id: id)
         {
             //_signature = CreateSignature(_structure.Values, isNullable: isNullable, typename: ConstTypeName, name: name);
             // raise event !
@@ -1481,7 +1532,7 @@ namespace OnTrack.Rulez
         /// <summary>
         /// gets the Signature
         /// </summary>
-        public override string Signature { get { return this.Name; } }
+        public override string Signature { get { return this.Id; } }
         /// <summary>
         /// returns true if the data object exists in Engine
         /// has no value if was not looked up via ObjectDefinition property
@@ -1496,7 +1547,7 @@ namespace OnTrack.Rulez
             {
                 if (!ExistsInEngine.HasValue && this.Engine != null)
                 {
-                    _objectdefinition = this.Engine.Globals.GetDataObjectDefinition(id:this.Name);
+                    _objectdefinition = this.Engine.Globals.GetDataObjectDefinition(id:this.Id);
                     this.ExistsInEngine = (_objectdefinition != null) ? true : false;
                 }
                 return _objectdefinition;

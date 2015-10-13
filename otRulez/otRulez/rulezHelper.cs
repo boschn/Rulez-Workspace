@@ -26,82 +26,85 @@ namespace OnTrack.Rulez
     /// <summary>
     /// class for working with canonical names
     /// </summary>
-    public class CanonicalName 
+    public class CanonicalName : IEqualityComparer<CanonicalName>, IEquatable<CanonicalName>
     {
-        public const string Global = "";
+        public const string GlobalID = "";
 
         #region Static
 
         public static char ConstDelimiter = '.';
-
         /// <summary>
-        /// returns true if the name is in canonical form
+        /// static Property Global (for GlobalName)
         /// </summary>
-        /// <param name="name"></param>
+        public static CanonicalName GlobalName { get { return new CanonicalName(GlobalID); } }
+        /// <summary>
+        /// returns true if the id is in canonical form
+        /// </summary>
+        /// <param id="id"></param>
         /// <returns></returns>
-        public static bool IsCanonical(string name)
+        public static bool IsCanonical(string id)
         {
-            if (string.IsNullOrWhiteSpace(name)) return false;
-            return name.IndexOf(ConstDelimiter)>=0;
+            if (string.IsNullOrWhiteSpace(id)) return false;
+            return id.IndexOf(ConstDelimiter)>=0;
         }
         /// <summary>
-        /// pushes a name on a canonical name and returns it
+        /// pushes a id on a canonical id and returns it
         /// </summary>
-        /// <param name="canonicalName"></param>
-        /// <param name="name"></param>
+        /// <param id="canonicalID"></param>
+        /// <param id="id"></param>
         /// <returns></returns>
-        public static string Push (string canonicalName, string name)
+        public static string Push (string canonicalID, string id)
         {
-            if (String.IsNullOrEmpty(canonicalName) || string.Compare (name, Global, true) == 0) return name;
-            return canonicalName + ConstDelimiter + name;
+            if (String.IsNullOrEmpty(canonicalID) || string.Compare (id, GlobalID, true) == 0) return id;
+            return canonicalID + ConstDelimiter + id;
         }
         /// <summary>
-        /// pops a name on a canonical name and returns it
+        /// pops a id on a canonical id and returns it
         /// </summary>
-        /// <param name="canonicalName"></param>
-        /// <param name="name"></param>
+        /// <param id="canonicalID"></param>
+        /// <param id="id"></param>
         /// <returns></returns>
-        public static string Pop(string canonicalName, ref string name)
+        public static string Pop(string canonicalID, ref string id)
         {
-            if (IsCanonical(canonicalName))
+            if (IsCanonical(canonicalID))
             {
-                string[] split = canonicalName.Split(ConstDelimiter);
+                string[] split = canonicalID.Split(ConstDelimiter);
                 if (split.GetUpperBound(0) > 0)
                 {
-                    name = split[split.GetUpperBound(0) - 1];
+                    id = split[split.GetUpperBound(0) - 1];
                     string result = String.Empty;
                     // get the result string
                     for (uint i = 0; i <= split.GetUpperBound(0); i++)
-                        if (i > 0) name += ConstDelimiter + split[i];
-                        else name = split[i];
+                        if (i > 0) id += ConstDelimiter + split[i];
+                        else id = split[i];
                     return result;
                 }
             }
-            name = canonicalName;
+            id = canonicalID;
             return String.Empty;
         }
         /// <summary>
         /// build a canonical String out of an array
         /// </summary>
-        /// <param name="names"></param>
+        /// <param name="ids"></param>
         /// <returns></returns>
-        public static string StringFrom(string [] names)
+        public static string StringFrom(string [] ids)
         {
             string result = String.Empty;
 
-            if (names != null)
-                foreach (string aName in names)
-                    if (!String.IsNullOrEmpty(result) && !String.IsNullOrEmpty(aName)) result += ConstDelimiter + aName;
-                    else result += aName;
+            if (ids != null)
+                foreach (string aName in ids)
+                    if (!String.IsNullOrEmpty(result) && !String.IsNullOrEmpty(aName)) result += ConstDelimiter + aName.ToUpper();
+                    else result += aName.ToUpper();
 
             return result;
         }
-        public static string StringFrom(IEnumerable<string> names)
+        public static string StringFrom(IEnumerable<string> ids)
         {
             string result = String.Empty;
 
-            if (names != null)
-                foreach (string aName in names)
+            if (ids != null)
+                foreach (string aName in ids)
                     if (!String.IsNullOrEmpty(result) && !String.IsNullOrEmpty(aName)) result += ConstDelimiter + aName;
                     else result += aName;
 
@@ -109,60 +112,143 @@ namespace OnTrack.Rulez
         }
 #endregion
         // hold the names in an array
-        protected string[] _names;
+        protected string[] _ids;
+        protected CanonicalName()
+        {
+
+        }
         /// <summary>
         /// constructor
         /// </summary>
-        /// <param name="name"></param>
-        public CanonicalName (string name)
+        /// <param id="id"></param>
+        public CanonicalName (string id)
         {
-            this.Name = name;
+            this.FullId = id;
         }
         /// <summary>
-        /// get or sets the Name
+        /// gets the individual parts of the canonical name
         /// </summary>
-        public string Name
+        public virtual string[] IDs { get { return _ids;  } }
+        /// <summary>
+        /// get or sets the Id
+        /// </summary>
+        public virtual string FullId
         {
             get
             {
-                return StringFrom(_names);
+                return StringFrom(_ids);
             }
             set
             {
-                _names = value.Split(ConstDelimiter);
+                if (String.IsNullOrEmpty(value)) _ids = (new List<string> ()).ToArray() ;
+                _ids = value.ToUpper().Split(ConstDelimiter);
             }
         }
         /// <summary>
         /// returns true if the name is in canonical Form
         /// </summary>
         /// <returns></returns>
-        public bool IsCanonical() { return CanonicalName.IsCanonical(this.Name); }
+        public virtual bool IsCanonical() { return CanonicalName.IsCanonical(this.FullId); }
         /// <summary>
         /// pushes a name on a canonical name and returns it
         /// </summary>
         /// <param name="canonicalName"></param>
         /// <param name="name"></param>
         /// <returns></returns>
-        public string Push(string name)
+        public virtual string Push(string name)
         {
-            return CanonicalName.Push(this.Name, name);
+            return CanonicalName.Push(this.FullId, name.ToUpper());
         }
         /// <summary>
-        /// pops a name on a canonical name and returns it
+        /// pops a id on a canonical id and returns it
         /// </summary>
-        /// <param name="canonicalName"></param>
-        /// <param name="name"></param>
+        /// <param id="canonicalName"></param>
+        /// <param id="id"></param>
         /// <returns></returns>
-        public  string Pop(ref string name)
+        public virtual string Pop(ref string id)
         {
-            return CanonicalName.Pop(this.Name, ref name);
+            return CanonicalName.Pop(this.FullId, ref id);
         }
         /// <summary>
         /// toString()
         /// </summary>
         /// <returns></returns>
-        public string ToString()
-        { return this.Name; }
+        public override string ToString()        { return this.FullId; }
+        #region "IEqualComparer"
+        /// <summary>
+        /// Equality Comparer
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+        public bool Equals(CanonicalName y)
+        {
+            return Equals(this, y);
+        }
+        /// <summary>
+        /// Equality Comparer
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+          public bool Equals(object y)
+        {
+            if (! (y is CanonicalName)) return false;
+            return Equals(this, (CanonicalName)y);
+        }
+        /// <summary>
+        /// compares 2 types by name 
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+        bool System.Collections.Generic.IEqualityComparer<CanonicalName>.Equals(CanonicalName x, CanonicalName y)
+        {
+            return String.Compare(x.FullId, y.FullId, ignoreCase: true) == 0;
+        }
+        /// <summary>
+        /// Gets the hash code.
+        /// </summary>
+        /// <param name="obj">The obj.</param>
+        /// <returns></returns>
+        int System.Collections.Generic.IEqualityComparer<CanonicalName>.GetHashCode(CanonicalName obj)
+        {
+            return this.IDs.GetHashCode();
+        }
+        /// <summary>
+        /// == comparerer on datatypes
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static bool operator ==(CanonicalName a, CanonicalName b)
+        {
+            // If both are null, or both are same instance, return true.
+            if (System.Object.ReferenceEquals(a, b))
+            {
+                return true;
+            }
+
+            // If one is null, but not both, return false.
+            if (((object)a == null) || ((object)b == null))
+            {
+                return false;
+            }
+
+            // Return true if the fields match:
+            return String.Compare(a.FullId, b.FullId, ignoreCase: true) == 0;
+        }
+        /// <summary>
+        /// != comparer
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static bool operator !=(CanonicalName a, CanonicalName b)
+        {
+            return !(a == b);
+        }
+        #endregion
     }
     /// <summary>
     /// class for working objectnames Modulename = [ID ( . ID )* .] ID with canonical names
@@ -172,88 +258,104 @@ namespace OnTrack.Rulez
         
         #region Static
         /// <summary>
-        /// returns true if the name is in canonical form
+        /// returns true if the id is in canonical form
         /// </summary>
-        /// <param name="name"></param>
+        /// <param id="id"></param>
         /// <returns></returns>
-        public new static bool IsCanonical(string name)
+        public new static bool IsCanonical(string id)
         {
-            if (string.IsNullOrWhiteSpace(name)) return false;
-            return name.IndexOf(ConstDelimiter) >= 1;
+            if (string.IsNullOrWhiteSpace(id)) return false;
+            return id.IndexOf(ConstDelimiter) >= 1;
+        }
+        /// <summary>
+        /// returns a Objectname object
+        /// </summary>
+        /// <param id="id"></param>
+        /// <returns></returns>
+        public static ObjectName From(string id)
+        {
+            return new ObjectName(id);
         }
         /// <summary>
         /// returns the modulename if one exists - if not then String.Empty
         /// </summary>
-        /// <param name="name"></param>
+        /// <param id="id"></param>
         /// <returns></returns>
-        public static string GetModuleName(string name)
+        public static string GetModuleID(string id)
         {
-            if (IsCanonical(name))
+            if (IsCanonical(id))
             {
-                string[] split = name.Split(ConstDelimiter);
+                string[] split = id.Split(ConstDelimiter);
                 if (split.GetUpperBound(0) > 1)
                 {
                     split[split.GetUpperBound(0)] = String.Empty; // use empty feature
                     return StringFrom(split);
                 }
-                return CanonicalName.Global;
+                return CanonicalName.GlobalID;
             }
-            return name;
+            return id;
         }
         /// <summary>
-        /// returns the classname if one exits else String.Empty - if not canonical return name
+        /// returns the classname if one exits else String.Empty - if not canonical return id
         /// </summary>
-        /// <param name="name"></param>
+        /// <param id="id"></param>
         /// <returns></returns>
-        public static string GetObjectName(string name)
+        public static string GetObjectID(string id)
         {
-            if (IsCanonical(name))
+            if (IsCanonical(id))
             {
-                string[] split = name.Split(ConstDelimiter);
-                if (split.GetUpperBound(0) > 1) return split[split.GetUpperBound(0) - 1];
+                string[] split = id.Split(ConstDelimiter);
+                if (split.GetUpperBound(0) > 1) return split[split.GetUpperBound(0) - 1].ToUpper();
                 return string.Empty;
             }
-            return name;
+            return id;
         }
         #endregion
         /// <summary>
         /// constructor
         /// </summary>
-        /// <param name="name"></param>
-        public ObjectName(string name) : base(name)
+        /// <param id="id"></param>
+        public ObjectName(string id) 
         {
-            this.Name = name;
+            this.FullId = id;
+        }
+        public ObjectName(string moduleid, string objectid)
+            : base(objectid)
+        {
+            this.FullId = (String.IsNullOrEmpty(moduleid) ? (moduleid + ConstDelimiter) : String.Empty)  
+                        + objectid;
         }
         /// <summary>
-        /// get or sets the Name
+        /// get or sets the Id
         /// </summary>
-        public string Name
+        public override string FullId
         {
             get
             {
-                return base.Name;
+                return base.FullId;
             }
             set
             {
-                if (value == null) base.Name = String.Empty;
+                if (value == null) base.FullId = String.Empty;
                 else
-                if (IsCanonical(value)) base.Name = value;
+                if (IsCanonical(value)) base.FullId = value;
                 else 
                 {
-                  List<string> names = value.Split(ConstDelimiter).ToList<string>();
-                  names.Insert(0,String.Empty);
-                  _names = names.ToArray();
+                    List<string> names = value.ToUpper().Split(ConstDelimiter).ToList<string>();
+                  if (names.Count() < 1) names.Insert(0,String.Empty);
+                  _ids = names.ToArray();
                 }
             }
         }
+        
         /// <summary>
         /// gets or sets the ModuleName
         /// </summary>
-        public string ModuleName
+        public virtual string ModuleId
         {
             get
             {
-                string[] names = (string[]) _names.Clone();
+                string[] names = (string[]) _ids.Clone();
                 names[names.GetUpperBound(0)] = string.Empty;
                 return StringFrom (names);
             }
@@ -261,47 +363,47 @@ namespace OnTrack.Rulez
             {
                 if (!String.IsNullOrEmpty(value))
                 {
-                    List<string> names = value.Split(ConstDelimiter).ToList<string>();
-                    names.Add(ObjectName);
-                    _names = names.ToArray();
+                    List<string> names = value.ToUpper().Split(ConstDelimiter).ToList<string>();
+                    names.Add(FullId);
+                    _ids = names.ToArray();
                 }
                 else
                 {
-                    string[] n = { String.Empty, ObjectName };
-                    _names = n;
+                    string[] n = { String.Empty, FullId };
+                    _ids = n;
                 }
             }
         }
         /// <summary>
-        /// gets the ClassName
+        /// gets the Objectname itself
         /// </summary>
-        public string ObjectName { get { return _names[_names.GetUpperBound(0)]; } set { _names[_names.GetUpperBound(0)] = value; } }
+        public virtual string Id { get { return _ids[_ids.GetUpperBound(0)]; } set { _ids[_ids.GetUpperBound(0)] = value.ToUpper(); } }
         /// <summary>
         /// returns true if the name is in canonical Form
         /// </summary>
         /// <returns></returns>
-        public bool IsObjectName() { return IsCanonical(this.Name); }
+        public virtual bool IsObjectName() { return IsCanonical(this.FullId); }
         /// <summary>
-        /// pushes a name on the Moduleside of the Canonical Name and returns the full name
+        /// pushes a id on the Moduleside of the Canonical Id and returns the full id
         /// </summary>
-        /// <param name="canonicalName"></param>
-        /// <param name="name"></param>
+        /// <param id="canonicalName"></param>
+        /// <param id="id"></param>
         /// <returns></returns>
-        public string PushModule(string name)
+        public string PushModule(string id)
         {
-            this.ModuleName = CanonicalName.Push(ModuleName, name);
-            return this.Name;
+            this.ModuleId = CanonicalName.Push(ModuleId, id);
+            return this.FullId;
         }
         /// <summary>
-        /// pops a modulename from the canonical name and returns the rest
+        /// pops a modulename from the canonical id and returns the rest
         /// </summary>
-        /// <param name="canonicalName"></param>
-        /// <param name="name"></param>
+        /// <param id="canonicalName"></param>
+        /// <param id="id"></param>
         /// <returns></returns>
-        public string PopModule(ref string name)
+        public string PopModule(ref string id)
         {
-            this.ModuleName = CanonicalName.Pop(ModuleName, ref name);
-            return this.Name;
+            this.ModuleId = CanonicalName.Pop(ModuleId, ref id);
+            return this.FullId;
         }
     }
     /// <summary>
@@ -312,106 +414,121 @@ namespace OnTrack.Rulez
 
         #region Static
         /// <summary>
-        /// returns true if the name is in canonical form
+        /// returns true if the id is in canonical form
         /// </summary>
-        /// <param name="name"></param>
+        /// <param id="id"></param>
         /// <returns></returns>
-        public new static bool IsCanonical(string name)
+        public new static bool IsCanonical(string id)
         {
-            if (string.IsNullOrWhiteSpace(name)) return false;
-            return name.IndexOf(ConstDelimiter) >= 2;
+            if (string.IsNullOrWhiteSpace(id)) return false;
+            return id.IndexOf(ConstDelimiter) >= 2;
+        }
+        /// <summary>
+        /// returns a Objectname object
+        /// </summary>
+        /// <param fullname="fullname"></param>
+        /// <returns></returns>
+        public new static EntryName From(string fullname)
+        {
+            return new EntryName(fullname);
         }
         /// <summary>
         /// returns the modulename if one exists - if not then String.Empty
         /// </summary>n
-        /// <param name="name"></param>
+        /// <param id="id"></param>
         /// <returns></returns>
-        public new static string GetModuleName(string name)
+        public new static string GetModuleID(string id)
         {
-            if (IsCanonical(name))
+            if (IsCanonical(id))
             {
-                string[] split = name.Split(ConstDelimiter);
+                string[] split = id.Split(ConstDelimiter);
                 if (split.GetUpperBound(0) > 2)
                 {
                     split[split.GetUpperBound(0)] = String.Empty; // use empty feature
                     split[split.GetUpperBound(0)-1] = String.Empty; // use empty feature
-                    return StringFrom(split);
+                    return StringFrom(split).ToUpper();
                 }
-                return CanonicalName.Global;
+                return CanonicalName.GlobalID;
             }
-            return name;
+            return id.ToUpper();
         }
         /// <summary>
-        /// returns the classname if one exits else String.Empty - if not canonical return name
+        /// returns the classname if one exits else String.Empty - if not canonical return id
         /// </summary>
-        /// <param name="name"></param>
+        /// <param id="id"></param>
         /// <returns></returns>
-        public static string GetObjectName(string name)
+        public new static string GetObjectID(string id)
         {
-            if (IsCanonical(name))
+            if (IsCanonical(id))
             {
-                string[] split = name.Split(ConstDelimiter);
-                if (split.GetUpperBound(0) > 1) return split[split.GetUpperBound(0) - 1];
+                string[] split = id.Split(ConstDelimiter);
+                if (split.GetUpperBound(0) > 1) return split[split.GetUpperBound(0) - 1].ToUpper();
                 return string.Empty;
             }
-            return name;
+            return id.ToUpper();
         }
         /// <summary>
-        /// returns the classname if one exits else String.Empty - if not canonical return name
+        /// returns the classname if one exits else String.Empty - if not canonical return id
         /// </summary>
-        /// <param name="name"></param>
+        /// <param id="id"></param>
         /// <returns></returns>
-        public static string GetEntryName(string name)
+        public static string GetEntryID(string id)
         {
-            if (IsCanonical(name))
+            if (IsCanonical(id))
             {
-                string[] split = name.Split(ConstDelimiter);
-                return split[split.GetUpperBound(0)];
+                string[] split = id.Split(ConstDelimiter);
+                return split[split.GetUpperBound(0)].ToUpper();
             }
-            return name;
+            return id.ToUpper();
         }
         #endregion
         /// <summary>
         /// constructor
         /// </summary>
-        /// <param name="name"></param>
-        public EntryName(string name)
-            : base(name)
+        /// <param id="id"></param>
+        public EntryName(string id)
+            : base(id)
         {
-            this.Name = name;
+            this.FullId = id;
+        }
+        public EntryName(string moduleid, string objectid, string entryid) : base(moduleid)
+        {
+            this.FullId = (String.IsNullOrEmpty(moduleid) ? (moduleid + ConstDelimiter) : String.Empty) + 
+                        (String.IsNullOrEmpty(objectid) & String.IsNullOrEmpty(moduleid) ? (objectid + ConstDelimiter) : String.Empty) 
+                        + entryid;
         }
         /// <summary>
-        /// get or sets the Name
+        /// get or sets the Id
         /// </summary>
-        public string Name
+        public override string FullId
         {
             get
             {
-                return base.Name;
+                return base.FullId;
             }
             set
             {
-                if (value == null) base.Name = String.Empty;
+                if (value == null) base.FullId = String.Empty;
                 else
-                    if (IsCanonical(value)) base.Name = value;
+                    if (IsCanonical(value)) base.FullId = value;
                     else
                     {
                         // make sure t add 2 or 1 
-                        List<string> names = value.Split(ConstDelimiter).ToList<string>();
+                        List<string> names = value.ToUpper().Split(ConstDelimiter).ToList<string>();
                         if (names.Count()== 1){ names.Insert(0, String.Empty);names.Insert(1, String.Empty);}
                         else if (names.Count() == 2) { names.Insert(0, String.Empty);  }
-                        _names = names.ToArray();
+                        _ids = names.ToArray();
                     }
             }
         }
         /// <summary>
         /// gets or sets the ModuleName
         /// </summary>
-        public string ModuleName
+        public override string ModuleId
         {
             get
             {
-                string[] names = (string[])_names.Clone();
+                string[] names = (string[])_ids.Clone();
                 names[names.GetUpperBound(0)] = string.Empty;
                 names[names.GetUpperBound(0)-1] = string.Empty;
                 return StringFrom(names);
@@ -420,30 +537,34 @@ namespace OnTrack.Rulez
             {
                 if (!String.IsNullOrEmpty(value))
                 {
-                    List<string> names = value.Split(ConstDelimiter).ToList<string>();
-                    names.Add(ObjectName);
-                    names.Add(EntryName);
-                    _names = names.ToArray();
+                    List<string> names = value.ToUpper().Split(ConstDelimiter).ToList<string>();
+                    names.Add(this.ObjectId);
+                    names.Add(this.Id);
+                    _ids = names.ToArray();
                 }
                 else
                 {
-                    string[] n = { String.Empty, ObjectName , EntryName};
-                    _names = n;
+                    string[] n = { String.Empty, ObjectId , this.Id};
+                    _ids = n;
                 }
             }
         }
         /// <summary>
         /// gets or sets the entry name
         /// </summary>
-        public string ObjectName { get { return _names[_names.GetUpperBound(0)-1]; } set { _names[_names.GetUpperBound(0)-1] = value; } }
+        public virtual string ObjectId { get { return _ids[_ids.GetUpperBound(0)-1]; } set { _ids[_ids.GetUpperBound(0)-1] = value.ToUpper(); } }
+        /// <summary>
+        /// gets te obectname object
+        /// </summary>
+        public virtual ObjectName ObjectName { get { return new ObjectName(String.IsNullOrEmpty(ModuleId) ? this.ObjectId : (this.ModuleId + ConstDelimiter + ObjectId)); } }
         /// <summary>
         /// gets or sets the entry name
         /// </summary>
-        public string EntryName { get { return _names[_names.GetUpperBound(0)]; } set { _names[_names.GetUpperBound(0)] = value; } }
+        public override string Id { get { return _ids[_ids.GetUpperBound(0)]; } set { _ids[_ids.GetUpperBound(0)] = value.ToUpper(); } }
         /// <summary>
         /// returns true if the name is in canonical Form
         /// </summary>
         /// <returns></returns>
-        public bool IsEntryName() { return IsCanonical(this.Name); }
+        public bool IsEntryName() { return IsCanonical(this.FullId); }
     }
 }

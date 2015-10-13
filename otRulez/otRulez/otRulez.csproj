@@ -63,6 +63,7 @@
     </Compile>
     <Compile Include="rulez.cs" />
     <Compile Include="rulezDataTypes.cs" />
+    <Compile Include="rulezDeclaration.cs" />
     <Compile Include="rulezEngine.cs" />
     <Compile Include="rulezHelper.cs" />
     <Compile Include="RulezLexer.g4.cs">
@@ -76,6 +77,7 @@
     <Compile Include="rulezXPTDeclaration.cs" />
     <Compile Include="rulezXPTGen.cs" />
     <Compile Include="rulezXPTree.cs" />
+    <Compile Include="rulezXPTRepository.cs" />
     <Compile Include="rulezXPTVisitor.cs" />
   </ItemGroup>
   <ItemGroup>

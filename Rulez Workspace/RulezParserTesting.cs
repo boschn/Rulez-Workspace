@@ -22,8 +22,8 @@ namespace OnTrack.Testing
         /// <param name="isNull"></param>
         public ObjectEntryDefinition (iObjectDefinition objectdefinition, String entryname, otDataType typeid, bool isNull )
         {
-            this.Objectname = objectdefinition.Objectname;
-            this.Entryname = entryname.ToUpper();
+            this.ObjectId = objectdefinition.Id;
+            this.EntryId = entryname.ToUpper();
             this.DataType = Core.DataType.GetDataType(typeid) ;
             this.IsNullable = isNull;
             this.ObjectDefinition = objectdefinition ;
@@ -35,8 +35,8 @@ namespace OnTrack.Testing
         public long? UpperRangeValue { get ; set; }
         public List<string> PossibleValues { get ; set; }
         public string Description{ get ; set; }
-        public string Objectname { get ; set; }
-        public string Entryname { get ; set; }
+        public string ObjectId { get ; set; }
+        public string EntryId { get ; set; }
         public otDataType TypeId { get { return DataType.TypeId; } set { DataType = Core.DataType.GetDataType(value); } }
         public long Version { get ; set; }
        
@@ -70,7 +70,7 @@ namespace OnTrack.Testing
     /// </summary>
     internal class ObjectDefinition : iObjectDefinition
     {
-        private String _id;
+        private OnTrack.Rulez.ObjectName _objectname;
         private Dictionary <String, iObjectEntryDefinition> _entries = new Dictionary<String, iObjectEntryDefinition>();
         private List<string> _keynames = new List<string>();
         /// <summary>
@@ -79,24 +79,30 @@ namespace OnTrack.Testing
         /// <param name="id"></param>
         public ObjectDefinition(String id)
         {
-            _id = id.ToUpper();
+            _objectname = new ObjectName(id);
         }
 
         public bool AddEntry(iObjectEntryDefinition entry)
         {
-            if (_entries.ContainsKey (entry.Entryname.ToUpper())) _entries .Remove (entry.Entryname.ToUpper() );
+            if (_entries.ContainsKey (entry.EntryId.ToUpper())) _entries .Remove (entry.EntryId.ToUpper() );
 
-            _entries .Add(entry.Entryname.ToUpper(), entry);
+            _entries .Add(entry.EntryId.ToUpper(), entry);
             return true;
         }
-        public string Objectname
+        public ObjectName Objectname
         {
             get
             {
-                return _id;
+                return _objectname;
             }
         }
-
+        public string ObjectId
+        {
+            get
+            {
+                return _objectname.FullId;
+            }
+        }
         public Type ObjectType
         {
             get
@@ -106,17 +112,15 @@ namespace OnTrack.Testing
             }
         }
 
-        public string Modulename
+        public string ModuleId
         {
             get
             {
-                // TODO: Implement this property getter
-                throw new NotImplementedException();
+                return _objectname.ModuleId;
             }
             set
             {
-                // TODO: Implement this property setter
-                throw new NotImplementedException();
+                _objectname.ModuleId = value;
             }
         }
 
@@ -124,13 +128,11 @@ namespace OnTrack.Testing
         {
             get
             {
-                // TODO: Implement this property getter
-                throw new NotImplementedException();
+                return _objectname.FullId;
             }
             set
             {
-                // TODO: Implement this property setter
-                throw new NotImplementedException();
+                _objectname.FullId = value;
             }
         }
 
@@ -211,7 +213,7 @@ namespace OnTrack.Testing
             }
         }
 
-        public IList<string> Entrynames(bool onlyActive = true)
+        public IList<string> EntryNameIds(bool onlyActive = true)
         {
             return _entries.Keys.ToList();
         }
@@ -235,7 +237,7 @@ namespace OnTrack.Testing
     internal  class DataObjectRepository : iDataObjectRepository
     {
         // add
-        private Dictionary<string, iObjectDefinition> _objects = new Dictionary<string, iObjectDefinition>();
+        private Dictionary<ObjectName, iObjectDefinition> _objects = new Dictionary<ObjectName, iObjectDefinition>();
         private Dictionary<Type, String> _types = new Dictionary<Type, String>();
 
         private List<iDataObjectProvider> _providers = new List<iDataObjectProvider>();
@@ -266,12 +268,11 @@ namespace OnTrack.Testing
         /// <summary>
         /// GetIObjectDefinition of an ID
         /// </summary>
-        /// <param name="id"></param>
+        /// <param id="id"></param>
         /// <returns></returns>
-        public iObjectDefinition GetIObjectDefinition(string id)
+        public iObjectDefinition GetIObjectDefinition(ObjectName name)
         {
-            if (_objects.ContainsKey(id.ToUpper()))
-                return _objects[id.ToUpper()];
+            if (_objects.ContainsKey(name)) return _objects[name];
             return null;
         }
 
@@ -280,7 +281,7 @@ namespace OnTrack.Testing
             throw new NotImplementedException();
         }
 
-        public string GetObjectname(Type type)
+        public string GetObjectId(Type type)
         {
             throw new NotImplementedException();
         }
@@ -297,10 +298,14 @@ namespace OnTrack.Testing
 
         public bool HasObjectDefinition(string id)
         {
-            if (_objects.ContainsKey(id.ToUpper()))  return true;
+            if (_objects.ContainsKey(ObjectName.From(id)))  return true;
             return false;
         }
-
+         public bool HasObjectDefinition(ObjectName name)
+        {
+            if (_objects.ContainsKey(name))  return true;
+            return false;
+        }
         public bool HasObjectDefinition(Type type)
         {
             throw new NotImplementedException();
@@ -319,6 +324,15 @@ namespace OnTrack.Testing
             get
             {
                 return _providers;
+            }
+        }
+        public System.Collections.Generic.IEnumerable<CanonicalName> ModuleNames
+        {
+            get
+            {
+                List<CanonicalName> aList = new List<CanonicalName>();
+                aList.Add(CanonicalName.GlobalName);
+                return aList;
             }
         }
     }

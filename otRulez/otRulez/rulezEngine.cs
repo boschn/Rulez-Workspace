@@ -28,11 +28,38 @@ namespace OnTrack.Rulez
     /// </summary>
     public class Engine
     {
+        public class  EventArgs :  System.EventArgs
+        {
+            private iDataObjectEngine _engine;
+            
+            /// <summary>
+            /// constructor
+            /// </summary>
+            /// <param name="engine"></param>
+            public EventArgs(iDataObjectEngine engine)
+            {
+                _engine = engine;
+            }
+            /// <summary>
+            /// gets the engine
+            /// </summary>
+            public iDataObjectEngine Engine { get { return _engine;}}
+            /// <summary>
+            /// gets the repository
+            /// </summary>
+            public iDataObjectRepository DataObjectRepository { get { return (_engine != null ) ? _engine.Objects : null; ; } }
+        }
         private Scope _globalScope;
         private string _id; // handle of the engine
         private Context _context;
         private Dictionary<String, ICodeBit> _Code; // Code Dictionary
-        private List<iDataObjectEngine> _dataobjectEngines; // DataObject Engines for running data object against 
+        private List<iDataObjectEngine> _dataobjectEngines; // DataObject Engines for running data object against
+
+        /// events
+        public event EventHandler<EventArgs> DataObjectRepositoryAdded;
+        public event EventHandler<EventArgs> DataObjectEngineAdded;
+        public event EventHandler<EventArgs> DataObjectRepositoryRemoved;
+        public event EventHandler<EventArgs> DataObjectEngineRemoved;
         /// <summary>
         /// constructor of an engine
         /// </summary>
@@ -40,7 +67,7 @@ namespace OnTrack.Rulez
         {
             if (id == null) _id = System.Environment.MachineName  + "_" + DateTime.Now.ToString("o");
             else _id = id;
-            _globalScope = new Scope(engine: this, id: CanonicalName.Global);
+            _globalScope = new Scope(engine: this, id: CanonicalName.GlobalID);
             _context = new Context(this);
             _dataobjectEngines = new List<iDataObjectEngine>();
             _Code = new Dictionary<string, ICodeBit>();
@@ -55,15 +82,18 @@ namespace OnTrack.Rulez
         /// gets the unique handle of the engine
         /// </summary>
         public string Id { get { return _id; } }
-
         /// <summary>
         /// returns the Toplevel Repository of the Engine
         /// </summary>
-        public Repository Globals { get { return GlobalScope.Repository; } }
+        public IRepository Globals { get { return GlobalScope.Repository; } }
         /// <summary>
         /// returns the Toplevel Scope
         /// </summary>
         public Scope GlobalScope { get { return _globalScope; } }
+        /// <summary>
+        /// gets the list of data object engines
+        /// </summary>
+        public IEnumerable<iDataObjectEngine> DataObjectEngines { get { return _dataobjectEngines; } }
         
 #endregion
 
@@ -80,7 +110,15 @@ namespace OnTrack.Rulez
                 throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { engine.ID , "DataEngines"});
 
             _dataobjectEngines.Add(engine);
+            // throw the added event
+            if (DataObjectEngineAdded != null) DataObjectEngineAdded(this, new Engine.EventArgs(engine));
+            // throw the added event
+            if (DataObjectRepositoryAdded != null) DataObjectRepositoryAdded(this, new Engine.EventArgs(engine));
+            // add the data object registery
             result &= Globals .RegisterDataObjectRepository (engine.Objects );
+            // register the modules to the scope
+            foreach (CanonicalName aModuleName in engine.Objects.ModuleNames)
+                if (!this.HasScope(aModuleName)) this.CreateScope(aModuleName);
             return result;
         }
         /// <summary>
@@ -99,6 +137,10 @@ namespace OnTrack.Rulez
 
             result &= _dataobjectEngines.Remove(aDataEngine);
             result &= Globals.DeRegisterDataObjectRepository(aDataEngine.Objects);
+            // throw the added event
+            if (DataObjectEngineAdded != null) DataObjectEngineAdded(this, new Engine.EventArgs(aDataEngine));
+            // throw the added event
+            if (DataObjectRepositoryAdded != null) DataObjectRepositoryAdded(this, new Engine.EventArgs(aDataEngine));
             return result;
         }
         /// <summary>
@@ -119,23 +161,36 @@ namespace OnTrack.Rulez
             aVisitor.Visit(GlobalScope);
             return aVisitor.Result;
         }
+         public bool HasScope(CanonicalName name)
+        {
+            return HasScope(name.FullId);
+        }
         /// <summary>
         /// returns the Scope Object of an given ID
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public Scope GetScope(string id)
+        public IScope GetScope(string id)
         {
             if (String.Compare(GlobalScope.Id, id, true) == 00) return GlobalScope;
             // define Visitor and return the REsult
-            Scope.Visitor<List<Scope>> aVisitor = new Scope.Visitor<List<Scope>>();
-            Scope.Visitor<List<Scope>>.Eventhandler aVisitingHandling = (o, e) =>
+            Scope.Visitor<List<IScope>> aVisitor = new Scope.Visitor<List<IScope>>();
+            Scope.Visitor<List<IScope>>.Eventhandler aVisitingHandling = (o, e) =>
             {
-                if (String.Compare(GlobalScope.Id, e.Current.Id, true) == 00) e.Result.Add(e.Current);
+                if (String.Compare(id, e.Current.Id, true) == 00) e.Result.Add(e.Current);
             };
             aVisitor.VisitedScope += aVisitingHandling;
             aVisitor.Visit(GlobalScope);
             return aVisitor.Result.FirstOrDefault ();
+        }
+        /// <summary>
+        /// returns the Scope Object of an given ID
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public IScope GetScope(CanonicalName name)
+        {
+            return GetScope(name.FullId);
         }
         /// <summary>
         /// create a scope in the scope tree by id
@@ -143,22 +198,33 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public Scope CreateScope(string id)
+        public IScope CreateScope(string id)
         {
             string[] split = id.Split (CanonicalName.ConstDelimiter);
-            Scope aLevelScope = GlobalScope;
-            string aLevelScopeName = CanonicalName.Global;
+            IScope aLevelScope = GlobalScope;
+            string aLevelScopeName = CanonicalName.GlobalID;
             for (uint i = 0; i <= split.GetUpperBound (0); i++)
             {
                 // get or create the Scope
                 if (aLevelScope.HasSubScope(aLevelScopeName)) aLevelScope = aLevelScope.GetSubScope(aLevelScopeName);
-                else aLevelScope = aLevelScope.AddSubScope(aLevelScopeName);
+                else
+                {
+                    aLevelScope = aLevelScope.AddSubScope(aLevelScopeName);
+                    // add the known data object repositories
+                    foreach (iDataObjectRepository aR in this._dataobjectEngines)
+                        aLevelScope.Repository.RegisterDataObjectRepository(aR);
+                    this.DataObjectRepositoryAdded += aLevelScope.Scope_DataObjectRepositoryAdded;
+                }
                 // increase the levelscope name
                 if (!String.IsNullOrEmpty(aLevelScopeName)) aLevelScopeName += CanonicalName.ConstDelimiter + split[i];
                 else aLevelScopeName += split[i];
             }
 
             return aLevelScope;
+        }
+        public IScope CreateScope(CanonicalName name)
+        {
+            return CreateScope(name.FullId);
         }
         #region Access
         /// <summary>
@@ -296,7 +362,7 @@ namespace OnTrack.Rulez
         /// <summary>
         /// returns true if the id exists somewhere in the scope tree
         /// </summary>
-        /// <param name="id"></param>
+        /// <param fullname="id"></param>
         /// <returns></returns>
         public bool HasFunction(Token id)
         {
@@ -368,7 +434,7 @@ namespace OnTrack.Rulez
         /// <summary>
         /// Verify a source code and return the Inode
         /// </summary>
-        /// <param name="source"></param>
+        /// <param id="source"></param>
         /// <returns></returns>
         public INode Verify(string source)
         {
@@ -387,7 +453,7 @@ namespace OnTrack.Rulez
                 // step 1: parse
                 aCtx = aParser.rulezUnit();
                 // step 2: generate the declarations
-                XPTDeclarationGenerator theDeclGen = new XPTDeclarationGenerator(aParser);
+                XPTDeclGen theDeclGen = new XPTDeclGen(aParser);
                 Antlr4.Runtime.Tree.ParseTreeWalker.Default.Walk(theDeclGen, aCtx);
                 // step 3: generate the XPTree of the code
                 XPTGenerator theXPTGen = new XPTGenerator(aParser);
@@ -497,7 +563,7 @@ namespace OnTrack.Rulez
                 foreach (iDataObjectEngine aDataEngine in _dataobjectEngines.Reverse <iDataObjectEngine > () )
                 {
                     foreach (String aName in rule.ResultingObjectnames () ) 
-                        result &= aDataEngine.Objects.HasObjectDefinition(id: aName);
+                        result &= aDataEngine.Objects.HasObjectDefinition(ObjectName.From(aName));
                     if (result) 
                         return aDataEngine.Generate((rule as eXPressionTree.IRule), out code);
                 }
@@ -554,6 +620,7 @@ namespace OnTrack.Rulez
                 throw new RulezException(RulezException.Types.RunFailed, inner: ex);
             }
         }
+
     }
 
     /// <summary>
