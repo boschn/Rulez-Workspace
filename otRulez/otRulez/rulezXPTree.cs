@@ -202,7 +202,7 @@ namespace OnTrack.Rulez.eXPressionTree
         private otXPTNodeType _nodeType;
         private IXPTree _parent;
         private List<Message> _errorlist = new List<Message>();
-        private XPTScope _scope; 
+        private IScope _scope; 
         // constants
         public const string ConstPropertyParent = "Parent";
         public const string ConstPropertyEngine = "Engine";
@@ -314,7 +314,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// Scope of the XPTree
         /// </summary>
-        public XPTScope Scope
+        public IScope Scope
         {
             get
             {
@@ -978,10 +978,11 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// constructor
         /// </summary>
-        public StatementBlock(Engine engine = null)
+        public StatementBlock(string id = null, Engine engine = null)
             : base(engine)
         {
             this.NodeType = otXPTNodeType.StatementBlock;
+            if (id == null) Id = "BLOCK-" + Guid.NewGuid().ToString();
         }
         /// <summary>
         /// constructor
@@ -1002,7 +1003,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// sets the ID of the block
         /// </summary>
-        public string ID { get {  if (_ID == null) _ID = Guid.NewGuid().ToString (); return _ID; } set { _ID = value; } }
+        public string Id { get {  if (_ID == null) _ID = "BLOCK-" + Guid.NewGuid().ToString (); return _ID; } set { _ID = value; } }
         #endregion
         /// <summary>
         /// Add a node to the block
@@ -1053,22 +1054,24 @@ namespace OnTrack.Rulez.eXPressionTree
         {
             if (_variables.ContainsKey(id))
             {
-                throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { id, this.ID });
+                throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { id, this.Id });
             }
             Variable aVar = new Variable(id: id, typeID: typeId, scope: this);
             _variables.Add(aVar.Id, aVar);
-
+            // add the symbol
+            if (this.Scope != null) this.Scope.AddSymbol(aVar);
             return aVar;
         }
         public ISymbol AddNewVariable(string id, IDataType datatype)
         {
             if (_variables.ContainsKey(id))
             {
-                throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { id, this.ID });
+                throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { id, this.Id });
             }
             Variable aVar = new Variable(id: id, datatype: datatype, scope: this);
             _variables.Add(aVar.Id, aVar);
-
+            // add the symbol
+            if (this.Scope != null) this.Scope.AddSymbol(aVar);
             return aVar;
         }
     }
@@ -1085,8 +1088,8 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// constructor
         /// </summary>
-        public SelectionStatementBlock(Engine engine = null)
-            : base(engine)
+        public SelectionStatementBlock(string id = null, Engine engine = null)
+            : base(id,engine)
         {
             this.NodeType = otXPTNodeType.SelectionStatementBlock;
         }
@@ -1095,8 +1098,8 @@ namespace OnTrack.Rulez.eXPressionTree
         /// </summary>
         /// <param name="token"></param>
         /// <param name="arguments"></param>
-        public SelectionStatementBlock(INode[] arguments, Engine engine = null)
-            : base(engine)
+        public SelectionStatementBlock(INode[] arguments, string id= null, Engine engine = null)
+            : base(id, engine)
         {
             this.NodeType = otXPTNodeType.SelectionStatementBlock;
             // arguments will be checked in event
@@ -1221,6 +1224,24 @@ namespace OnTrack.Rulez.eXPressionTree
             aString += "}}";
             return aString;
         }
+    }
+    /// <summary>
+    /// module definition node
+    /// </summary>
+    public class Module: XPTree
+    {
+        private CanonicalName _name;
+        /// <summary>
+        /// constructor
+        /// </summary>
+        /// <param name="name"></param>
+        public Module(CanonicalName name)
+        {
+            _name = name;
+        }
+        #region Properties
+
+        #endregion
     }
     /// <summary>
     /// function call node
@@ -2197,6 +2218,8 @@ namespace OnTrack.Rulez.eXPressionTree
             }
             Variable aVar = new Variable(id: id, datatype: datatype, scope: this);
             _parameters.Add(aVar.Id, aVar);
+            // add symbol to scope
+            if (this.Scope != null) this.Scope.AddSymbol(aVar);
 
             return aVar;
         }

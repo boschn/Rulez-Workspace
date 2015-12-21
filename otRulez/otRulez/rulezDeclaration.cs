@@ -52,17 +52,56 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         bool HasSubScope(string id);
         /// <summary>
+        /// returns true if the scope name exists in the descendants of this scope
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        bool HasScope(CanonicalName name);
+        bool HasScope(string id);
+        /// <summary>
         /// returns a Subscope of an given id or null
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
         IScope GetSubScope(string id);
         /// <summary>
+        /// returns a scope object from the descendants
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        IScope GetScope(CanonicalName name);
+        IScope GetScope(string id);
+        /// <summary>
         /// create an Subscope of an given id
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
         IScope AddSubScope(string id);
+        /// <summary>
+        /// adds a scope object to the descendants
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        bool AddScope(IScope scope);
+        bool AddScope(string id);
+        bool AddScope(CanonicalName name);
+        /// <summary>
+        /// get root scope
+        /// </summary>
+        /// <returns></returns>
+        IScope GetRoot();
+        /// <summary>
+        /// creates a new scope object
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        IScope NewScope(string id);
+        /// <summary>
+        /// creates a new scope object
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        IScope NewScope(CanonicalName name);
         /// <summary>
         /// returns a rule rule from the repository or creates a new one and returns this
         /// </summary>
@@ -119,13 +158,33 @@ namespace OnTrack.Rulez
         /// gets or sets the ID of the scope
         /// </summary>
         string Id { get; set; }
-
+        /// <summary>
+        /// gets or sets the Name of the Scope
+        /// </summary>
+        CanonicalName Name { get; set; }
         /// <summary>
         /// event handler for dataObjectRepository Added
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         void Scope_DataObjectRepositoryAdded(object sender, Rulez.Engine.EventArgs e);
+        /// <summary>
+        /// returns true if the scope has the symbol by id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        bool HasSymbol(string id);
+        /// <summary>
+        /// returns the symbol by ID from the scope
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        ISymbol GetSymbol(string id);
+        /// <summary>
+        /// adds a symbol to the Scope
+        /// </summary>
+        /// <param name="symbol"></param>
+        bool AddSymbol(ISymbol symbol);
     }
     /// <summary>
     /// Interface for Engine Repositories
@@ -316,5 +375,28 @@ namespace OnTrack.Rulez
         bool RegisterDataObjectRepository(iDataObjectRepository iDataObjectRepository);
 
         bool DeRegisterDataObjectRepository(iDataObjectRepository iDataObjectRepository);
+        /// <summary>
+        /// returns true if the symbol exists in the repository
+        /// </summary>
+        /// <param name="p"></param>
+        /// <returns></returns>
+        bool HasSymbol(string p);
+        /// <summary>
+        /// add the symbol to the repository
+        /// </summary>
+        /// <param name="symbol"></param>
+        bool AddSymbol(ISymbol symbol);
+        /// <summary>
+        /// get the symbol from the Repository
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        ISymbol GetSymbol(string id);
+        /// <summary>
+        /// remove the symbol from the Repository
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        bool RemoveSymbol(string id);
     }
 }

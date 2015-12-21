@@ -61,7 +61,7 @@ namespace OnTrack.Rulez.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to variable id &apos;{0}&apos; already defined in context &apos;{1}&apos;.
+        ///   Looks up a localized string similar to variable name &apos;{0}&apos; already defined in context &apos;{1}&apos;.
         /// </summary>
         internal static string RCM_1 {
             get {
@@ -93,6 +93,15 @@ namespace OnTrack.Rulez.Resources {
         internal static string RCM_12 {
             get {
                 return ResourceManager.GetString("RCM_12", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to selection rule &apos;{0}&apos; is defined more than once.
+        /// </summary>
+        internal static string RCM_13 {
+            get {
+                return ResourceManager.GetString("RCM_13", resourceCulture);
             }
         }
         
@@ -277,7 +286,7 @@ namespace OnTrack.Rulez.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Data type with id &apos;{0}&apos; is not implemented in case condition of routine.
+        ///   Looks up a localized string similar to Data type with name &apos;{0}&apos; is not implemented in case condition of routine.
         /// </summary>
         internal static string REM_20 {
             get {

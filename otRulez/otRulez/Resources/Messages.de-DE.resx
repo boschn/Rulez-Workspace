@@ -129,6 +129,9 @@
   <data name="RCM_12" xml:space="preserve">
     <value>Die Instanz der Datenobjekt Klasse '{0}' ist nicht im Zugriff der Anweisung</value>
   </data>
+  <data name="RCM_13" xml:space="preserve">
+    <value>Auswahlregel '{0}' ist mehr wie einmal definiert.</value>
+  </data>
   <data name="RCM_2" xml:space="preserve">
     <value>Keinen Variablen-Kontext '{0}' gefunden.</value>
   </data>

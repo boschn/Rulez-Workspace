@@ -43,9 +43,10 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
     ;
 
 /*
- * namespace declaration
+ * namespace / Module declaration declaration
  */
 moduleDeclaration
+returns [ OnTrack.Rulez.IScope Scope, OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 	: MODULE canonicalName
 	;
 /*
@@ -183,14 +184,14 @@ isNullable
 *	selection s as deliverables[uid=p1 as number? default 100]; -> implicit defines a parameter p1 
 */
 selectionRulez
-returns [  OnTrack.Rulez.Scope Scope, OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
+returns [  OnTrack.Rulez.IScope Scope, OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 locals [ 
 		// parameters
 		 Dictionary<string,ParameterDefinition> names = new Dictionary<string,ParameterDefinition>() ]
 @init{ $XPTreeNode = new SelectionRule(); RegisterMessages($XPTreeNode);}
 @after { DeRegisterMessages($XPTreeNode);}
 
-    : SELECTION id = ruleid {((SelectionRule)$XPTreeNode).ID = $ctx.id.GetText();  $Scope = new Scope(engine:this.Engine, id: $ctx.id.GetText());} (LPAREN parameters RPAREN)? AS ( selectStatementBlock | selection ) 
+    : SELECTION id = ruleid {((SelectionRule)$XPTreeNode).ID = $ctx.id.GetText(); } (LPAREN parameters RPAREN)? AS ( selectStatementBlock | selection ) 
 	
     ;
 // rulename
@@ -214,13 +215,12 @@ parameterdefinition  [uint pos]
 /* SelectStatementBlock
  */
 selectStatementBlock
-returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode,  OnTrack.Rulez.Scope Scope ]
+returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode,  OnTrack.Rulez.IScope Scope ]
 locals [
 		 // local variables
 		Dictionary<string,VariableDefinition> names = new Dictionary<string,VariableDefinition>() 
 		]
 @init {$XPTreeNode = new OnTrack.Rulez.eXPressionTree.SelectionStatementBlock(); 
-	   $Scope = new Scope(engine:this.Engine);
 	   RegisterMessages($XPTreeNode);}
 @after {  DeRegisterMessages($XPTreeNode); }
 

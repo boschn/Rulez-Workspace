@@ -80,13 +80,13 @@ namespace OnTrack.Core
         /// <summary>
         /// returns an EntryDefinition or null
         /// </summary>
-        /// <param name="entryname"></param>
+        /// <param name="entryNameId"></param>
         /// <returns></returns>
-        iObjectEntryDefinition GetiEntryDefinition(string entryname);
+        iObjectEntryDefinition GetiEntryDefinition(string entryNameId);
         /// <summary>
         /// returns true if the entry name exists
         /// </summary>
-        bool HasEntry(String entryname);
+        bool HasEntry(String entryNameId);
     }
 
  /// <summary>
@@ -323,7 +323,7 @@ namespace OnTrack.Core
         /// <returns></returns>
         iObjectDefinition GetIObjectDefinition(ObjectName name);
         /// <summary>
-        /// retuns an object definition by canonical name in string
+        /// retuns an object definition by canonical id in string
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>

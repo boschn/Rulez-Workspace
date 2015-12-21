@@ -129,6 +129,9 @@
   <data name="RCM_12" xml:space="preserve">
     <value>instance of data object class '{0}' not in scope</value>
   </data>
+  <data name="RCM_13" xml:space="preserve">
+    <value>selection rule '{0}' is defined more than once</value>
+  </data>
   <data name="RCM_2" xml:space="preserve">
     <value>no variable context '{0}' found</value>
   </data>

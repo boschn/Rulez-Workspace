@@ -47,7 +47,7 @@ namespace OnTrack.Testing
         public bool IsNullable { get ; set; }
         
 
-        public long PrimaryKeyOrdinal { get ; set; }
+        public long? PrimaryKeyOrdinal { get ; set; }
        
         public otDataType? InnerDatatype { get ; set; }
        
@@ -96,7 +96,7 @@ namespace OnTrack.Testing
                 return _objectname;
             }
         }
-        public string ObjectId
+        public string Id
         {
             get
             {
@@ -230,7 +230,7 @@ namespace OnTrack.Testing
         }
     }
 
-   
+  
     /// <summary>
     /// Test DataObject Repository
     /// </summary>
@@ -276,6 +276,17 @@ namespace OnTrack.Testing
             return null;
         }
 
+        /// <summary>
+        /// retuns an object definition by canonical name in string
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public iObjectDefinition GetIObjectDefinition(string name)
+        {
+            // TODO: Implement this method
+            throw new NotImplementedException();
+        }
+
         public iObjectDefinition GetIObjectDefinition(Type type)
         {
             throw new NotImplementedException();
@@ -283,6 +294,17 @@ namespace OnTrack.Testing
 
         public string GetObjectId(Type type)
         {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// returns the objectname from a type name
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public Type GetObjectType(ObjectName name)
+        {
+            // TODO: Implement this method
             throw new NotImplementedException();
         }
 

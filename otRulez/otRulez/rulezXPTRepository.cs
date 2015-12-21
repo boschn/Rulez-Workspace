@@ -30,6 +30,7 @@ namespace OnTrack.Rulez
     /// </summary>
     public class XPTScope : Scope
     {
+        // integrated repository
         private XPTRepository _xptrepository;
 
         /// <summary>
@@ -41,7 +42,10 @@ namespace OnTrack.Rulez
         {
             _xptrepository = new XPTRepository (engine);
         }
-
+        public XPTScope(Engine engine, CanonicalName name) : base(engine, name)
+        {
+            _xptrepository = new XPTRepository(engine);
+        }
         /// <summary>
         /// gets the scope of the engine with same id
         /// </summary>
@@ -62,52 +66,29 @@ namespace OnTrack.Rulez
             get { return _xptrepository; }
         }
         /// <summary>
-        /// returns true if the Children have an ID
+        /// creates a new scope object
         /// </summary>
-        /// <param name="id"></param>
+        /// <param name="name"></param>
         /// <returns></returns>
-        public override bool HasSubScope(string id)
+        public override IScope NewScope(CanonicalName name)
         {
-            if (this.Children.Where(x => String.Compare(x.Id, id, true) == 00).FirstOrDefault() != null)
-                return true;
-            else
-                return (EngineScope!=null) ? EngineScope.HasSubScope(id) : false;
-        }
-
-        /// <summary>
-        /// returns a Subscope of an given id or null
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        public override IScope GetSubScope(string id)
-        {
-            IScope aScope = this.Children.Where(x => String.Compare(x.Id, id, true) == 00).FirstOrDefault();
-
-            if (aScope != null) return aScope;
-            return (EngineScope!=null) ? EngineScope.GetSubScope(id) :null;
+            return new XPTScope(engine: Engine, name: name);
         }
         /// <summary>
-        /// create an Subscope of an given id
+        /// creates a new scope object
         /// </summary>
-        /// <param name="id"></param>
+        /// <param name="name"></param>
         /// <returns></returns>
-        public virtual IScope AddSubScope(string id)
+        public override IScope NewScope(string id)
         {
-            // add the scope
-            if (!HasSubScope(id))
-            {
-                this.Children.Add(new Scope(engine: this.Engine, id: id));
-            }
-            // return the last scope
-            return this.GetSubScope(id);
+            return new XPTScope(engine: Engine, id: id);
         }
-
         /// <summary>
         /// returns a rule rule from the repository or creates a new one and returns this
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
-        public virtual SelectionRule GetSelectionRule(string id = null)
+        public override SelectionRule GetSelectionRule(string id = null)
         {
             if (Repository.HasSelectionRule(id))
                 return Repository.GetSelectionRule(id);
@@ -132,16 +113,14 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param id="id"></param>
         /// <returns></returns>
-        public virtual bool HasSelectionRule(string id)
+        public override bool HasSelectionRule(string id)
         {
             if (Repository.HasSelectionRule(id))
                 return true;
-            else
-                if (EngineScope != null && EngineScope.Repository.HasSelectionRule(id)) return true;
-                else
-                    if (Parent != null)
-                        return Parent.HasSelectionRule(id);
-                
+            else if (EngineScope != null && EngineScope.Repository.HasSelectionRule(id)) 
+                return true;
+            else if (Parent != null)
+                return Parent.HasSelectionRule(id);
 
             return false;
         }
@@ -151,7 +130,7 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
-        public virtual Operator GetOperator(Token id)
+        public override Operator GetOperator(Token id)
         {
             if (Repository.HasOperator(id))
                 return Repository.GetOperator(id);
@@ -167,14 +146,14 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public virtual bool HasOperator(Token id)
+        public override bool HasOperator(Token id)
         {
             if (Repository.HasOperator(id))
                 return true;
             else if (EngineScope != null && EngineScope.Repository.HasOperator(id))
                 return true;
             else if (Parent != null)
-                return Parent.Repository.HasOperator(id);
+                return Parent.HasOperator(id);
             return false;
         }
 
@@ -183,7 +162,7 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
-        public virtual @Function GetFunction(Token id)
+        public override @Function GetFunction(Token id)
         {
             if (Repository.HasFunction(id))
                 return Repository.GetFunction(id);
@@ -199,14 +178,14 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public virtual bool HasFunction(Token id)
+        public override bool HasFunction(Token id)
         {
             if (Repository.HasFunction(id))
                 return true;
             else if (EngineScope!=null && EngineScope.Repository.HasFunction(id))
                 return true;
             else if (Parent != null)
-                return Parent.Repository.HasFunction(id);
+                return Parent.HasFunction(id);
             return false;
         }
 
@@ -215,7 +194,7 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
-        public virtual iObjectDefinition GetDataObjectDefinition(string id)
+        public override iObjectDefinition GetDataObjectDefinition(string id)
         {
             if (Repository.HasDataObjectDefinition(id))
                 return Repository.GetDataObjectDefinition(id);
@@ -231,7 +210,7 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public virtual bool HasDataObjectDefinition(string id)
+        public override bool HasDataObjectDefinition(string id)
         {
             if (Repository.HasDataObjectDefinition(new ObjectName(moduleid: this.Id, objectid: id)))
                 return true;
@@ -241,14 +220,66 @@ namespace OnTrack.Rulez
                 return Parent.HasDataObjectDefinition(id);
             return false;
         }
+        /// <summary>
+        /// add a symbol to the scope
+        /// </summary>
+        /// <param name="symbol"></param>
+        public override bool AddSymbol(ISymbol symbol)
+        {
+            if (!this.Repository.HasSymbol(symbol.Id))
+                return this.Repository.AddSymbol(symbol);
+            return false;
+        }
+        /// <summary>
+        /// remove a symbol from the scope
+        /// </summary>
+        /// <param name="symbol"></param>
+        public override bool RemoveSymbol(string id)
+        {
+            if (this.Repository.HasSymbol(id))
+                return this.Repository.RemoveSymbol(id);
+            return false;
+        }
+        /// <summary>
+        /// returns true if the symbol is known in this scope by id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public override bool HasSymbol(string id)
+        {
+            if (Repository.HasSymbol(id))
+                return true;
+            else if (EngineScope != null && EngineScope.Repository.HasSymbol(id))
+                return true;
+            else if (Parent != null)
+                return Parent.HasSymbol(id);
+            return false;
+        }
+        /// <summary>
+        /// returns a symbol by id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public override ISymbol GetSymbol(string id)
+        {
+            if (this.Repository.HasSymbol(id)) 
+                return this.Repository.GetSymbol(id);
+            else if (EngineScope != null && EngineScope.Repository.HasSymbol(id))
+                return EngineScope.Repository.GetSymbol(id);
+            else if (Parent != null)
+                return Parent.GetSymbol(id);
+
+            return null;
+        }
     }
     /// <summary>
     /// XPT Generation Repository
-    /// implement a normal repository but with a fake data object repository
+    /// implement a normal repository but with a fake data object repository to hold all data object definitions
     /// </summary>
     internal class XPTRepository : Repository
     {
-        // static dataobjectrepository
+        // static dataobjectrepository -> register this for all the XPT DataObject Definitions to go here before instanced in the
+        //                                data engine
         static XPTDataObjectRepository _datarepository = new XPTDataObjectRepository();
 
         /// <summary>
@@ -269,61 +300,99 @@ namespace OnTrack.Rulez
     internal class XPTDataObjectRepository : iDataObjectRepository
     {
         private Dictionary <ObjectName,iObjectDefinition> _objects = new Dictionary<ObjectName, iObjectDefinition>();
-
+        /// <summary>
+        /// returns a dataobject definition by name
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public iObjectDefinition GetIObjectDefinition(ObjectName name)
         {
             if (HasObjectDefinition(name)) return _objects[name];
             return null;
         }
-
-        public iObjectDefinition GetIObjectDefinition(string name)
+        /// <summary>
+        /// returns the data object definition by id
+        /// </summary>
+        /// <param id="id"></param>
+        /// <returns></returns>
+        public iObjectDefinition GetIObjectDefinition(string id)
         {
-            ObjectName aName = new ObjectName(name);
+            ObjectName aName = new ObjectName(id);
             if (HasObjectDefinition(aName)) return _objects[aName];
             return null;
         }
-
+        /// <summary>
+        /// returns a data object definition by type
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
         public iObjectDefinition GetIObjectDefinition(Type type)
         {
             return _objects.Values.Where(x => x.ObjectType == type).FirstOrDefault();
         }
-
+        /// <summary>
+        /// returns an object id by type
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
         public string GetObjectId(Type type)
         {
             return (GetIObjectDefinition(type) == null) ? null : GetIObjectDefinition (type).Id;
         }
-
+        /// <summary>
+        /// returns a type for an object definition name
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public Type GetObjectType(ObjectName name)
         {
             throw new NotImplementedException();
         }
-
+        /// <summary>
+        /// return true if the name exists
+        /// </summary>
+        /// <param name="objectname"></param>
+        /// <returns></returns>
         public bool HasObjectDefinition(ObjectName objectname)
         {
             return _objects.ContainsKey(objectname);
         }
-
+        /// <summary>
+        /// returns true if the id exists
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         public bool HasObjectDefinition(string id)
         {
             ObjectName aName = new ObjectName(id);
             return HasObjectDefinition(aName);
         }
-
+        /// <summary>
+        /// returns true if the type is an object definition
+        /// </summary>
+        /// <param name="type"></param>
+        /// <returns></returns>
         public bool HasObjectDefinition(Type type)
         {
             return _objects.Values.Where(x => x.ObjectType == type).FirstOrDefault() != null;
         }
-
+        /// <summary>
+        /// returns all object definitions
+        /// </summary>
         public IEnumerable<iObjectDefinition> IObjectDefinitions
         {
             get { return _objects.Values; }
         }
-
+        /// <summary>
+        /// returns all data object provides
+        /// </summary>
         public IEnumerable<iDataObjectProvider> DataObjectProviders
         {
             get { return new List<iDataObjectProvider>(); }
         }
-
+        /// <summary>
+        /// return all module names
+        /// </summary>
         public IEnumerable<CanonicalName> ModuleNames
         {
             get 

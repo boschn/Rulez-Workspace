@@ -601,7 +601,7 @@ namespace OnTrack.Rulez
                     VisitedScope(scope, args);
             }
         }
-
+        private CanonicalName _name; // name of the scope
         private string _id; // scope id
         private IScope _parent; // parent scope
         private ObservableCollection<IScope> _children = new ObservableCollection<IScope>(); // children scopes
@@ -621,12 +621,30 @@ namespace OnTrack.Rulez
         /// </summary>
         public Scope(Engine engine, string id = null)
         {
-            if (id == null)
+            if (id == null) _id = Guid.NewGuid().ToString();
+            else _id = id;
+            _name = new CanonicalName (_id);
+
+            Children.CollectionChanged += Scope_CollectionChanged;
+            this.PropertyChanged += Scope_PropertyChanged;
+            // Register with Data types
+            DataType.OnCreation += Scope_DataTypeOnCreation;
+            DataType.OnRemoval += Scope_DataTypeOnRemoval;
+        }
+        public Scope(Engine engine, CanonicalName name = null)
+        {
+            if (name == null)
+            {
                 _id = Guid.NewGuid().ToString();
+                _name = new CanonicalName(_id);
+            }
             else
-                _id = id;
-            _engine = engine;
-            this.Children.CollectionChanged += Scope_CollectionChanged;
+            {
+                _name = name;
+                _id = name.FullId;
+            }
+
+            Children.CollectionChanged += Scope_CollectionChanged;
             this.PropertyChanged += Scope_PropertyChanged;
             // Register with Data types
             DataType.OnCreation += Scope_DataTypeOnCreation;
@@ -644,7 +662,15 @@ namespace OnTrack.Rulez
             {
                 return _id;
             }
-            set { _id = value; }
+            set { _id = value; _name = new CanonicalName(_id); }
+        }
+        /// <summary>
+        /// gets or sets the name
+        /// </summary>
+        public virtual CanonicalName Name
+        {
+            get { return _name; }
+            set { _name = value; _id = _name.FullId; }
         }
         /// <summary>
         /// gets or sets the parent scope
@@ -703,7 +729,7 @@ namespace OnTrack.Rulez
                 RaisePropertyChanged(ConstPropertyEngine);
             }
         }
-        
+       
         #endregion
         
         /// <summary>
@@ -715,7 +741,6 @@ namespace OnTrack.Rulez
             if (PropertyChanged != null)
                 PropertyChanged(this, new PropertyChangedEventArgs(name));
         }
-        
         /// <summary>
         /// PropertyChanged Event
         /// </summary>
@@ -736,7 +761,6 @@ namespace OnTrack.Rulez
                         aScope.Engine = this.Engine;
             }
         }
-        
         /// <summary>
         /// handler for changing the nodes list
         /// </summary>
@@ -755,7 +779,6 @@ namespace OnTrack.Rulez
                     }
                 }
         }
-        
         /// <summary>
         /// handle added Event
         /// </summary>
@@ -765,7 +788,6 @@ namespace OnTrack.Rulez
         {
             this.Repository.RegisterDataObjectRepository(e.DataObjectRepository);
         }
-        
         /// <summary>
         /// handle removed Event
         /// </summary>
@@ -775,7 +797,6 @@ namespace OnTrack.Rulez
         {
             this.Repository.DeRegisterDataObjectRepository(e.DataObjectRepository);
         }
-        
         /// <summary>
         /// event Handling routine of Datatype On Creation Event
         /// </summary>
@@ -789,7 +810,6 @@ namespace OnTrack.Rulez
                 this.Repository.AddDataType(args.DataType);
             }
         }
-        
         /// <summary>
         ///  event Handling routine of Datatype On Removal Event
         /// </summary>
@@ -813,7 +833,33 @@ namespace OnTrack.Rulez
             else
                 return false;
         }
-        
+        /// <summary>
+        /// returns true if one descendant has the scope name
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public virtual bool HasScope(CanonicalName name)
+        {
+            CanonicalName normalized = name.Reduce(this.Name);
+            foreach (IScope aSub in this.Children)
+            {
+                // if we have the name
+                if (aSub.Name == name) return true;
+                if (String.Compare(normalized.IDs.First(), aSub.Name.IDs.First(), ignoreCase: true) == 00)
+                    return aSub.HasScope(name);
+            }
+            
+            return false;
+        }
+        /// <summary>
+        /// returns true if one descendant scope has the same id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public virtual bool HasScope(string id)
+        {
+            return HasScope(new CanonicalName(id));
+        }
         /// <summary>
         /// returns a Subscope of an given id or null
         /// </summary>
@@ -822,6 +868,32 @@ namespace OnTrack.Rulez
         public virtual IScope GetSubScope(string id)
         {
             return this.Children.Where(x => String.Compare(x.Id, id, true) == 00).FirstOrDefault() ;
+        }
+        /// <summary>
+        /// returns a scope object from the scope descendants by name
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public virtual IScope GetScope(CanonicalName name)
+        {
+            CanonicalName normalized = name.Reduce(this.Name);
+            foreach (IScope aSub in this.Children)
+            {
+                // if we have the name
+                if (aSub.Name == name) return aSub;
+                if (String.Compare(normalized.IDs.First(), aSub.Name.IDs.First(), ignoreCase: true) == 00)
+                    return aSub.GetScope(name);
+            }
+            return null;
+        }
+        /// <summary>
+        /// returns a scope object from the descendants by id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public virtual IScope GetScope(string id)
+        {
+            return GetScope(new CanonicalName(id));
         }
         /// <summary>
         /// create an Subscope of an given id
@@ -838,7 +910,67 @@ namespace OnTrack.Rulez
             // return the last scope
             return this.GetSubScope(id);
         }
-        
+        public virtual IScope GetRoot()
+        {
+            if (_parent != null) return _parent.GetRoot();
+            return this;
+        }
+        /// <summary>
+        /// adds a scope object to the descendants
+        /// </summary>
+        /// <param name="scope"></param>
+        /// <returns></returns>
+        public virtual bool AddScope(IScope scope)
+        {
+            if (!HasScope(scope.Name))
+            {
+                IScope aSub;
+                CanonicalName normalized = scope.Name.Reduce(this.Name);
+                if (!HasSubScope(normalized.IDs.First()))
+                    aSub = new Scope(engine: this.Engine, id: CanonicalName.Push(this.Id, normalized.IDs.First()));
+                else aSub = GetSubScope(normalized.IDs.First());
+
+                return aSub.AddScope(scope);
+            }
+            return false;
+        }
+        /// <summary>
+        /// add new scope object by id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public virtual bool AddScope(string id)
+        {
+            return AddScope(NewScope(id));
+        }
+        /// <summary>
+        /// Add new scope object by name
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public virtual bool AddScope(CanonicalName name)
+        {
+            return AddScope(NewScope(name));
+        }
+        /// <summary>
+        /// creates a new scope object
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public virtual IScope NewScope(string id)
+        {
+            return NewScope(new CanonicalName(id));
+        }
+        /// <summary>
+        /// creates a new scope object
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public virtual IScope NewScope(CanonicalName name)
+        {
+            IScope aScope = new Scope(engine: this.Engine, name: name);
+            return aScope;
+        }
         /// <summary>
         /// returns a rule rule from the repository or creates a new one and returns this
         /// </summary>
@@ -855,7 +987,6 @@ namespace OnTrack.Rulez
             Repository.AddSelectionRule(aRule.ID, aRule);
             return aRule;
         }
-        
         /// <summary>
         /// returns true if the selection rule by id is found in this Scope
         /// </summary>
@@ -869,7 +1000,6 @@ namespace OnTrack.Rulez
                 return Parent.HasSelectionRule(id);
             return false;
         }
-        
         /// <summary>
         /// gets the Operator definition for the Token ID
         /// </summary>
@@ -883,7 +1013,6 @@ namespace OnTrack.Rulez
                 return Parent.GetOperator(id);
             return null;
         }
-        
         /// <summary>
         /// return true if the operator is found here
         /// </summary>
@@ -897,7 +1026,6 @@ namespace OnTrack.Rulez
                 return Parent.HasOperator(id);
             return false;
         }
-        
         /// <summary>
         /// gets the Operator definition for the Token ID
         /// </summary>
@@ -911,7 +1039,6 @@ namespace OnTrack.Rulez
                 return Parent.GetFunction(id);
             return null;
         }
-        
         /// <summary>
         /// returns true if the function is in scope
         /// </summary>
@@ -925,7 +1052,6 @@ namespace OnTrack.Rulez
                 return Parent.HasFunction(id);
             return false;
         }
-        
         /// <summary>
         /// gets the Operator definition for the ID
         /// </summary>
@@ -939,7 +1065,6 @@ namespace OnTrack.Rulez
                 return Parent.GetDataObjectDefinition(id);
             return null;
         }
-        
         /// <summary>
         /// returns true if the data object is in scope
         /// </summary>
@@ -952,6 +1077,47 @@ namespace OnTrack.Rulez
             else if (Parent != null)
                 return Parent.HasDataObjectDefinition(id);
             return false;
+        }
+        /// <summary>
+        /// add a symbol to the scope
+        /// </summary>
+        /// <param name="symbol"></param>
+        public virtual bool AddSymbol(ISymbol symbol)
+        {
+            if (!this.Repository.HasSymbol(symbol.Id))
+                return this.Repository.AddSymbol(symbol);
+
+            return false;
+        }
+        /// <summary>
+        /// remove a symbol from the scope
+        /// </summary>
+        /// <param name="symbol"></param>
+        public virtual bool RemoveSymbol(string id)
+        {
+            if (this.Repository.HasSymbol(id))
+                return this.Repository.RemoveSymbol(id);
+            return false;
+        }
+        /// <summary>
+        /// returns true if the symbol is known in this scope by id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public virtual bool HasSymbol(string id)
+        {
+            if (this.Repository.HasSymbol(id)) return true;
+            return false;
+        }
+        /// <summary>
+        /// returns the ISymbol from this Scope
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public virtual ISymbol GetSymbol(string id)
+        {
+            if (this.Repository.HasSymbol(id)) return this.Repository.GetSymbol(id);
+            return null;
         }
     }
 
@@ -973,6 +1139,8 @@ namespace OnTrack.Rulez
         // dictionary of types
         protected Dictionary<string, IDataType> _datatypes = new Dictionary<string, IDataType>();
         protected Dictionary<string, List<IDataType>> _datatypesSignature = new Dictionary<string, List<IDataType>>();
+        // dictionary of symbols
+        protected Dictionary<string, ISymbol> _symbols = new Dictionary<string, ISymbol>();
 
         // initialize Flag
         private bool _IsInitialized = false;
@@ -1077,10 +1245,13 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public virtual bool RegisterDataObjectRepository(iDataObjectRepository repository)
         {
-            _dataobjectRepositories.Add(repository);
-            return true;
+            if (_dataobjectRepositories.Contains(repository))
+            {
+                _dataobjectRepositories.Add(repository);
+                return true;
+            }
+            return false;
         }
-        
         /// <summary>
         /// register the DataObjectEntrySymbol Repository
         /// </summary>
@@ -1088,10 +1259,13 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public virtual bool DeRegisterDataObjectRepository(iDataObjectRepository repository)
         {
-            _dataobjectRepositories.Remove(repository);
-            return true;
+            if (_dataobjectRepositories.Contains(repository))
+            {
+                _dataobjectRepositories.Remove(repository);
+                return true;
+            }
+            return false;
         }
-        
         /// <summary>
         /// lazy initialize
         /// </summary>
@@ -1131,7 +1305,6 @@ namespace OnTrack.Rulez
             _IsInitialized = true;
             return _IsInitialized;
         }
-        
         /// <summary>
         /// returns true if the repository has the rule rule
         /// </summary>
@@ -1142,7 +1315,6 @@ namespace OnTrack.Rulez
             Initialize();
             return _selectionrules.ContainsKey(id);
         }
-        
         /// <summary>
         /// returns the selectionrule by handle
         /// </summary>
@@ -1155,7 +1327,6 @@ namespace OnTrack.Rulez
                 return _selectionrules[id];
             throw new KeyNotFoundException(id + " was not found in repository");
         }
-        
         /// <summary>
         /// adds a rule rule to the repository by handle
         /// </summary>
@@ -1170,7 +1341,6 @@ namespace OnTrack.Rulez
             _selectionrules.Add(id, rule);
             return true;
         }
-        
         /// <summary>
         /// adds a rule rule to the repository by handle
         /// </summary>
@@ -1184,7 +1354,6 @@ namespace OnTrack.Rulez
                 return _selectionrules.Remove(id);
             return false;
         }
-        
         /// <summary>
         /// returns true if the repository has the function
         /// </summary>
@@ -1195,7 +1364,6 @@ namespace OnTrack.Rulez
             Initialize();
             return _Functions.ContainsKey(id);
         }
-        
         /// <summary>
         /// returns the function by handle
         /// </summary>
@@ -1208,7 +1376,6 @@ namespace OnTrack.Rulez
                 return _Functions[id];
             throw new KeyNotFoundException(id + " was not found in repository");
         }
-        
         /// <summary>
         /// adds a function to the repository by handle
         /// </summary>
@@ -1223,7 +1390,6 @@ namespace OnTrack.Rulez
             _Functions.Add(function.Token, function);
             return true;
         }
-        
         /// <summary>
         /// returns true if the repository has the rule rule
         /// </summary>
@@ -1236,7 +1402,6 @@ namespace OnTrack.Rulez
                 return _Operators.ContainsKey(id);
             return false;
         }
-        
         /// <summary>
         /// returns the selectionrule by handle
         /// </summary>
@@ -1249,7 +1414,6 @@ namespace OnTrack.Rulez
                 return _Operators[id];
             throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[] { id.ToString(), "Operator" });
         }
-        
         /// <summary>
         /// adds a rule rule to the repository by handle
         /// </summary>
@@ -1264,7 +1428,6 @@ namespace OnTrack.Rulez
             _Operators.Add(Operator.Token, Operator);
             return true;
         }
-        
         /// <summary>
         /// adds a rule rule to the repository by handle
         /// </summary>
@@ -1278,7 +1441,6 @@ namespace OnTrack.Rulez
                 return _Operators.Remove(id);
             return false;
         }
-        
         /// <summary>
         /// returns true if the repository has the function
         /// </summary>
@@ -1289,7 +1451,6 @@ namespace OnTrack.Rulez
             Initialize();
             return _datatypes.ContainsKey(name.ToUpper());
         }
-        
         /// <summary>
         /// returns true if the repository has the function
         /// </summary>
@@ -1299,7 +1460,6 @@ namespace OnTrack.Rulez
         {
             return HasDataType(datatype.Id);
         }
-        
         /// <summary>
         /// returns true if the repository has the function
         /// </summary>
@@ -1310,7 +1470,6 @@ namespace OnTrack.Rulez
             Initialize();
             return _datatypesSignature.ContainsKey(signature.ToUpper());
         }
-        
         /// <summary>
         /// returns the datatype by name
         /// </summary>
@@ -1323,7 +1482,6 @@ namespace OnTrack.Rulez
                 return _datatypes[Name.ToUpper()];
             throw new RulezException(RulezException.Types.DataTypeNotFound, arguments: new object[] { Name.ToUpper() });
         }
-        
         /// <summary>
         /// returns the datatype by name
         /// </summary>
@@ -1336,7 +1494,6 @@ namespace OnTrack.Rulez
                 return _datatypesSignature[signature.ToUpper()];
             throw new RulezException(RulezException.Types.DataTypeNotFound, arguments: new object[] { signature.ToUpper() });
         }
-        
         /// <summary>
         /// adds a datatype to the repository by handle
         /// </summary>
@@ -1357,7 +1514,6 @@ namespace OnTrack.Rulez
             aList.Add(datatype);
             return true;
         }
-        
         /// <summary>
         /// adds a datatype to the repository by handle
         /// </summary>
@@ -1377,7 +1533,55 @@ namespace OnTrack.Rulez
             }
             return true;
         }
-        
+        /// <summary>
+        /// returns true if the repository has the symbol
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <returns></returns>
+        public bool HasSymbol(string id)
+        {
+            Initialize();
+            if (!String.IsNullOrEmpty (id))
+                return _symbols.ContainsKey(id.ToUpper());
+            return false;
+        }
+        /// <summary>
+        /// returns the symbol by id
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <returns></returns>
+        public ISymbol GetSymbol(string id)
+        {
+            Initialize();
+            if (this.HasSymbol(id))
+                return _symbols[id.ToUpper()];
+            throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[] { id.ToString(), "Symbol" });
+        }
+        /// <summary>
+        /// adds a rule rule to the repository by handle
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <param name="rule"></param>
+        /// <returns></returns>
+        public bool AddSymbol(ISymbol symbol)
+        {
+            Initialize();
+            if (this.HasSymbol(symbol.Id)) RemoveSymbol(symbol.Id);
+            _symbols.Add(symbol.Id.ToUpper(), symbol);
+            return true;
+        }
+        /// <summary>
+        /// adds a symbol to the repository by id
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <param name="rule"></param>
+        /// <returns></returns>
+        public bool RemoveSymbol(string id)
+        {
+            Initialize();
+            if (this.HasSymbol(id)) return _symbols.Remove(id.ToUpper());
+            return false;
+        }
         /// <summary>
         /// returns true if the id exists in the Repository
         /// </summary>
@@ -1402,9 +1606,8 @@ namespace OnTrack.Rulez
             }
             return false;
         }
-        
         /// <summary>
-        /// returns the selectionrule by handle
+        /// returns dataobject definition by object id
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
@@ -1412,7 +1615,11 @@ namespace OnTrack.Rulez
         {
             return GetDataObjectDefinition(new ObjectName(id));
         }
-        
+        /// <summary>
+        /// returns a dataobject definition by object name
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
         public iObjectDefinition GetDataObjectDefinition(ObjectName name)
         {
             Initialize();

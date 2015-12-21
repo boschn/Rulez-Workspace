@@ -32,6 +32,7 @@ namespace OnTrack.Rulez
     /// </summary>
     partial class RulezParser
     {
+       
         /// <summary> 
         /// structure to hold a parameter definition
         /// </summary>
@@ -41,6 +42,7 @@ namespace OnTrack.Rulez
             public IDataType datatype;
             public string name;
             public IExpression defaultvalue;
+
             /// <summary>
             /// Constructor
             /// </summary>
@@ -63,6 +65,10 @@ namespace OnTrack.Rulez
             public VariableDefinition(string name, IDataType datatype, INode defaultvalue = null)
             { this.name = name; this.datatype = datatype; this.defaultvalue = defaultvalue; }
         }
+        /// <summary>
+        /// gets or sets the current XPTScope
+        /// </summary>
+        public XPTScope CurrentScope { get; set; }
         /// <summary>
         /// gets or sets the Engine for the parser
         /// </summary>
@@ -474,7 +480,7 @@ namespace OnTrack.Rulez
         }
 
         /// <summary>
-        /// build-in Message Listener
+        /// Rulez build-in Message Listener
         /// </summary>
         public class MessageListener : Antlr4.Runtime.BaseErrorListener
         {

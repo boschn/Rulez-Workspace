@@ -75,13 +75,56 @@ namespace OnTrack.Rulez
                     string result = String.Empty;
                     // get the result string
                     for (uint i = 0; i <= split.GetUpperBound(0); i++)
-                        if (i > 0) id += ConstDelimiter + split[i];
-                        else id = split[i];
+                        if (i > 0) result += ConstDelimiter + split[i];
+                        else result = split[i];
                     return result;
                 }
             }
             id = canonicalID;
             return String.Empty;
+        }
+        /// <summary>
+        /// pops a id on a canonical id and returns it
+        /// </summary>
+        /// <param id="canonicalID"></param>
+        /// <param id="id"></param>
+        /// <returns></returns>
+        public static string Pop(string canonicalID)
+        {
+            if (IsCanonical(canonicalID))
+            {
+                string[] split = canonicalID.Split(ConstDelimiter);
+                if (split.GetUpperBound(0) > 0)
+                {
+                    string result = String.Empty;
+                    // get the result string
+                    for (uint i = 0; i <= split.GetUpperBound(0); i++)
+                        if (i > 0) result += ConstDelimiter + split[i];
+                        else result = split[i];
+                    return result;
+                }
+            }
+            return String.Empty;
+        }
+        /// <summary>
+        /// returns from canonicalID a reduced id string (without id)  or the canonicalID if not doesnot contain
+        /// </summary>
+        /// <param name="canonicalID"></param>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public static string Reduce(string canonicalID,string id)
+        {
+            // if the canonicalID fully contains the id
+            if (String.Compare (canonicalID,1,id, id.Length, 1, true)==00)
+            {
+                // remove heading '.'
+                if (canonicalID.ElementAt(id.Length) == ConstDelimiter)
+                    return canonicalID.Substring(id.Length + 1);
+                // else the rest of the string
+                return canonicalID.Substring(id.Length);
+            }
+            // else
+            return canonicalID;
         }
         /// <summary>
         /// build a canonical String out of an array
@@ -168,6 +211,32 @@ namespace OnTrack.Rulez
         public virtual string Pop(ref string id)
         {
             return CanonicalName.Pop(this.FullId, ref id);
+        }
+        /// <summary>
+        /// pops the last canonical id and resturns the rest
+        /// </summary>
+        /// <returns></returns>
+        public virtual string Pop()
+        {
+            return CanonicalName.Pop(this.FullId);
+        }
+        /// <summary>
+        /// strips a heading id from the canonical Name
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        public virtual CanonicalName Reduce(string id)
+        {
+            return new CanonicalName(CanonicalName.Reduce(this.FullId, id));
+        }
+        /// <summary>
+        /// strips a heading name from this canonical name
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public virtual CanonicalName Reduce(CanonicalName name)
+        {
+            return Reduce(name.FullId);
         }
         /// <summary>
         /// toString()

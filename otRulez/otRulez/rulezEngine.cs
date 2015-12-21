@@ -200,31 +200,28 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public IScope CreateScope(string id)
         {
-            string[] split = id.Split (CanonicalName.ConstDelimiter);
-            IScope aLevelScope = GlobalScope;
-            string aLevelScopeName = CanonicalName.GlobalID;
-            for (uint i = 0; i <= split.GetUpperBound (0); i++)
-            {
-                // get or create the Scope
-                if (aLevelScope.HasSubScope(aLevelScopeName)) aLevelScope = aLevelScope.GetSubScope(aLevelScopeName);
-                else
-                {
-                    aLevelScope = aLevelScope.AddSubScope(aLevelScopeName);
-                    // add the known data object repositories
-                    foreach (iDataObjectRepository aR in this._dataobjectEngines)
-                        aLevelScope.Repository.RegisterDataObjectRepository(aR);
-                    this.DataObjectRepositoryAdded += aLevelScope.Scope_DataObjectRepositoryAdded;
-                }
-                // increase the levelscope name
-                if (!String.IsNullOrEmpty(aLevelScopeName)) aLevelScopeName += CanonicalName.ConstDelimiter + split[i];
-                else aLevelScopeName += split[i];
-            }
-
-            return aLevelScope;
+            return CreateScope(new CanonicalName(id));
         }
         public IScope CreateScope(CanonicalName name)
         {
-            return CreateScope(name.FullId);
+            IScope aScope;
+            // todo: error condition
+            if (!GlobalScope.AddScope(name)) return null;
+
+            aScope = GlobalScope.GetScope(name);
+            this.DataObjectRepositoryAdded += aScope.Scope_DataObjectRepositoryAdded;
+
+            // register all scopes 
+            do
+            {
+                // add the known data object repositories
+                foreach (iDataObjectRepository aR in this._dataobjectEngines)
+                  aScope.Repository.RegisterDataObjectRepository(aR);
+                // next scope
+                aScope = GlobalScope.GetScope(aScope.Name.Pop());
+            } while (aScope != GlobalScope && aScope != null);
+            // return the original scope
+            return GlobalScope.GetScope(name);
         }
         #region Access
         /// <summary>
@@ -483,6 +480,8 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         private bool Generate(Antlr4.Runtime.ICharStream input)
         {
+            RulezParser.MessageListener aListener = new RulezParser.MessageListener();
+            RulezParser.RulezUnitContext aCtx = null;
             try
             {
                 RulezLexer aLexer = new RulezLexer(input);
@@ -492,21 +491,31 @@ namespace OnTrack.Rulez
                 RulezParser aParser = new RulezParser(theTokens);
                 aParser.Trace = true;
                 aParser.Engine = this;
-                //aParser.RemoveErrorListeners();
-                //aParser.AddErrorListener(new ErrorListener());
-                RulezParser.RulezUnitContext  aTree = aParser.rulezUnit();
-                // walk the parse tree -> get the result XPTree
-                XPTGenerator aGenerator = new XPTGenerator(aParser);
-                Antlr4.Runtime.Tree.ParseTreeWalker.Default.Walk(aGenerator, aTree);
+                aParser.AddErrorListener(aListener);
+                // step 1: parse
+                aCtx = aParser.rulezUnit();
+                // step 2: generate the declarations
+                XPTDeclGen theDeclGen = new XPTDeclGen(aParser);
+                Antlr4.Runtime.Tree.ParseTreeWalker.Default.Walk(theDeclGen, aCtx);
+                // step 3: generate the XPTree of the code
+                XPTGenerator theXPTGen = new XPTGenerator(aParser);
+                Antlr4.Runtime.Tree.ParseTreeWalker.Default.Walk(theXPTGen, aCtx);
                 // result -> Generate and store from the XPTree
-                return Generate((IRule) aGenerator.XPTree);
+                return Generate((IRule)theXPTGen);
 
             }
             catch (Exception ex)
             {
+                if (aCtx != null)
+                {
+                    if (aCtx.XPTreeNode != null)
+                    {
+                        aCtx.XPTreeNode.Messages.Add(new Message(type: MessageType.Error, message: ex.Message));
+                    }
+                }
                 return false;
             }
-        }
+                   }
         /// <summary>
         /// Generate from a rule the intermediate Code and store it
         /// </summary>

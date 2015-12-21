@@ -30,14 +30,15 @@ using OnTrack.Rulez.Resources;
 namespace OnTrack.Rulez
 {
     /// <summary>
-    /// lister to generate all the declarations in a symbol table
+    /// lister to generate all the declarations in a XPT Scope
     /// </summary>
     public class XPTDeclGen : RulezParserBaseListener
     {
         private RulezParser _parser;
         private eXPressionTree.XPTree _xptree; // the output tree
         private Engine _engine;
-
+        private IScope _currentScope;
+        private Stack<IScope> _scopeStack = new Stack<IScope>();
         /// <summary>
         /// constructor
         /// </summary>
@@ -47,6 +48,9 @@ namespace OnTrack.Rulez
             _parser = parser;
             if (engine == null) _engine = parser.Engine;
             else { _engine = engine; }
+            // default scope is the global scope of the same engine
+            _currentScope = new XPTScope(engine: _engine, id: CanonicalName.GlobalID);
+            
         }
         /// <summary>
         /// gets the associated Engine
@@ -58,6 +62,55 @@ namespace OnTrack.Rulez
                 return _engine;
             }
         }
+        public RulezParser Parser
+        {
+            get
+            {
+                return _parser;
+            }
+        }
+        /// <summary>
+        /// gets or sets the  Current Scope
+        /// </summary>
+        private IScope CurrentScope
+        {
+            get { return _currentScope; }
+            set { _currentScope = value; }
+        }
+        /// <summary>
+        /// push scope element on the stack
+        /// </summary>
+        /// <param name="scope"></param>
+
+        private void PushScope(IScope scope)
+        {
+            _scopeStack.Push(scope);
+        }
+        /// <summary>
+        /// push a new scope (which will be created) on the stack an sets the current scope to this scope
+        /// returns the created scope
+        /// </summary>
+        /// <param name="id"></param>
+        private IScope PushNewScope(string id)
+        {
+            // create Scope
+            CurrentScope.AddScope(id: id);
+            IScope aScope = CurrentScope.GetScope(id: id);
+            if (aScope != null) CurrentScope = aScope;
+            PushScope(aScope);
+            return aScope;
+ 
+        }
+        /// <summary>
+        /// pop the last scope from stack and sets  the current scope to the remaining top element
+        /// </summary>
+        /// <returns></returns>
+        private IScope PopScope()
+        {
+            IScope aScope =  _scopeStack.Pop();
+            CurrentScope = aScope;
+            return aScope;
+        }
         /// <summary>
         /// define nodes
         /// </summary>
@@ -65,7 +118,7 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public override void ExitTypeDeclaration(RulezParser.TypeDeclarationContext ctx)
         {
-            // selection Rulez
+            // todo: save the type declaration in the XPTScope
 
             return ;
         }
@@ -76,9 +129,43 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public override void ExitVariableDeclaration (RulezParser.VariableDeclarationContext ctx)
         {
-            // selection Rulez
+            // todo: save the variable declaration in the XPTScope
 
             return;
+        }
+        /// <summary>
+        /// enter the module declaration
+        /// </summary>
+        /// <param name="ctx"></param>
+        /// <returns></returns>
+        public override void EnterModuleDeclaration(RulezParser.ModuleDeclarationContext ctx)
+        {
+            // create a scope and assign
+            ctx.Scope = PushNewScope(ctx.canonicalName().GetText());
+
+        }
+        /// <summary>
+        /// exit the module declaration
+        /// </summary>
+        /// <param name="context"></param>
+        public override void ExitModuleDeclaration(RulezParser.ModuleDeclarationContext context)
+        {
+            base.ExitModuleDeclaration(context);
+            PopScope();
+        }
+        /// <summary>
+        /// enter the selection rulez
+        /// </summary>
+        /// <param name="ctx"></param>
+        public override void EnterSelectionRulez(RulezParser.SelectionRulezContext ctx)
+        {
+            base.EnterSelectionRulez(ctx);
+            
+            // create new scope
+            if (this.CurrentScope.HasSelectionRule(ctx.ruleid().GetText()))
+                Parser.NotifyErrorListeners(string.Format(Messages.RCM_13, ctx.ruleid().GetText()));
+            ctx.Scope = PushNewScope(ctx.ruleid().GetText());
+           
         }
         /// <summary>
         /// builds the XPT node of this
@@ -96,22 +183,32 @@ namespace OnTrack.Rulez
             // get the name
             SelectionRule aRule = new SelectionRule(ctx.ruleid().GetText(), engine: this.Engine);
             ctx.XPTreeNode = aRule;
-            // create Scope
-            aRule.Scope = new XPTScope(engine: this.Engine, id: ctx.ruleid().GetText());
-            
             // add the parameters
             foreach (RulezParser.ParameterDefinition aParameter in ctx.names.Values)
             {
-                ISymbol symbol = aRule.AddNewParameter(aParameter.name, datatype: aParameter.datatype);
-                // add scope
-                aRule.Scope.AddSymbol(symbol);
+                ISymbol symbol= aRule.AddNewParameter(aParameter.name, datatype: aParameter.datatype);
+                
                 // defaultvalue assignment
                 if (aParameter.defaultvalue != null) aRule.Selection.Nodes.Insert(0, new eXPressionTree.IfThenElse(
                     eXPressionTree.CompareExpression.EQ(symbol, new Literal(null, otDataType.@Null)),
                     new eXPressionTree.Assignment(symbol, (IExpression)aParameter.defaultvalue)));
 
             }
-            return ;
+            // pop the current scope
+            PopScope();
+        }
+        /// <summary>
+        /// Enter SelectStatementBlock
+        /// </summary>
+        /// <param name="ctx"></param>
+         public override void EnterSelectStatementBlock(RulezParser.SelectStatementBlockContext ctx)
+        {
+            // create a scope and assign
+            if (ctx.XPTreeNode == null) ctx.XPTreeNode = new OnTrack.Rulez.eXPressionTree.SelectionStatementBlock("BLOCK-" + Guid.NewGuid().ToString());
+            SelectionStatementBlock aBlock = (SelectionStatementBlock)ctx.XPTreeNode;
+            ctx.Scope = PushNewScope(aBlock.Id);
+
+            return;
         }
         /// <summary>
         /// build the XPTNode of a select statement block
@@ -120,20 +217,26 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public override void ExitSelectStatementBlock(RulezParser.SelectStatementBlockContext ctx)
         {
-            // create a local scope and add the variables
-
-            if (ctx.XPTreeNode == null) ctx.XPTreeNode = new OnTrack.Rulez.eXPressionTree.SelectionStatementBlock();
+            // get the XPTreeNode
             SelectionStatementBlock aBlock = (SelectionStatementBlock)ctx.XPTreeNode;
 
             // add the defined variables to the XPT
             foreach (RulezParser.VariableDefinition aVariable in ctx.names.Values)
             {
-                ISymbol symbol = aBlock.Variables.Where ( X=> X.Id == aVariable.name).FirstOrDefault ();
-                if (symbol == null) 
-                    symbol = aBlock.AddNewVariable(aVariable.name, datatype: aVariable.datatype);
-                // defaultvalue assignment
-                if (aVariable.defaultvalue != null) aBlock.Nodes.Insert(0,new eXPressionTree.Assignment(symbol, (IExpression)aVariable.defaultvalue));
+                /// check the repository (on defined in here) else (if defined in higher scopes) we overwrite
+                if (!aBlock.Scope.Repository.HasSymbol(aVariable.name))
+                {
+                    ISymbol symbol = aBlock.AddNewVariable(aVariable.name, datatype: aVariable.datatype);
+                    
+                    // defaultvalue assignment
+                    if (aVariable.defaultvalue != null)
+                        aBlock.Nodes.Insert(0, new eXPressionTree.Assignment(symbol, (IExpression)aVariable.defaultvalue));
+                }else
+                    // ToDO redefined variable name
+                { Parser.NotifyErrorListeners(string.Format(Messages.RCM_1, aVariable.name, aBlock.Id)); ; }
             }
+            // pop the current scope
+            PopScope();
         }
         
     }
