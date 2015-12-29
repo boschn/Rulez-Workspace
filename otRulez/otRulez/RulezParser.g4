@@ -486,7 +486,7 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode , CanonicalName Name  ]
 	// named literals
 	| TRUE | FALSE | NULL
 	// logical operators 
-	| A N D | O R | N O T | X O R
+	| AND | OR | NOT | XOR
 	// identifier
 	| IDENTIFIER // finally
 	;

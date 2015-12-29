@@ -455,7 +455,7 @@ namespace OnTrack.Core
         /// in the same position in the sort order as <paramref name="obj" />. Greater than
         /// zero This instance follows <paramref name="obj" /> in the sort order.
         /// </returns>
-         int CompareTo(object obj);
+        new int CompareTo(object obj);
 
         /// <summary>
         /// Determines whether the specified objects are equal.
@@ -466,7 +466,7 @@ namespace OnTrack.Core
         /// <paramref name="x" /> and <paramref name="y" /> are of different types and neither
         /// one can handle comparisons with the other.</exception>
         /// <returns>true if the specified objects are equal; otherwise, false.</returns>
-         bool Equals(object x, object y);
+        new bool Equals(object x, object y);
 
         /// <summary>
         /// Returns a hash code for the specified object.
@@ -476,7 +476,7 @@ namespace OnTrack.Core
         /// <exception cref="T:System.ArgumentNullException">The type of <paramref name="obj" />
         /// is a reference type and <paramref name="obj" /> is null.</exception>
         /// <returns>A hash code for the specified object.</returns>
-         int GetHashCode(object obj);
+        new int GetHashCode(object obj);
 
 
         /// <summary>

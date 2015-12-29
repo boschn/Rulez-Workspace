@@ -55,6 +55,8 @@ STROKE : '|' ;
 HASH : '#' ;
 DOT : '.' ;
 QUESTIONMARK : '?';
+CONCAT: C O N C A T;
+NOTHING: N O T H I N G;
 
 // parenthesis
  LPAREN : '(';

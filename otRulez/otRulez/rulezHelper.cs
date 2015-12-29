@@ -260,7 +260,7 @@ namespace OnTrack.Rulez
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <returns></returns>
-          public bool Equals(object y)
+        public override bool Equals(object y)
         {
             if (! (y is CanonicalName)) return false;
             return Equals(this, (CanonicalName)y);
@@ -281,6 +281,14 @@ namespace OnTrack.Rulez
         /// <param name="obj">The obj.</param>
         /// <returns></returns>
         int System.Collections.Generic.IEqualityComparer<CanonicalName>.GetHashCode(CanonicalName obj)
+        {
+            return this.IDs.GetHashCode();
+        }
+        /// <summary>
+        /// returns Hashcode
+        /// </summary>
+        /// <returns></returns>
+        public override int GetHashCode()
         {
             return this.IDs.GetHashCode();
         }

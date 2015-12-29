@@ -673,6 +673,14 @@ namespace OnTrack.Core
           {
               return !(a == b);
           }
+        /// <summary>
+        /// returns Hashcode
+        /// </summary>
+        /// <returns></returns>
+        public override int GetHashCode()
+        {
+            return this.Id.GetHashCode();
+        }
         #endregion
         /// <summary>
         /// to String Method

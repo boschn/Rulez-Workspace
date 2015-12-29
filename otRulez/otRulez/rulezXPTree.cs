@@ -1432,7 +1432,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// returns true if node is a leaf
         /// </summary>
-        public bool HasSubNodes { get { if (this.Operator.Arguments != 0) return true; return false; } }
+        public new bool HasSubNodes { get { if (this.Operator.Arguments != 0) return true; return false; } }
         #endregion
         /// <summary>
         /// build and return a recursive LogicalExpression Tree from arguments
