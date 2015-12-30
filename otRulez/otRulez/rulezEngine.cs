@@ -541,12 +541,12 @@ namespace OnTrack.Rulez
                 // if successfull
                 if (result) 
                 {
-                    rule.RuleState = otRuleState.generatedCode ;
+                    rule.RuleState = otRuleState.GeneratedCode ;
                     //  get the handle
                     if (code != null && !String.IsNullOrEmpty(code.Handle)) code.Handle = rule.Handle;
                     // add it to the code base
                     if (code != null &&  !String.IsNullOrEmpty(code.Handle)) AddCode(code);
-                    else throw new RulezException(RulezException.Types.HandleNotDefined, arguments: new object[] { rule.ID});
+                    else throw new RulezException(RulezException.Types.HandleNotDefined, arguments: new object[] { rule.Id});
                 }
                 return result;
                
@@ -608,8 +608,8 @@ namespace OnTrack.Rulez
                 throw new RulezException (RulezException.Types.InvalidNumberOfArguments, arguments: new object[] {"SelectionRule", ruleid, aRule.Parameters .Count(), parameters.Length});
             // get the Codebit
             ICodeBit theCode = this.GetCode(aRule.Handle);
-            if (theCode == null) throw new RulezException (RulezException.Types.HandleNotDefined , arguments: new object[] {aRule.ID});
-            if (theCode.Code == null) throw new RulezException (RulezException.Types.InvalidCode, arguments: new object[]{aRule.ID, aRule.Handle});
+            if (theCode == null) throw new RulezException (RulezException.Types.HandleNotDefined , arguments: new object[] {aRule.Id});
+            if (theCode.Code == null) throw new RulezException (RulezException.Types.InvalidCode, arguments: new object[]{aRule.Id, aRule.Handle});
             // push the arguments
             _context.PushParameters(parameters);
             try

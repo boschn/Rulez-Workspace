@@ -429,14 +429,14 @@ namespace OnTrack.Rulez.eXPressionTree
 
             if (id == null) { _id = Guid.NewGuid().ToString(); }
             else { _id = id; }
-            _state = otRuleState.created;
+            _state = otRuleState.Created;
             _engine = engine;
             _handle = Guid.NewGuid().ToString();
         }
         /// <summary>
         /// sets or gets the handle of the rule
         /// </summary>
-        public string ID { get { return _id; } set { _id = value; RaiseOnPropertyChanged(this, ConstPropertyID); } }
+        public string Id { get { return _id; } set { _id = value; RaiseOnPropertyChanged(this, ConstPropertyID); } }
         /// <summary>
         /// returns the theCode handle
         /// </summary>
@@ -2197,7 +2197,7 @@ namespace OnTrack.Rulez.eXPressionTree
         {
             if (_parameters.ContainsKey(id))
             {
-                throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { id, this.ID });
+                throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { id, this.Id });
             }
             Variable aVar = new Variable(id:id, typeID:typeId, scope:this);
              _parameters.Add(aVar.Id,aVar);
@@ -2214,7 +2214,7 @@ namespace OnTrack.Rulez.eXPressionTree
         {
             if (_parameters.ContainsKey(id))
             {
-                throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { id, this.ID });
+                throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { id, this.Id });
             }
             Variable aVar = new Variable(id: id, datatype: datatype, scope: this);
             _parameters.Add(aVar.Id, aVar);
@@ -2230,7 +2230,7 @@ namespace OnTrack.Rulez.eXPressionTree
         public override string ToString()
         {
             bool comma = false;
-            string aString = "{(" + NodeType.ToString() + ") " + this.ID + "[";
+            string aString = "{(" + NodeType.ToString() + ") " + this.Id + "[";
             foreach (ISymbol aSymbol in Parameters)
             {
                 if (comma) aString += ",";

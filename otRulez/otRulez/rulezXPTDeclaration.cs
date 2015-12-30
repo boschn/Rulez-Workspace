@@ -27,9 +27,9 @@ namespace OnTrack.Rulez.eXPressionTree
     /// </summary>
     public enum otRuleState
     {
-        created = 1,
-        updated = 2,
-        generatedCode = 4
+        Created = 1,
+        Updated = 2,
+        GeneratedCode = 4
     }
     /// <summary>
     /// token type of the Node
@@ -56,7 +56,6 @@ namespace OnTrack.Rulez.eXPressionTree
         IfThenElse,
         Return,
         Unit,
-
     }
 
     /// <summary>
@@ -152,13 +151,11 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// returns the ID of the rule
         /// </summary>
-        String ID { get; set; }
-
+        String Id { get; set; }
         /// <summary>
         /// returns the state of the rule
         /// </summary>
         otRuleState RuleState { get; set; }
-
         /// <summary>
         ///  Code Handle
         /// </summary>
@@ -172,7 +169,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// gets or sets the ID of the function
         /// </summary>
-        String ID { get; set; }
+        String Id { get; set; }
     }
     /// <summary>
     /// describes a expression tree symbol 
@@ -183,7 +180,6 @@ namespace OnTrack.Rulez.eXPressionTree
         /// gets or sets the ID of the variable
         /// </summary>
         String Id { get; set; }
-        
         /// <summary>
         /// defines the IeXPressionTree scope of the symbol
         /// </summary>
@@ -192,6 +188,5 @@ namespace OnTrack.Rulez.eXPressionTree
         /// returns true if the symbol is valid in the engine (late binding)
         /// </summary>
         bool? IsValid { get; }
-        
     }
 }

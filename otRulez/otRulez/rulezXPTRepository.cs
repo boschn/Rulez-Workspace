@@ -95,7 +95,7 @@ namespace OnTrack.Rulez
 
             // create a selection rule and return
             var aRule = new SelectionRule(id);
-            Repository.AddSelectionRule(aRule.ID, aRule);
+            Repository.AddSelectionRule(aRule.Id, aRule);
             return aRule;
         }
 
