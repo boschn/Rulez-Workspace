@@ -537,7 +537,7 @@ namespace OnTrack.Rulez.eXPressionTree
     public class DataObjectSymbol : Node, ISymbol
     {
         private IXPTree _scope;
-        private iObjectDefinition _objectdefinition;
+        private IObjectDefinition _objectdefinition;
         private ObjectName _name;
         private bool? _isChecked = false;
         // constants
@@ -598,7 +598,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// returns the IObjectDefinition
         /// </summary>
-        public iObjectDefinition ObjectDefinition
+        public IObjectDefinition ObjectDefinition
         {
             get
             {
@@ -701,7 +701,7 @@ namespace OnTrack.Rulez.eXPressionTree
     public class DataObjectEntrySymbol :  Node, ISymbol 
     {
         private IXPTree _scope;
-        private iObjectEntryDefinition _entrydefinition;
+        private IObjectEntryDefinition _entrydefinition;
         private EntryName _name = null;
         private bool? _isChecked = false;
         // constants
@@ -761,11 +761,11 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// returns the IObjectDefinition
         /// </summary>
-        public iObjectDefinition ObjectDefinition { get { CheckValidity(); return _entrydefinition.ObjectDefinition; } }
+        public IObjectDefinition ObjectDefinition { get { CheckValidity(); return _entrydefinition.ObjectDefinition; } }
         /// <summary>
         /// returns the IObjectEntryDefinition
         /// </summary>
-        public iObjectEntryDefinition ObjectEntryDefinition { get { CheckValidity();  return _entrydefinition; } }
+        public IObjectEntryDefinition ObjectEntryDefinition { get { CheckValidity();  return _entrydefinition; } }
         /// <summary>
         /// returns the ObjectID of the entry
         /// </summary>
@@ -816,7 +816,7 @@ namespace OnTrack.Rulez.eXPressionTree
             {
                 if (Engine.Globals.HasDataObjectDefinition(Name.ObjectName) )
                 {
-                    Core.iObjectDefinition aDefinition = Engine.Globals.GetDataObjectDefinition(Name.ObjectName);
+                    Core.IObjectDefinition aDefinition = Engine.Globals.GetDataObjectDefinition(Name.ObjectName);
                     _entrydefinition = aDefinition.GetiEntryDefinition(Name.Id);
                     if (_entrydefinition == null)
                     {

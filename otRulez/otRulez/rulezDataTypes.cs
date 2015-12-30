@@ -1178,7 +1178,7 @@ namespace OnTrack.Rulez
                 case otDataType.List:
                     return typeof(List<>);
                 case otDataType.DataObject:
-                    return typeof(iDataObject);
+                    return typeof(IDataObject);
                 default:
                     if (typeId != otDataType.List)
                         throw new Rulez.RulezException(Rulez.RulezException.Types.DataTypeNotImplementedByCase,
@@ -1492,7 +1492,7 @@ namespace OnTrack.Rulez
     /// </summary>
     public class DataObjectType: DataStructureType
     {
-        private Core.iObjectDefinition _objectdefinition;
+        private Core.IObjectDefinition _objectdefinition;
         /// <summary>
         /// returns or creates an anonymous type from the engine
         /// </summary>
@@ -1541,7 +1541,7 @@ namespace OnTrack.Rulez
         /// <summary>
         /// gets the object definition
         /// </summary>
-        public Core.iObjectDefinition ObjectDefinition 
+        public Core.IObjectDefinition ObjectDefinition 
         { 
             get 
             {

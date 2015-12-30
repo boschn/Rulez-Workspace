@@ -143,7 +143,7 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
-        iObjectDefinition GetDataObjectDefinition(string id);
+        IObjectDefinition GetDataObjectDefinition(string id);
         /// <summary>
         /// returns true if the data object is in scope
         /// </summary>
@@ -368,13 +368,13 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
-        iObjectDefinition GetDataObjectDefinition(String id);
+        IObjectDefinition GetDataObjectDefinition(String id);
 
-        iObjectDefinition GetDataObjectDefinition(ObjectName name);
+        IObjectDefinition GetDataObjectDefinition(ObjectName name);
 
-        bool RegisterDataObjectRepository(iDataObjectRepository iDataObjectRepository);
+        bool RegisterDataObjectRepository(IDataObjectRepository iDataObjectRepository);
 
-        bool DeRegisterDataObjectRepository(iDataObjectRepository iDataObjectRepository);
+        bool DeRegisterDataObjectRepository(IDataObjectRepository iDataObjectRepository);
         /// <summary>
         /// returns true if the symbol exists in the repository
         /// </summary>

@@ -11,7 +11,7 @@ namespace OnTrack.Testing
     /// <summary>
     /// Test Object Entry Definition
     /// </summary>
-    internal class ObjectEntryDefinition : iObjectEntryDefinition 
+    internal class ObjectEntryDefinition : IObjectEntryDefinition 
     {
         /// <summary>
         /// constructor
@@ -20,7 +20,7 @@ namespace OnTrack.Testing
         /// <param name="entryname"></param>
         /// <param name="typeId"></param>
         /// <param name="isNull"></param>
-        public ObjectEntryDefinition (iObjectDefinition objectdefinition, String entryname, otDataType typeid, bool isNull )
+        public ObjectEntryDefinition (IObjectDefinition objectdefinition, String entryname, otDataType typeid, bool isNull )
         {
             this.ObjectId = objectdefinition.Id;
             this.EntryId = entryname.ToUpper();
@@ -61,17 +61,17 @@ namespace OnTrack.Testing
         public bool IsActive { get ; set; }
        
 
-        public iObjectDefinition ObjectDefinition { get ; set; }
+        public IObjectDefinition ObjectDefinition { get ; set; }
        
     }
 
     /// <summary>
     /// Test ObjectDefinition
     /// </summary>
-    internal class ObjectDefinition : iObjectDefinition
+    internal class ObjectDefinition : IObjectDefinition
     {
         private OnTrack.Rulez.ObjectName _objectname;
-        private Dictionary <String, iObjectEntryDefinition> _entries = new Dictionary<String, iObjectEntryDefinition>();
+        private Dictionary <String, IObjectEntryDefinition> _entries = new Dictionary<String, IObjectEntryDefinition>();
         private List<string> _keynames = new List<string>();
         /// <summary>
         /// constructor
@@ -82,7 +82,7 @@ namespace OnTrack.Testing
             _objectname = new ObjectName(id);
         }
 
-        public bool AddEntry(iObjectEntryDefinition entry)
+        public bool AddEntry(IObjectEntryDefinition entry)
         {
             if (_entries.ContainsKey (entry.EntryId.ToUpper())) _entries .Remove (entry.EntryId.ToUpper() );
 
@@ -205,7 +205,7 @@ namespace OnTrack.Testing
             }
         }
 
-        public IList<iObjectEntryDefinition> iObjectEntryDefinitions
+        public IList<IObjectEntryDefinition> IObjectEntryDefinitions
         {
             get
             {
@@ -218,7 +218,7 @@ namespace OnTrack.Testing
             return _entries.Keys.ToList();
         }
 
-        public iObjectEntryDefinition GetiEntryDefinition(string entryname)
+        public IObjectEntryDefinition GetiEntryDefinition(string entryname)
         {
             if (this.HasEntry(entryname)) return _entries[entryname.ToUpper()];
             return null;
@@ -234,13 +234,13 @@ namespace OnTrack.Testing
     /// <summary>
     /// Test DataObject Repository
     /// </summary>
-    internal  class DataObjectRepository : iDataObjectRepository
+    internal  class DataObjectRepository : IDataObjectRepository
     {
         // add
-        private Dictionary<ObjectName, iObjectDefinition> _objects = new Dictionary<ObjectName, iObjectDefinition>();
+        private Dictionary<ObjectName, IObjectDefinition> _objects = new Dictionary<ObjectName, IObjectDefinition>();
         private Dictionary<Type, String> _types = new Dictionary<Type, String>();
 
-        private List<iDataObjectProvider> _providers = new List<iDataObjectProvider>();
+        private List<IDataObjectProvider> _providers = new List<IDataObjectProvider>();
 
         /// <summary>
         /// constructor
@@ -270,7 +270,7 @@ namespace OnTrack.Testing
         /// </summary>
         /// <param id="id"></param>
         /// <returns></returns>
-        public iObjectDefinition GetIObjectDefinition(ObjectName name)
+        public IObjectDefinition GetIObjectDefinition(ObjectName name)
         {
             if (_objects.ContainsKey(name)) return _objects[name];
             return null;
@@ -281,13 +281,13 @@ namespace OnTrack.Testing
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        public iObjectDefinition GetIObjectDefinition(string name)
+        public IObjectDefinition GetIObjectDefinition(string name)
         {
             // TODO: Implement this method
             throw new NotImplementedException();
         }
 
-        public iObjectDefinition GetIObjectDefinition(Type type)
+        public IObjectDefinition GetIObjectDefinition(Type type)
         {
             throw new NotImplementedException();
         }
@@ -333,7 +333,7 @@ namespace OnTrack.Testing
             throw new NotImplementedException();
         }
 
-        public System.Collections.Generic.IEnumerable<iObjectDefinition> IObjectDefinitions
+        public System.Collections.Generic.IEnumerable<IObjectDefinition> IObjectDefinitions
         {
             get
             {
@@ -341,7 +341,7 @@ namespace OnTrack.Testing
             }
         }
 
-        public System.Collections.Generic.IEnumerable<iDataObjectProvider> DataObjectProviders
+        public System.Collections.Generic.IEnumerable<IDataObjectProvider> DataObjectProviders
         {
             get
             {
@@ -362,7 +362,7 @@ namespace OnTrack.Testing
     /// <summary>
     /// Test DataObject Provider
     /// </summary>
-    internal class DataObjectProvider : iDataObjectProvider
+    internal class DataObjectProvider : IDataObjectProvider
     {
         /// <summary>
         /// constructor
@@ -371,7 +371,7 @@ namespace OnTrack.Testing
         {
 
         }
-        public iDataObject NewDataObject(Type type)
+        public IDataObject NewDataObject(Type type)
         {
             // TODO: Implement this method
             throw new NotImplementedException();
@@ -394,7 +394,7 @@ namespace OnTrack.Testing
             throw new NotImplementedException();
         }
 
-        public iDataObjectRepository DataObjectRepository
+        public IDataObjectRepository DataObjectRepository
         {
             get
             {
@@ -421,49 +421,49 @@ namespace OnTrack.Testing
             }
         }
 
-        public iDataObject Create(string objectid, iKey key)
+        public IDataObject Create(string objectid, IKey key)
         {
             // TODO: Implement this method
             throw new NotImplementedException();
         }
 
-        public IEnumerable<iDataObject> RetrieveAll(string objectid)
+        public IEnumerable<IDataObject> RetrieveAll(string objectid)
         {
             // TODO: Implement this method
             throw new NotImplementedException();
         }
 
-        public IEnumerable<iDataObject> Retrieve(SelectionRule rule)
+        public IEnumerable<IDataObject> Retrieve(SelectionRule rule)
         {
             // TODO: Implement this method
             throw new NotImplementedException();
         }
 
-        public iDataObject Retrieve(string objectid, iKey key)
+        public IDataObject Retrieve(string objectid, IKey key)
         {
             // TODO: Implement this method
             throw new NotImplementedException();
         }
 
-        public bool Persist(iDataObject obj, DateTime? timestamp = null)
+        public bool Persist(IDataObject obj, DateTime? timestamp = null)
         {
             // TODO: Implement this method
             throw new NotImplementedException();
         }
 
-        public bool Delete(iDataObject obj, DateTime? timestamp = null)
+        public bool Delete(IDataObject obj, DateTime? timestamp = null)
         {
             // TODO: Implement this method
             throw new NotImplementedException();
         }
 
-        public bool UnDelete(iDataObject obj)
+        public bool UnDelete(IDataObject obj)
         {
             // TODO: Implement this method
             throw new NotImplementedException();
         }
 
-        public iDataObject Clone(iDataObject obj, iKey key = null)
+        public IDataObject Clone(IDataObject obj, IKey key = null)
         {
             // TODO: Implement this method
             throw new NotImplementedException();
@@ -473,19 +473,19 @@ namespace OnTrack.Testing
     /// <summary>
     /// DataObjectEngine for Testing
     /// </summary>
-    internal class DataObjectEngine : iDataObjectEngine
+    internal class DataObjectEngine : IDataObjectEngine
     {
         DataObjectRepository _objects = new DataObjectRepository();
 
         public DataObjectEngine (string id = null)
         {
             if (id == null) id = Guid.NewGuid().ToString();
-            this.ID = id;
+            this.Id = id;
            
         }
-        public string ID { get; set; }
+        public string Id { get; set; }
 
-        public iDataObjectRepository Objects
+        public IDataObjectRepository Objects
         {
             get
             {

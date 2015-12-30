@@ -26,6 +26,7 @@ using OnTrack.Rulez.eXPressionTree;
 using OnTrack.Core;
 using OnTrack.Rulez;
 using OnTrack.Rulez.Resources;
+using Antlr4.Runtime.Misc;
 
 namespace OnTrack.Rulez
 {
@@ -52,6 +53,7 @@ namespace OnTrack.Rulez
             _currentScope = new XPTScope(engine: _engine, id: CanonicalName.GlobalID);
             
         }
+        #region Properties
         /// <summary>
         /// gets the associated Engine
         /// </summary>
@@ -77,6 +79,8 @@ namespace OnTrack.Rulez
             get { return _currentScope; }
             set { _currentScope = value; }
         }
+        #endregion
+        #region Helpers
         /// <summary>
         /// push scope element on the stack
         /// </summary>
@@ -111,26 +115,45 @@ namespace OnTrack.Rulez
             CurrentScope = aScope;
             return aScope;
         }
+        #endregion
         /// <summary>
-        /// define nodes
+        /// Enter the type declaration
+        /// </summary>
+        /// <param name="context"></param>
+        public override void EnterTypeDeclaration([NotNull] RulezParser.TypeDeclarationContext context)
+        {
+            base.EnterTypeDeclaration(context);
+            // push the new scope of this type
+            context.Scope = PushNewScope(context.typeid().GetText());
+        }
+        /// <summary>
+        /// exit the type declaraton
         /// </summary>
         /// <param id="ctx"></param>
         /// <returns></returns>
         public override void ExitTypeDeclaration(RulezParser.TypeDeclarationContext ctx)
         {
-            // todo: save the type declaration in the XPTScope
-
-            return ;
+            // pop the scope
+            PopScope();
         }
         /// <summary>
-        /// define nodes
+        /// enter the Variable declaration
+        /// </summary>
+        /// <param name="context"></param>
+        public override void EnterVariableDeclaration([NotNull] RulezParser.VariableDeclarationContext context)
+        {
+            base.EnterVariableDeclaration(context);
+            // set scope to current scope
+            context.Scope = this.CurrentScope;
+        }
+        /// <summary>
+        /// exit variable declaration
         /// </summary>
         /// <param name="ctx"></param>
         /// <returns></returns>
         public override void ExitVariableDeclaration (RulezParser.VariableDeclarationContext ctx)
         {
-            // todo: save the variable declaration in the XPTScope
-
+            // Add the variables to the scope will be handled by end of block Visitor
             return;
         }
         /// <summary>
@@ -151,6 +174,7 @@ namespace OnTrack.Rulez
         public override void ExitModuleDeclaration(RulezParser.ModuleDeclarationContext context)
         {
             base.ExitModuleDeclaration(context);
+            // leave scope
             PopScope();
         }
         /// <summary>
@@ -164,6 +188,7 @@ namespace OnTrack.Rulez
             // create new scope
             if (this.CurrentScope.HasSelectionRule(ctx.ruleid().GetText()))
                 Parser.NotifyErrorListeners(string.Format(Messages.RCM_13, ctx.ruleid().GetText()));
+            // set scope
             ctx.Scope = PushNewScope(ctx.ruleid().GetText());
            
         }
@@ -181,7 +206,7 @@ namespace OnTrack.Rulez
 
             // $ctx.XPTreeNode = (eXPressionTree.IeXPressionTree) new SelectionRule($ctx.ruleid().GetText(), engine: this.Engine);
             // get the name
-            SelectionRule aRule = new SelectionRule(ctx.ruleid().GetText(), engine: this.Engine);
+            var aRule = new SelectionRule(ctx.ruleid().GetText(), engine: this.Engine);
             ctx.XPTreeNode = aRule;
             // add the parameters
             foreach (RulezParser.ParameterDefinition aParameter in ctx.names.Values)
@@ -190,11 +215,11 @@ namespace OnTrack.Rulez
                 
                 // defaultvalue assignment
                 if (aParameter.defaultvalue != null) aRule.Selection.Nodes.Insert(0, new eXPressionTree.IfThenElse(
-                    eXPressionTree.CompareExpression.EQ(symbol, new Literal(null, otDataType.@Null)),
+                    eXPressionTree.CompareExpression.EQ(symbol, new Literal( null, otDataType.@Null)),
                     new eXPressionTree.Assignment(symbol, (IExpression)aParameter.defaultvalue)));
 
             }
-            // pop the current scope
+            // leave the scope
             PopScope();
         }
         /// <summary>
@@ -205,7 +230,8 @@ namespace OnTrack.Rulez
         {
             // create a scope and assign
             if (ctx.XPTreeNode == null) ctx.XPTreeNode = new OnTrack.Rulez.eXPressionTree.SelectionStatementBlock("BLOCK-" + Guid.NewGuid().ToString());
-            SelectionStatementBlock aBlock = (SelectionStatementBlock)ctx.XPTreeNode;
+            var aBlock = (SelectionStatementBlock)ctx.XPTreeNode;
+            // push the new scope to the current scope
             ctx.Scope = PushNewScope(aBlock.Id);
 
             return;
@@ -218,7 +244,7 @@ namespace OnTrack.Rulez
         public override void ExitSelectStatementBlock(RulezParser.SelectStatementBlockContext ctx)
         {
             // get the XPTreeNode
-            SelectionStatementBlock aBlock = (SelectionStatementBlock)ctx.XPTreeNode;
+            var aBlock = (SelectionStatementBlock)ctx.XPTreeNode;
 
             // add the defined variables to the XPT
             foreach (RulezParser.VariableDefinition aVariable in ctx.names.Values)
@@ -259,7 +285,7 @@ namespace OnTrack.Rulez
             if (engine == null) _engine = parser.Engine;
             else { _engine = engine; }
         }
-       
+        #region Properties
         /// <summary>
         /// gets the resulted tree
         /// </summary>
@@ -281,7 +307,7 @@ namespace OnTrack.Rulez
                 return _engine;
             }
         }
-        
+        #endregion
         /// <summary>
         /// define nodes
         /// </summary>
@@ -338,7 +364,7 @@ namespace OnTrack.Rulez
         {
             // $ctx.XPTreeNode = (eXPressionTree.IeXPressionTree) new SelectionRule($ctx.ruleid().GetText(), engine: this.Engine);
             // get the name
-            SelectionRule aRule = new SelectionRule(ctx.ruleid().GetText(), engine: this.Engine);
+            var aRule = new SelectionRule(ctx.ruleid().GetText(), engine: this.Engine);
             ctx.XPTreeNode = aRule;
 
             // add expression
@@ -367,7 +393,7 @@ namespace OnTrack.Rulez
         public override void ExitSelectStatementBlock(RulezParser.SelectStatementBlockContext ctx)
         {
             if (ctx.XPTreeNode == null) ctx.XPTreeNode = new OnTrack.Rulez.eXPressionTree.SelectionStatementBlock();
-            SelectionStatementBlock aBlock = (SelectionStatementBlock)ctx.XPTreeNode;
+            var aBlock = (SelectionStatementBlock)ctx.XPTreeNode;
 
             // add the defined variables to the XPT
             foreach (RulezParser.VariableDefinition aVariable in ctx.names.Values)
@@ -404,7 +430,6 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public override void ExitAssignment(RulezParser.AssignmentContext ctx)
         {
-
             return;
         }
         /// <summary>
@@ -414,7 +439,6 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public override void ExitMatch(RulezParser.MatchContext ctx)
         {
-
             return ;
         }
         public override void ExitMatchcase (RulezParser.MatchcaseContext ctx)
@@ -447,10 +471,10 @@ namespace OnTrack.Rulez
             if (String.IsNullOrEmpty(ctx.ClassName)) ctx.ClassName = ctx.dataObject.GetText();
 
             // create the result with the data object class name
-            eXPressionTree.ResultList Result = (ResultList)ctx.resultSelection().XPTreeNode;
+            var aResult = (ResultList)ctx.resultSelection().XPTreeNode;
 
             // create a selection expression with the result
-            eXPressionTree.SelectionExpression aSelection = new eXPressionTree.SelectionExpression(result: Result, engine: this.Engine);
+            var aSelection = new eXPressionTree.SelectionExpression(result: aResult, engine: this.Engine);
 
             //  L_SQUARE_BRACKET  R_SQUARE_BRACKET // all
             if (ctx.selectConditions() == null)
@@ -474,17 +498,17 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public override void ExitResultSelection(RulezParser.ResultSelectionContext ctx)
         {
-            List<INode> results = new List<INode>();
+            var theResults = new List<INode>();
 
             // add the class
             if (ctx.identifier() == null || ctx.identifier().Count() == 0)
-                results.Add(new eXPressionTree.DataObjectSymbol(ctx.ClassName, engine: this.Engine));
+                theResults.Add(new eXPressionTree.DataObjectSymbol(ctx.ClassName, engine: this.Engine));
             else
                 // add the entries
                 foreach (RulezParser.IdentifierContext anEntryCTX in ctx.identifier())
-                    results.Add(new eXPressionTree.DataObjectEntrySymbol(anEntryCTX.GetText(), engine: this.Engine));
+                    theResults.Add(new eXPressionTree.DataObjectEntrySymbol(anEntryCTX.GetText(), engine: this.Engine));
 
-            ctx.XPTreeNode = new ResultList(results);
+            ctx.XPTreeNode = new ResultList(theResults);
             return ;
         }
         /// <summary>
@@ -515,7 +539,7 @@ namespace OnTrack.Rulez
             //|	selectCondition [$ClassName, $keypos] (logicalOperator_2 selectCondition [$ClassName, $keypos])* 
             if (ctx.selectCondition().Count() > 1)
             {
-                eXPressionTree.LogicalExpression theLogical = (LogicalExpression)ctx.selectCondition()[0].XPTreeNode;
+                var theLogical = (LogicalExpression)ctx.selectCondition()[0].XPTreeNode;
                 if (theLogical == null) return ;
 
                 for (uint i = 0; i < ctx.selectCondition().Count() - 1; i++)
@@ -535,7 +559,7 @@ namespace OnTrack.Rulez
                     else
                     {   // x and y or z ->  x and ( y or z )
                         // build the new (lower) operation in the higher level tree (right with the last operand)
-                        IExpression right = (IExpression)theLogical.RightOperand;
+                        var right = (IExpression)theLogical.RightOperand;
                         theLogical.RightOperand = new LogicalExpression(anOperator, right, (IExpression)ctx.selectCondition()[i + 1].XPTreeNode);
                         // negate
                         if (ctx.NOT().Count() >= i + 1 && ctx.NOT()[i + 1] != null)
@@ -577,7 +601,7 @@ namespace OnTrack.Rulez
                     string aClassName = RulezParser.GetDefaultClassName(ctx);
                     if (this.Engine.Globals.HasDataObjectDefinition(aClassName))
                     {
-                        iObjectDefinition aObjectDefinition = this.Engine.GetDataObjectDefinitions(aClassName).First();
+                        IObjectDefinition aObjectDefinition = this.Engine.GetDataObjectDefinitions(aClassName).First();
                         if (ctx.keypos <= aObjectDefinition.Keys.Count())
                             entryName = aClassName + "." + aObjectDefinition.Keys[ctx.keypos - 1];
                         else
@@ -596,7 +620,7 @@ namespace OnTrack.Rulez
                 else entryName = ctx.dataObjectEntry.GetText();
 
                 // get the symbol
-                DataObjectEntrySymbol aSymbol = new DataObjectEntrySymbol(entryName, engine: this.Engine);
+                var aSymbol = new DataObjectEntrySymbol(entryName, engine: this.Engine);
 
                 // Operator
                 Operator anOperator;

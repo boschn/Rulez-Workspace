@@ -54,6 +54,7 @@ returns [ OnTrack.Rulez.IScope Scope, OnTrack.Rulez.eXPressionTree.INode XPTreeN
  */
 typeDeclaration
 returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
+locals [  OnTrack.Rulez.IScope Scope ]
 	: TYPE typeid AS typeDefinition [$ctx.typeid().GetText()]
 	
 	;
@@ -251,6 +252,7 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
 /* Variable Declaration
  */
 variableDeclaration
+locals [  OnTrack.Rulez.IScope Scope ]
 	: identifier AS dataType[null] ( DEFAULT literal )? 
 		{AddVariable($ctx.identifier().GetText(), $ctx.dataType().datatype, $ctx.literal(), $ctx);}
 	;

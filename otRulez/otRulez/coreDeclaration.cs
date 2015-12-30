@@ -29,7 +29,7 @@ namespace OnTrack.Core
     /// <summary>
     /// declares a data object meta description
     /// </summary>
-    public interface iObjectDefinition
+    public interface IObjectDefinition
     {
         /// <summary>
         /// gets the object name
@@ -70,7 +70,7 @@ namespace OnTrack.Core
         /// <summary>
         /// returns a List of iObjectEntryDefinitions
         /// </summary>
-        IList<iObjectEntryDefinition> iObjectEntryDefinitions { get; }
+        IList<IObjectEntryDefinition> IObjectEntryDefinitions { get; }
         /// <summary>
         /// returns the (active) names of the Entries
         /// </summary>
@@ -82,7 +82,7 @@ namespace OnTrack.Core
         /// </summary>
         /// <param name="entryNameId"></param>
         /// <returns></returns>
-        iObjectEntryDefinition GetiEntryDefinition(string entryNameId);
+        IObjectEntryDefinition GetiEntryDefinition(string entryNameId);
         /// <summary>
         /// returns true if the entry name exists
         /// </summary>
@@ -165,7 +165,7 @@ namespace OnTrack.Core
     /// Interface for Object Entries
     /// </summary>
     /// <remarks></remarks>
-    public interface iObjectEntryDefinition 
+    public interface IObjectEntryDefinition 
     {
         /// <summary>
         /// returns true if the Entry is mapped to a class member field
@@ -277,31 +277,28 @@ namespace OnTrack.Core
         /// gets the ObjectDefinition
         /// </summary>
         /// <returns></returns>
-        iObjectDefinition ObjectDefinition {get;}
+        IObjectDefinition ObjectDefinition {get;}
     }
       
     /// <summary>
     /// declares an data object Engine
     /// </summary>
-    public interface iDataObjectEngine
+    public interface IDataObjectEngine
     {
         /// <summary>
         /// gets the unique ID of the Engine
         /// </summary>
-        String ID { get; }
-
+        String Id { get; }
         /// <summary>
         /// gets the Repository
         /// </summary>
-        iDataObjectRepository Objects { get;}
-
+        IDataObjectRepository Objects { get;}
         /// <summary>
         /// generate a rule
         /// </summary>
         /// <param id="rule"></param>
         /// <returns></returns>
         bool Generate(IRule rule, out OnTrack.Rulez.ICodeBit result);
-
         /// <summary>
         /// run a rule by handle
         /// </summary>
@@ -313,27 +310,26 @@ namespace OnTrack.Core
     /// <summary>
     /// declares an repository for data objects 
     /// </summary>
-    public interface iDataObjectRepository
+    public interface IDataObjectRepository
     {
-       
         /// <summary>
         /// returns an object definition by object name
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        iObjectDefinition GetIObjectDefinition(ObjectName name);
+        IObjectDefinition GetIObjectDefinition(ObjectName name);
         /// <summary>
         /// retuns an object definition by canonical id in string
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        iObjectDefinition GetIObjectDefinition(string name);
+        IObjectDefinition GetIObjectDefinition(string name);
         /// <summary>
         /// returns a object definition
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
-        iObjectDefinition GetIObjectDefinition(Type type);
+        IObjectDefinition GetIObjectDefinition(Type type);
         /// <summary>
         /// returns the object id from a type
         /// </summary>
@@ -357,30 +353,29 @@ namespace OnTrack.Core
         /// <summary>
         /// returns a list of ObjectDefinitions
         /// </summary>
-        IEnumerable<iObjectDefinition> IObjectDefinitions { get; }
+        IEnumerable<IObjectDefinition> IObjectDefinitions { get; }
         /// <summary>
         /// returns an enumerable of Data Object providers
         /// </summary>
-        IEnumerable<iDataObjectProvider> DataObjectProviders { get; }
+        IEnumerable<IDataObjectProvider> DataObjectProviders { get; }
         /// <summary>
         /// returns the list of module names handled in this repository
         /// </summary>
         IEnumerable<CanonicalName> ModuleNames { get; }
     }
- 
     /// <summary>
     /// describes a data object
     /// </summary>
-    public interface iDataObject
+    public interface IDataObject
     {
         /// <summary>
         /// gets the Object Definition of th data object
         /// </summary>
-        iObjectDefinition IObjectDefinition {get;}
+        IObjectDefinition IObjectDefinition {get;}
         /// <summary>
         /// gets the Primary key of the data object
         /// </summary>
-        iKey PrimaryKey {get;}
+        IKey PrimaryKey {get;}
         /// <summary>
         /// gets the created timestamp
         /// </summary>
@@ -396,7 +391,7 @@ namespace OnTrack.Core
         /// <summary>
         /// gets the GUID of the object
         /// </summary>
-        Guid GUID {get;}
+        Guid Guid {get;}
         /// <summary>
         /// gets the object handle of the data object
         /// </summary>
@@ -438,7 +433,7 @@ namespace OnTrack.Core
     /// <summary>
     /// describes a key data tuple
     /// </summary>
-    public interface iKey : IHashCodeProvider, IEqualityComparer , IComparable 
+    public interface IKey : IHashCodeProvider, IEqualityComparer , IComparable 
     {
         /// <summary>
         /// Compares the current instance with another object of the same type and
@@ -456,7 +451,6 @@ namespace OnTrack.Core
         /// zero This instance follows <paramref name="obj" /> in the sort order.
         /// </returns>
         new int CompareTo(object obj);
-
         /// <summary>
         /// Determines whether the specified objects are equal.
         /// </summary>
@@ -467,7 +461,6 @@ namespace OnTrack.Core
         /// one can handle comparisons with the other.</exception>
         /// <returns>true if the specified objects are equal; otherwise, false.</returns>
         new bool Equals(object x, object y);
-
         /// <summary>
         /// Returns a hash code for the specified object.
         /// </summary>
@@ -477,8 +470,6 @@ namespace OnTrack.Core
         /// is a reference type and <paramref name="obj" /> is null.</exception>
         /// <returns>A hash code for the specified object.</returns>
         new int GetHashCode(object obj);
-
-
         /// <summary>
         /// gets or sets the keys / entrynames
         /// </summary>
@@ -511,14 +502,14 @@ namespace OnTrack.Core
     /// <summary>
     /// declares a DataObjectProvider
     /// </summary>
-    public interface iDataObjectProvider
+    public interface IDataObjectProvider
     {
             /// <summary>
             /// creates a new instance of the data object type
             /// </summary>
             /// <param name="type"></param>
             /// <returns></returns>
-            iDataObject NewDataObject(System.Type type);
+            IDataObject NewDataObject(System.Type type);
             /// <summary>
             /// returns true if the object handle is handled by the factory
             /// </summary>
@@ -538,7 +529,7 @@ namespace OnTrack.Core
         /// <summary>
         /// gets the data object repository of this provider
         /// </summary>
-        iDataObjectRepository DataObjectRepository { get;  }
+        IDataObjectRepository DataObjectRepository { get;  }
         /// <summary>
         /// returns a list of types of data objects handled by this provided
         /// </summary>
@@ -547,63 +538,61 @@ namespace OnTrack.Core
         /// returns a list of data object ids handled by this data object provider
         /// </summary>
         List<String> ObjectIDs {get;}
-
         /// <summary>
         /// creates a data object of a object handle with a key
         /// </summary>
         /// <param signature="objectid"></param>
         /// <param signature="key"></param>
         /// <returns></returns>
-        iDataObject Create(string objectid, iKey key);
+        IDataObject Create(string objectid, IKey key);
         /// <summary>
         /// returns an all data object of an object handle
         /// </summary>
         /// <param name="objectid"></param>
         /// <param name="key"></param>
         /// <returns></returns>
-        IEnumerable <iDataObject> RetrieveAll(string objectid);
+        IEnumerable <IDataObject> RetrieveAll(string objectid);
         /// <summary>
         /// returns an all data object of an object handle
         /// </summary>
         /// <param name="objectid"></param>
         /// <param name="key"></param>
         /// <returns></returns>
-        IEnumerable<iDataObject> Retrieve(SelectionRule rule);
+        IEnumerable<IDataObject> Retrieve(SelectionRule rule);
         /// <summary>
         /// returns an existing data object of an object handle with key
         /// </summary>
         /// <param name="objectid"></param>
         /// <param name="key"></param>
         /// <returns></returns>
-        iDataObject Retrieve(string objectid, iKey key);
+        IDataObject Retrieve(string objectid, IKey key);
         /// <summary>
         /// persists an data object with an optional time stamp
         /// </summary>
         /// <param name="obj"></param>
         /// <param name="timestamp"></param>
         /// <returns></returns>
-        bool Persist(iDataObject obj,DateTime? timestamp = null);
+        bool Persist(IDataObject obj,DateTime? timestamp = null);
         /// <summary>
         /// deletes an data object with an optional time stamp
         /// </summary>
         /// <param name="obj"></param>
         /// <param name="timestamp"></param>
         /// <returns></returns>
-        bool Delete(iDataObject obj, DateTime? timestamp = null);
+        bool Delete(IDataObject obj, DateTime? timestamp = null);
         /// <summary>
         /// deletes an data object with an optional time stamp
         /// </summary>
         /// <param name="obj"></param>
         /// <param name="timestamp"></param>
         /// <returns></returns>
-        bool UnDelete(iDataObject obj);
+        bool UnDelete(IDataObject obj);
         /// <summary>
         /// clones an data object with an optional new key
         /// </summary>
         /// <param name="obj"></param>
         /// <param name="timestamp"></param>
         /// <returns></returns>
-        iDataObject Clone(iDataObject obj, iKey key=null);
-
+        IDataObject Clone(IDataObject obj, IKey key=null);
     }
 }

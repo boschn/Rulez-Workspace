@@ -30,30 +30,30 @@ namespace OnTrack.Rulez
     {
         public class  EventArgs :  System.EventArgs
         {
-            private iDataObjectEngine _engine;
+            private IDataObjectEngine _engine;
             
             /// <summary>
             /// constructor
             /// </summary>
             /// <param name="engine"></param>
-            public EventArgs(iDataObjectEngine engine)
+            public EventArgs(IDataObjectEngine engine)
             {
                 _engine = engine;
             }
             /// <summary>
             /// gets the engine
             /// </summary>
-            public iDataObjectEngine Engine { get { return _engine;}}
+            public IDataObjectEngine Engine { get { return _engine;}}
             /// <summary>
             /// gets the repository
             /// </summary>
-            public iDataObjectRepository DataObjectRepository { get { return (_engine != null ) ? _engine.Objects : null; ; } }
+            public IDataObjectRepository DataObjectRepository { get { return (_engine != null ) ? _engine.Objects : null; ; } }
         }
         private Scope _globalScope;
         private string _id; // handle of the engine
         private Context _context;
         private Dictionary<String, ICodeBit> _Code; // Code Dictionary
-        private List<iDataObjectEngine> _dataobjectEngines; // DataObject Engines for running data object against
+        private List<IDataObjectEngine> _dataobjectEngines; // DataObject Engines for running data object against
 
         /// events
         public event EventHandler<EventArgs> DataObjectRepositoryAdded;
@@ -69,7 +69,7 @@ namespace OnTrack.Rulez
             else _id = id;
             _globalScope = new Scope(engine: this, id: CanonicalName.GlobalID);
             _context = new Context(this);
-            _dataobjectEngines = new List<iDataObjectEngine>();
+            _dataobjectEngines = new List<IDataObjectEngine>();
             _Code = new Dictionary<string, ICodeBit>();
         }
 
@@ -93,7 +93,7 @@ namespace OnTrack.Rulez
         /// <summary>
         /// gets the list of data object engines
         /// </summary>
-        public IEnumerable<iDataObjectEngine> DataObjectEngines { get { return _dataobjectEngines; } }
+        public IEnumerable<IDataObjectEngine> DataObjectEngines { get { return _dataobjectEngines; } }
         
 #endregion
 
@@ -102,12 +102,12 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="engine"></param>
         /// <returns></returns>
-        public bool AddDataEngine(iDataObjectEngine engine)
+        public bool AddDataEngine(IDataObjectEngine engine)
         {
             Boolean result = false;
 
-            if  (_dataobjectEngines.Where (x => x.ID == engine.ID).FirstOrDefault () != null)
-                throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { engine.ID , "DataEngines"});
+            if  (_dataobjectEngines.Where (x => x.Id == engine.Id).FirstOrDefault () != null)
+                throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { engine.Id , "DataEngines"});
 
             _dataobjectEngines.Add(engine);
             // throw the added event
@@ -129,7 +129,7 @@ namespace OnTrack.Rulez
         public bool RemoveDataEngine(String id)
         {
             Boolean result = false;
-            iDataObjectEngine aDataEngine = _dataobjectEngines.Where(x => x.ID == id).FirstOrDefault();
+            IDataObjectEngine aDataEngine = _dataobjectEngines.Where(x => x.Id == id).FirstOrDefault();
 
             if (aDataEngine != null)
                 throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[] { id, "DataEngines" });
@@ -215,7 +215,7 @@ namespace OnTrack.Rulez
             do
             {
                 // add the known data object repositories
-                foreach (iDataObjectRepository aR in this._dataobjectEngines)
+                foreach (IDataObjectRepository aR in this._dataobjectEngines)
                   aScope.Repository.RegisterDataObjectRepository(aR);
                 // next scope
                 aScope = GlobalScope.GetScope(aScope.Name.Pop());
@@ -379,18 +379,18 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
-        public IList<iObjectDefinition> GetDataObjectDefinitions(string id)
+        public IList<IObjectDefinition> GetDataObjectDefinitions(string id)
         {
             if (GlobalScope.HasDataObjectDefinition (id))
             {
-                List<iObjectDefinition> aResult = new List<iObjectDefinition>();
+                List<IObjectDefinition> aResult = new List<IObjectDefinition>();
                 aResult.Add(GlobalScope.GetDataObjectDefinition(id));
                 return aResult;
             }
 
             // define Visitor and return the REsult
-            Scope.Visitor<List<iObjectDefinition>> aVisitor = new Scope.Visitor<List<iObjectDefinition>>();
-            Scope.Visitor<List<iObjectDefinition>>.Eventhandler aVisitingHandling = (o, e) =>
+            Scope.Visitor<List<IObjectDefinition>> aVisitor = new Scope.Visitor<List<IObjectDefinition>>();
+            Scope.Visitor<List<IObjectDefinition>>.Eventhandler aVisitingHandling = (o, e) =>
             {
                 if (e.Current.HasDataObjectDefinition (id))
                     e.Result.Add(e.Current.GetDataObjectDefinition(id));
@@ -569,7 +569,7 @@ namespace OnTrack.Rulez
                 code = null;
 
                 // check if the object to which data engine
-                foreach (iDataObjectEngine aDataEngine in _dataobjectEngines.Reverse <iDataObjectEngine > () )
+                foreach (IDataObjectEngine aDataEngine in _dataobjectEngines.Reverse <IDataObjectEngine > () )
                 {
                     foreach (String aName in rule.ResultingObjectnames () ) 
                         result &= aDataEngine.Objects.HasObjectDefinition(ObjectName.From(aName));
@@ -597,7 +597,7 @@ namespace OnTrack.Rulez
         /// <param name="ruleid"></param>
         /// <param name="parameters"></param>
         /// <returns></returns>
-        public IEnumerable <iDataObject > RunSelectionRule (string ruleid, params object[] parameters)
+        public IEnumerable <IDataObject > RunSelectionRule (string ruleid, params object[] parameters)
         {
             SelectionRule aRule = this.GetSelectionRules(id: ruleid).First();
             // search the rule
@@ -617,7 +617,7 @@ namespace OnTrack.Rulez
                 // run the theCode
                 if (theCode.Code(_context) == false) return null;
                 // pop result
-                IEnumerable<iDataObject> result = (_context.Pop() as IEnumerable<iDataObject>);
+                IEnumerable<IDataObject> result = (_context.Pop() as IEnumerable<IDataObject>);
                 return result;
             }
             catch (RulezException ex)

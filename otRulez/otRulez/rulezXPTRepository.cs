@@ -31,7 +31,7 @@ namespace OnTrack.Rulez
     public class XPTScope : Scope
     {
         // integrated repository
-        private XPTRepository _xptrepository;
+        private readonly XPTRepository _xptrepository;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="XPTScope" /> class.
@@ -63,25 +63,16 @@ namespace OnTrack.Rulez
         /// </summary>
         public override IRepository Repository
         {
-            get { return _xptrepository; }
+            get { return (IRepository) _xptrepository; }
         }
         /// <summary>
-        /// creates a new scope object
+        /// create an XPT Scope and return
         /// </summary>
-        /// <param name="name"></param>
+        /// <param name="id"></param>
         /// <returns></returns>
-        public override IScope NewScope(CanonicalName name)
+        protected override IScope CreateScope(string id)
         {
-            return new XPTScope(engine: Engine, name: name);
-        }
-        /// <summary>
-        /// creates a new scope object
-        /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        public override IScope NewScope(string id)
-        {
-            return new XPTScope(engine: Engine, id: id);
+            return new XPTScope(engine: this.Engine, id: id);
         }
         /// <summary>
         /// returns a rule rule from the repository or creates a new one and returns this
@@ -103,7 +94,7 @@ namespace OnTrack.Rulez
 
 
             // create a selection rule and return
-            SelectionRule aRule = new SelectionRule(id);
+            var aRule = new SelectionRule(id);
             Repository.AddSelectionRule(aRule.ID, aRule);
             return aRule;
         }
@@ -194,7 +185,7 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
-        public override iObjectDefinition GetDataObjectDefinition(string id)
+        public override IObjectDefinition GetDataObjectDefinition(string id)
         {
             if (Repository.HasDataObjectDefinition(id))
                 return Repository.GetDataObjectDefinition(id);
@@ -297,15 +288,15 @@ namespace OnTrack.Rulez
     /// <summary>
     /// the XPT DataObjectRepository to handle the intermediate data objects
     /// </summary>
-    internal class XPTDataObjectRepository : iDataObjectRepository
+    internal class XPTDataObjectRepository : IDataObjectRepository
     {
-        private Dictionary <ObjectName,iObjectDefinition> _objects = new Dictionary<ObjectName, iObjectDefinition>();
+        private Dictionary <ObjectName,IObjectDefinition> _objects = new Dictionary<ObjectName, IObjectDefinition>();
         /// <summary>
         /// returns a dataobject definition by name
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        public iObjectDefinition GetIObjectDefinition(ObjectName name)
+        public IObjectDefinition GetIObjectDefinition(ObjectName name)
         {
             if (HasObjectDefinition(name)) return _objects[name];
             return null;
@@ -315,7 +306,7 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param id="id"></param>
         /// <returns></returns>
-        public iObjectDefinition GetIObjectDefinition(string id)
+        public IObjectDefinition GetIObjectDefinition(string id)
         {
             ObjectName aName = new ObjectName(id);
             if (HasObjectDefinition(aName)) return _objects[aName];
@@ -326,7 +317,7 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="type"></param>
         /// <returns></returns>
-        public iObjectDefinition GetIObjectDefinition(Type type)
+        public IObjectDefinition GetIObjectDefinition(Type type)
         {
             return _objects.Values.Where(x => x.ObjectType == type).FirstOrDefault();
         }
@@ -379,16 +370,16 @@ namespace OnTrack.Rulez
         /// <summary>
         /// returns all object definitions
         /// </summary>
-        public IEnumerable<iObjectDefinition> IObjectDefinitions
+        public IEnumerable<IObjectDefinition> IObjectDefinitions
         {
             get { return _objects.Values; }
         }
         /// <summary>
         /// returns all data object provides
         /// </summary>
-        public IEnumerable<iDataObjectProvider> DataObjectProviders
+        public IEnumerable<IDataObjectProvider> DataObjectProviders
         {
-            get { return new List<iDataObjectProvider>(); }
+            get { return new List<IDataObjectProvider>(); }
         }
         /// <summary>
         /// return all module names
@@ -408,9 +399,9 @@ namespace OnTrack.Rulez
     /// <summary>
     /// XPT data object definition - simply a fake
     /// </summary>
-    internal class XPTDataObjectDefinition : iObjectDefinition
+    internal class XPTDataObjectDefinition : IObjectDefinition
     {
-        private  ObservableCollection<iObjectEntryDefinition> _entries = new ObservableCollection<iObjectEntryDefinition> ();
+        private  ObservableCollection<IObjectEntryDefinition> _entries = new ObservableCollection<IObjectEntryDefinition> ();
         /// <summary>
         /// constructor
         /// </summary>
@@ -427,7 +418,7 @@ namespace OnTrack.Rulez
         {
             if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add )
             {
-                foreach (iObjectEntryDefinition item in e.NewItems)
+                foreach (IObjectEntryDefinition item in e.NewItems)
                 {
                     if (item is XPTDataObjectEntryDefinition) ((XPTDataObjectEntryDefinition)item).ObjectDefinition  = this;
                 }
@@ -525,7 +516,7 @@ namespace OnTrack.Rulez
             {
                 // set key according to array
                 long anOrdinal = 1;
-                foreach(iObjectEntryDefinition anEntry in _entries)
+                foreach(IObjectEntryDefinition anEntry in _entries)
                 {
                     bool found = false;
                     foreach (string anId in value)
@@ -544,14 +535,14 @@ namespace OnTrack.Rulez
         /// returns a List of iObjectEntryDefinitions
         /// </summary>
         /// <value></value>
-        public IList<iObjectEntryDefinition> iObjectEntryDefinitions
+        public IList<IObjectEntryDefinition> IObjectEntryDefinitions
         {
             get { return _entries; }
         }
         /// <summary>
         /// gets the Entries
         /// </summary>
-        public ObservableCollection<iObjectEntryDefinition> Entries
+        public ObservableCollection<IObjectEntryDefinition> Entries
         {
             get { return _entries; }
         }
@@ -570,7 +561,7 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="entryNameId"></param>
         /// <returns></returns>
-        public iObjectEntryDefinition GetiEntryDefinition(string entryNameId)
+        public IObjectEntryDefinition GetiEntryDefinition(string entryNameId)
         {
             return _entries.Where(x => String.Compare(x.EntryId, entryNameId, true) == 00).FirstOrDefault();
         }
@@ -587,7 +578,7 @@ namespace OnTrack.Rulez
     /// <summary>
     /// XPT data object entry definition
     /// </summary>
-    internal class XPTDataObjectEntryDefinition : iObjectEntryDefinition
+    internal class XPTDataObjectEntryDefinition : IObjectEntryDefinition
     {
         #region Properties
         /// <summary>
@@ -784,7 +775,7 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <returns></returns>
         /// <value></value>
-        public iObjectDefinition ObjectDefinition
+        public IObjectDefinition ObjectDefinition
         {
             get;
             set;

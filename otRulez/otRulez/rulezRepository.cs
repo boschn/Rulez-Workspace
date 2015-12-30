@@ -571,7 +571,7 @@ namespace OnTrack.Rulez
             public event Eventhandler VisitedScope;
 
             //
-            private T _result = new T();
+            private readonly T _result = new T();
 
             /// <summary>
             /// return the Result of a run
@@ -590,7 +590,7 @@ namespace OnTrack.Rulez
             /// <param name="expression"></param>
             public void Visit(IScope scope)
             {
-                EventArgs<T> args = new EventArgs<T>(current: scope);
+                var args = new EventArgs<T>(current: scope);
 
                 // visit subnodes from left to right
                 if (VisitingScope != null)
@@ -604,7 +604,7 @@ namespace OnTrack.Rulez
         private CanonicalName _name; // name of the scope
         private string _id; // scope id
         private IScope _parent; // parent scope
-        private ObservableCollection<IScope> _children = new ObservableCollection<IScope>(); // children scopes
+        private readonly ObservableCollection<IScope> _children = new ObservableCollection<IScope>(); // children scopes
         private IRepository _current; // this scope;
         private Engine _engine; // my engine
 
@@ -752,7 +752,7 @@ namespace OnTrack.Rulez
             if (e.PropertyName == ConstPropertyEngine)
             {
                 // add the known data object repositories
-                foreach (iDataObjectEngine anEngine in this.Engine.DataObjectEngines)
+                foreach (IDataObjectEngine anEngine in this.Engine.DataObjectEngines)
                     this.Repository.RegisterDataObjectRepository(anEngine.Objects);
                 this.Engine.DataObjectRepositoryAdded += Scope_DataObjectRepositoryAdded;
                 // add the engine also to the children
@@ -820,6 +820,15 @@ namespace OnTrack.Rulez
             // remove
             if ((args.Engine == null || args.Engine == this.Engine) && String.Compare(args.DataType.Name.ModuleId, this.Id, true) == 00)
                 this.Repository.RemoveDataType(args.DataType);
+        }
+        /// <summary>
+        /// create a new scope and return it without doing it
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        protected virtual IScope CreateScope(string id)
+        {
+            return new Scope(engine: this.Engine, id: id);
         }
         /// <summary>
         /// returns true if the Children have an ID
@@ -905,7 +914,7 @@ namespace OnTrack.Rulez
             // add the scope
             if (!HasSubScope(id))
             {
-                this.Children.Add(new Scope(engine: this.Engine, id: id));
+                this.Children.Add(CreateScope(id));
             }
             // return the last scope
             return this.GetSubScope(id);
@@ -927,7 +936,7 @@ namespace OnTrack.Rulez
                 IScope aSub;
                 CanonicalName normalized = scope.Name.Reduce(this.Name);
                 if (!HasSubScope(normalized.IDs.First()))
-                    aSub = new Scope(engine: this.Engine, id: CanonicalName.Push(this.Id, normalized.IDs.First()));
+                    aSub = CreateScope (CanonicalName.Push(this.Id, normalized.IDs.First()));
                 else aSub = GetSubScope(normalized.IDs.First());
 
                 return aSub.AddScope(scope);
@@ -968,8 +977,32 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public virtual IScope NewScope(CanonicalName name)
         {
-            IScope aScope = new Scope(engine: this.Engine, name: name);
-            return aScope;
+            // create the nested scope
+            CanonicalName aNestedName = null;
+            foreach (var subscope in name.IDs)
+            {
+                IScope aScope = null;
+                if (aNestedName == null)
+                {
+                    aNestedName = new CanonicalName(subscope);
+                    // create or get
+                    if (this.Engine.HasScope(aNestedName)) aScope = this.Engine.GetScope(aNestedName);
+                    else aScope = CreateScope( aNestedName.FullId);
+                }
+                else
+                {
+                    // create or get
+                    if (this.Engine.HasScope(aNestedName)) aScope = this.Engine.GetScope(aNestedName);
+                    else aScope = CreateScope(aNestedName.FullId); ;
+
+                    aNestedName = new CanonicalName(aNestedName.Push(subscope));
+                    // create
+                    aScope.AddSubScope (aNestedName.FullId) ;
+                }
+                
+            }
+            // return the scope
+            return this.Engine.GetScope (name);
         }
         /// <summary>
         /// returns a rule rule from the repository or creates a new one and returns this
@@ -983,7 +1016,7 @@ namespace OnTrack.Rulez
             else if (Parent != null && Parent.HasSelectionRule(id))
                 return Parent.GetSelectionRule(id);
             // create a selection rule and return
-            SelectionRule aRule = new SelectionRule(id);
+            var aRule = new SelectionRule(id);
             Repository.AddSelectionRule(aRule.ID, aRule);
             return aRule;
         }
@@ -1057,7 +1090,7 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
-        public virtual iObjectDefinition GetDataObjectDefinition(string id)
+        public virtual IObjectDefinition GetDataObjectDefinition(string id)
         {
             if (Repository.HasDataObjectDefinition(id))
                 return Repository.GetDataObjectDefinition(id);
@@ -1135,7 +1168,7 @@ namespace OnTrack.Rulez
         // Dictionary of the rule rules
         protected Dictionary<String, SelectionRule> _selectionrules = new Dictionary<string, SelectionRule>();
         // Stack of dataObject Repositories
-        protected List<iDataObjectRepository> _dataobjectRepositories = new List<iDataObjectRepository>();
+        protected List<IDataObjectRepository> _dataobjectRepositories = new List<IDataObjectRepository>();
         // dictionary of types
         protected Dictionary<string, IDataType> _datatypes = new Dictionary<string, IDataType>();
         protected Dictionary<string, List<IDataType>> _datatypesSignature = new Dictionary<string, List<IDataType>>();
@@ -1243,7 +1276,7 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="repository"></param>
         /// <returns></returns>
-        public virtual bool RegisterDataObjectRepository(iDataObjectRepository repository)
+        public virtual bool RegisterDataObjectRepository(IDataObjectRepository repository)
         {
             if (_dataobjectRepositories.Contains(repository))
             {
@@ -1257,7 +1290,7 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="repository"></param>
         /// <returns></returns>
-        public virtual bool DeRegisterDataObjectRepository(iDataObjectRepository repository)
+        public virtual bool DeRegisterDataObjectRepository(IDataObjectRepository repository)
         {
             if (_dataobjectRepositories.Contains(repository))
             {
@@ -1599,7 +1632,7 @@ namespace OnTrack.Rulez
         public bool HasDataObjectDefinition(ObjectName name)
         {
             Initialize();
-            foreach (iDataObjectRepository aRepository in _dataobjectRepositories)
+            foreach (IDataObjectRepository aRepository in _dataobjectRepositories)
             {
                 if (aRepository.HasObjectDefinition(name))
                     return true;
@@ -1611,7 +1644,7 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
-        public iObjectDefinition GetDataObjectDefinition(String id)
+        public IObjectDefinition GetDataObjectDefinition(String id)
         {
             return GetDataObjectDefinition(new ObjectName(id));
         }
@@ -1620,12 +1653,12 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        public iObjectDefinition GetDataObjectDefinition(ObjectName name)
+        public IObjectDefinition GetDataObjectDefinition(ObjectName name)
         {
             Initialize();
-            foreach (iDataObjectRepository aRepository in _dataobjectRepositories)
+            foreach (IDataObjectRepository aRepository in _dataobjectRepositories)
             {
-                iObjectDefinition aDefinition = aRepository.GetIObjectDefinition(name);
+                IObjectDefinition aDefinition = aRepository.GetIObjectDefinition(name);
                 if (aDefinition != null) return aDefinition;
             }
             throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[] { name, "DataObjectEntrySymbol Repositories" });
