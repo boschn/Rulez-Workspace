@@ -25,166 +25,166 @@ using System.ComponentModel;
 
 namespace OnTrack.Rulez
 {
+    /// <summary>
+    /// declares something which can be run by the engine
+    /// </summary>
+    public interface ICodeBit
+    {
         /// <summary>
-        /// declares something which can be run by the engine
+        /// the ID of the Bit
         /// </summary>
-        public interface ICodeBit
-        {
-            /// <summary>
-            /// the ID of the Bit
-            /// </summary>
-            string Handle { get; set; }
-            /// <summary>
-            /// a Helper Tag for the Generator to attach a custom object
-            /// </summary>
-            Object Tag { get; set; }
-            /// <summary>
-            /// delegate for the Code
-            /// </summary>
-            Func<Context, Boolean> Code { get; set; }
-        }
+        string Handle { get; set; }
         /// <summary>
-        /// types of operator
+        /// a Helper Tag for the Generator to attach a custom object
         /// </summary>
-        public enum otOperatorType
-        {
-            Logical,
-            Arithmetic,
-            Assignement,
-            Compare
-        }
+        Object Tag { get; set; }
         /// <summary>
-        /// defines the Operator Token
+        /// delegate for the Code
         /// </summary>
-        public class Token : IComparable<Token>
-        {
-            /// <summary>
-            /// static - must be ascending and discrete ! (do not leave one out !!)
-            /// </summary>
-            public  const uint TRUE = 0;
-            public  const uint AND = 1;
-            public  const uint ANDALSO = 2;
-            public  const uint OR = 3;
-            public  const uint ORELSE = 4;
-            public  const uint NOT = 5;
+        Func<Context, Boolean> Code { get; set; }
+    }
+    /// <summary>
+    /// types of operator
+    /// </summary>
+    public enum otOperatorType
+    {
+        Logical,
+        Arithmetic,
+        Assignement,
+        Compare
+    }
+    /// <summary>
+    /// defines the Operator Token
+    /// </summary>
+    public class Token : IComparable<Token>
+    {
+#pragma warning disable JustCode_NamingConventions // Naming conventions inconsistency
+        /// <summary>
+        /// static - must be ascending and discrete ! (do not leave one out !!)
+        /// </summary>
+        public const uint TRUE = 0;
+        public const uint AND = 1;
+        public const uint ANDALSO = 2;
+        public const uint OR = 3;
+        public const uint ORELSE = 4;
+        public const uint NOT = 5;
 
-            public  const uint EQ = 10;
-            public  const uint NEQ = 11;
-            public  const uint GT = 12;
-            public  const uint GE = 13;
-            public  const uint LT = 14;
-            public  const uint LE = 15;
+        public const uint EQ = 10;
+        public const uint NEQ = 11;
+        public const uint GT = 12;
+        public const uint GE = 13;
+        public const uint LT = 14;
+        public const uint LE = 15;
 
-            public  const uint PLUS = 16;
-            public  const uint MINUS = 17;
-            public  const uint MULT = 18;
-            public  const uint DIV = 19;
-            public  const uint MOD = 20;
-            public  const uint CONCAT = 21; // Concat must be the last one for functions to be found
+        public const uint PLUS = 16;
+        public const uint MINUS = 17;
+        public const uint MULT = 18;
+        public const uint DIV = 19;
+        public const uint MOD = 20;
+        public const uint CONCAT = 21; // Concat must be the last one for functions to be found
 
-            public  const uint BEEP = 22;
+        public const uint BEEP = 22;
 
-            private static string[] _ids = {"TRUE", "AND", "ANDALSO", "OR", "ORELSE", "NOT", "","","","",
-                                            "=", "!=", "GT", "GE", "LT", "LE", "+", "-", "*", "/", "MOD", "CONCAT", 
+#pragma warning restore JustCode_NamingConventions // Naming conventions inconsistency
+
+        private readonly static string[] _ids = {"TRUE", "AND", "ANDALSO", "OR", "ORELSE", "NOT", "","","","",
+                                            "=", "!=", "GT", "GE", "LT", "LE", "+", "-", "*", "/", "MOD", "CONCAT",
                                             "BEEP"};
-            /// <summary>
-            /// variable
-            /// </summary>
-            private uint _token;
+        /// <summary>
+        /// variable
+        /// </summary>
+        private readonly uint _token;
 
-            /// <summary>
-            /// constructor
-            /// </summary>
-            /// <param name="value"></param>
-            public Token(uint value)
-            {
-                _token = value;
-            }
-
-            /// <summary>
-            /// returns the token
-            /// </summary>
-            public uint ToUint { get { return (uint) _token; } }
-
-            /// <summary>
-            /// implementation of comparable
-            /// </summary>
-            /// <param name="obj"></param>
-            /// <returns></returns>
-            public int CompareTo(Token obj)
-            {
-                if (obj.ToUint < this.ToUint) return -1;
-                if (obj.ToUint == this.ToUint) return 0;
-                if (obj.ToUint > this.ToUint) return 1;
-
-                throw new NotImplementedException();
-            }
-            /// <summary>
-            /// == comparerer on datatypes
-            /// </summary>
-            /// <param name="a"></param>
-            /// <param name="b"></param>
-            /// <returns></returns>
-            public static bool operator ==(Token a, Token b)
-            {
-                // If both are null, or both are same instance, return true.
-                if (System.Object.ReferenceEquals(a, b))
-                {
-                    return true;
-                }
-
-                // If one is null, but not both, return false.
-                if (((object)a == null) || ((object)b == null))
-                {
-                    return false;
-                }
-
-                // Return true if the fields match:
-                return a.ToUint == b.ToUint ;
-            }
-            /// <summary>
-            /// != comparer
-            /// </summary>
-            /// <param name="a"></param>
-            /// <param name="b"></param>
-            /// <returns></returns>
-            public static bool operator !=(Token a, Token b)
-            {
-                return !(a == b);
-            }
-            /// <summary>
-            /// Equals
-            /// </summary>
-            /// <param name="obj"></param>
-            /// <returns></returns>
-            public override bool Equals(Object obj)
-            {
-                if (obj == null || !(obj is Token))
-                    return false;
-                else
-                    return this.CompareTo ((Token) obj) == 0;
-            }      
-
-
-            /// <summary>
-            /// override Hashcode
-            /// </summary>
-            /// <returns></returns>
-            public override int GetHashCode()
-            {
-                return (int) this.ToUint;
-            }
-            /// <summary>
-            /// To string
-            /// </summary>
-            /// <returns></returns>
-            public override string ToString()
-            {
-                if ( this.ToUint <= _ids.GetUpperBound (0) ) return  "'" + _ids[this.ToUint ]+"'";
-                return this.ToUint.ToString();
-            }
+        /// <summary>
+        /// constructor
+        /// </summary>
+        /// <param name="value"></param>
+        public Token(uint value)
+        {
+            _token = value;
         }
-   
+        /// <summary>
+        /// returns the token
+        /// </summary>
+        public uint ToUint { get { return (uint) _token; } }
+
+        /// <summary>
+        /// implementation of comparable
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public int CompareTo(Token obj)
+        {
+            if (obj.ToUint < this.ToUint) return -1;
+            if (obj.ToUint == this.ToUint) return 0;
+            if (obj.ToUint > this.ToUint) return 1;
+
+            throw new NotImplementedException();
+        }
+        /// <summary>
+        /// == comparerer on datatypes
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static bool operator ==(Token a, Token b)
+        {
+            // If both are null, or both are same instance, return true.
+            if (System.Object.ReferenceEquals(a, b))
+            {
+                return true;
+            }
+
+            // If one is null, but not both, return false.
+            if (((object) a == null) || ((object) b == null))
+            {
+                return false;
+            }
+
+            // Return true if the fields match:
+            return a.ToUint == b.ToUint;
+        }
+        /// <summary>
+        /// != comparer
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static bool operator !=(Token a, Token b)
+        {
+            return !(a == b);
+        }
+        /// <summary>
+        /// Equals
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public override bool Equals(Object obj)
+        {
+            if (obj == null || !(obj is Token))
+                return false;
+            else
+                return this.CompareTo((Token) obj) == 0;
+        }
+        /// <summary>
+        /// override Hashcode
+        /// </summary>
+        /// <returns></returns>
+        public override int GetHashCode()
+        {
+            return (int) this.ToUint;
+        }
+        /// <summary>
+        /// To string
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            if (this.ToUint <= _ids.GetUpperBound(0)) return "'" + _ids[this.ToUint] + "'";
+            return this.ToUint.ToString();
+        }
+    }
+
     /// <summary>
     /// defines the function
     /// </summary>
@@ -194,14 +194,14 @@ namespace OnTrack.Rulez
         /// <summary>
         /// get the _BuildInFunctions -> must be in Order of the TokenID
         /// </summary>
-        private static List<@Function> _buildInFunctions = new List<@Function>();
+        private readonly static List<@Function> _buildInFunctions = new List<@Function>();
         /// <summary>
         /// static constructor
         /// </summary>
         static @Function()
         {
             // build the build-in functions
-             _buildInFunctions.Add(new @Function(Token.BEEP, CreateSignature(PrimitiveType.GetPrimitiveType(otDataType.Null)), PrimitiveType.GetPrimitiveType(otDataType.Bool)));
+            _buildInFunctions.Add(new @Function(Token.BEEP, CreateSignature(PrimitiveType.GetPrimitiveType(otDataType.Null)), PrimitiveType.GetPrimitiveType(otDataType.Bool)));
         }
         /// <summary>
         /// 
@@ -221,9 +221,9 @@ namespace OnTrack.Rulez
         /// <summary>
         /// inner variables
         /// </summary>
-        private Token _token;
-        private string _signature;
-        private IDataType _returntype;
+        private readonly Token _token;
+        private readonly string _signature;
+        private readonly IDataType _returntype;
         /// <summary>
         /// returns a List of BuildInFunctions
         /// </summary>
@@ -251,13 +251,13 @@ namespace OnTrack.Rulez
         public @Function(Token token, string signature, IDataType returnType)
         {
             _token = token;
-            _signature  = signature;
+            _signature = signature;
             _returntype = returnType;
         }
         public @Function(uint tokenID, string signature, IDataType returnType)
         {
             _token = new Token(tokenID);
-            _signature  = signature;
+            _signature = signature;
             _returntype = returnType;
         }
         #region "Properties"
@@ -272,7 +272,7 @@ namespace OnTrack.Rulez
         /// <summary>
         /// gets or sets the return type of the operation
         /// </summary>
-        public IDataType ReturnType { get { return _returntype; } set { _returntype = value; } }
+        public IDataType ReturnType { get { return _returntype; } }
         #endregion
         /// <summary>
         /// implementation of comparable
@@ -289,7 +289,7 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public override int GetHashCode()
         {
-            return (int)this.Token.GetHashCode();
+            return (int) this.Token.GetHashCode();
         }
         /// <summary>
         /// To string
@@ -297,7 +297,7 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public override string ToString()
         {
-            return this.Token.ToString()+"<" + this.Signature + ">";
+            return this.Token.ToString() + "<" + this.Signature + ">";
         }
         /// <summary>
         /// Equals
@@ -309,8 +309,8 @@ namespace OnTrack.Rulez
             if (obj == null || !(obj is @Function))
                 return false;
             else
-                return this.CompareTo((@Function)obj) == 0;
-        }      
+                return this.CompareTo((@Function) obj) == 0;
+        }
     }
 
     /// <summary>
@@ -322,40 +322,40 @@ namespace OnTrack.Rulez
         /// <summary>
         /// get the _BuildInFunctions -> must be in Order of the TokenID
         /// </summary>
-        private static Operator[] _buildInOperators = {
+        private readonly static Operator[] buildInOperators = {
 
                                                   // logical Operations
-                                                  new Operator(Token.TRUE,0,7,otDataType .Bool ,  otOperatorType.Logical  ) ,
-                                                  new Operator(Token.AND,2,5,  otDataType .Bool , otOperatorType.Logical ) ,
-                                                  new Operator(Token.ANDALSO,2,5 ,  otDataType .Bool, otOperatorType.Logical ) ,
-                                                  new Operator(Token.OR,2,6,  otDataType .Bool , otOperatorType.Logical ) ,
-                                                  new Operator(Token.ORELSE,2,6,  otDataType .Bool , otOperatorType.Logical ) ,
-                                                  new Operator(Token.NOT,1,7, otDataType .Bool, otOperatorType.Logical   ) ,
-                                                  new Operator(Token.EQ,2,8,  otDataType .Bool , otOperatorType.Compare ) ,
-                                                  new Operator(Token.NEQ,2,8,  otDataType .Bool , otOperatorType.Compare ) ,
-                                                  new Operator(Token.GT,2,8,  otDataType .Bool , otOperatorType.Compare ) ,
-                                                  new Operator(Token.GE,2,8,  otDataType .Bool, otOperatorType.Compare  ) ,
-                                                  new Operator(Token.LT,2,8,  otDataType .Bool , otOperatorType.Compare ) ,
-                                                  new Operator(Token.LE,2,8,  otDataType .Bool , otOperatorType.Compare ) ,
+                                                  new Operator(Token.TRUE,arguments:0,priority:7,returnTypeId:otDataType .Bool ,   type:otOperatorType.Logical  ) ,
+                                                  new Operator(Token.AND,arguments:2,priority:5,  returnTypeId:otDataType .Bool , type: otOperatorType.Logical ) ,
+                                                  new Operator(Token.ANDALSO,arguments:2,priority:5 ,  returnTypeId:otDataType .Bool,  type:otOperatorType.Logical ) ,
+                                                  new Operator(Token.OR,arguments:2,priority:6, returnTypeId: otDataType .Bool ,  type:otOperatorType.Logical ) ,
+                                                  new Operator(Token.ORELSE,arguments:2,priority:6,  returnTypeId:otDataType .Bool ,  type:otOperatorType.Logical ) ,
+                                                  new Operator(Token.NOT,arguments:1,priority:7, returnTypeId:otDataType .Bool,  type:otOperatorType.Logical   ) ,
+                                                  new Operator(Token.EQ,arguments:2,priority:8,  returnTypeId:otDataType .Bool ,  type:otOperatorType.Compare ) ,
+                                                  new Operator(Token.NEQ,arguments:2,priority:8, returnTypeId: otDataType .Bool ,  type:otOperatorType.Compare ) ,
+                                                  new Operator(Token.GT,arguments:2,priority:8, returnTypeId: otDataType .Bool ,  type:otOperatorType.Compare ) ,
+                                                  new Operator(Token.GE,arguments:2,priority:8, returnTypeId: otDataType .Bool,  type:otOperatorType.Compare  ) ,
+                                                  new Operator(Token.LT,arguments:2,priority:8, returnTypeId: otDataType .Bool ,  type:otOperatorType.Compare ) ,
+                                                  new Operator(Token.LE,arguments:2,priority:8, returnTypeId: otDataType .Bool ,  type:otOperatorType.Compare ) ,
 
                                                   // Arithmetic - null means return type is determined by the operands
-                                                  new Operator(Token.PLUS,2,2,  null , otOperatorType.Arithmetic ) ,
-                                                  new Operator(Token.MINUS,2,2,  null , otOperatorType.Arithmetic ) ,
-                                                  new Operator(Token.MULT,2,1,  null , otOperatorType.Arithmetic ) ,
-                                                  new Operator(Token.DIV,2,1,  null , otOperatorType.Arithmetic ) ,
-                                                  new Operator(Token.MOD,2,1,  null , otOperatorType.Arithmetic ) ,
-                                                  new Operator(Token.CONCAT,2,1,  null , otOperatorType.Arithmetic ) ,
-                                               
+                                                  new Operator(Token.PLUS,arguments:2,priority:2, returnTypeId: null ,  type:otOperatorType.Arithmetic ) ,
+                                                  new Operator(Token.MINUS,arguments:2,priority:2, returnTypeId: null ,  type:otOperatorType.Arithmetic ) ,
+                                                  new Operator(Token.MULT,arguments:2,priority:1, returnTypeId: null ,  type:otOperatorType.Arithmetic ) ,
+                                                  new Operator(Token.DIV,arguments:2,priority:1, returnTypeId: null ,  type:otOperatorType.Arithmetic ) ,
+                                                  new Operator(Token.MOD,arguments:2,priority:1, returnTypeId: null ,  type:otOperatorType.Arithmetic ) ,
+                                                  new Operator(Token.CONCAT,arguments: 2, priority: 1, returnTypeId:  null , type: otOperatorType.Arithmetic ) ,
+
         };
 
         /// <summary>
         /// inner variables
         /// </summary>
-        private Token _token;
-        private UInt16 _arguments;
-        private UInt16 _priority;
-        private IDataType  _returntype;
-        private otOperatorType _type;
+        private readonly Token _token;
+        private readonly UInt16 _arguments;
+        private readonly UInt16 _priority;
+        private readonly IDataType _returntype;
+        private readonly otOperatorType _type;
 
         /// <summary>
         /// returns a List of BuildInFunctions
@@ -363,7 +363,7 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public static List<Operator> BuildInOperators()
         {
-            return _buildInOperators.ToList();
+            return buildInOperators.ToList();
         }
         /// <summary>
         /// return the Operator Definition
@@ -372,7 +372,7 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public static Operator GetOperator(Token token)
         {
-            Operator o =  _buildInOperators.Where( x => x.Token == token).FirstOrDefault();
+            Operator o = buildInOperators.Where(x => x.Token == token).FirstOrDefault();
             if (o == null) throw new RulezException(RulezException.Types.OperatorNotDefined, arguments: new object[] { token.ToString() });
             return o;
         }
@@ -383,8 +383,8 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public static Operator GetOperator(uint tokenid)
         {
-            if (tokenid < _buildInOperators.Length) return _buildInOperators[tokenid];
-            throw new RulezException(RulezException.Types.OutOfArraySize, arguments: new object[] { tokenid, _buildInOperators.Length });
+            if (tokenid < buildInOperators.Length) return buildInOperators[tokenid];
+            throw new RulezException(RulezException.Types.OutOfArraySize, arguments: new object[] { tokenid, buildInOperators.Length });
         }
         /// <summary>
         /// 
@@ -393,7 +393,7 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public static string CreateSignature(Token token, UInt16 arguments, UInt16 priority, IDataType returnType)
         {
-            return token.ToString() + "<" + arguments.ToString() + "," + priority.ToString() + "," + (returnType == null ? returnType.ToString() :"*") + ">";
+            return token.ToString() + "<" + arguments.ToString() + "," + priority.ToString() + "," + (returnType == null ? returnType.ToString() : "*") + ">";
         }
         /// <summary>
         /// constructor
@@ -406,7 +406,15 @@ namespace OnTrack.Rulez
             _token = token;
             _arguments = arguments;
             _priority = priority;
-            if (returnTypeId.HasValue ) _returntype = DataType.GetDataType (returnTypeId.Value);
+            if (returnTypeId.HasValue) _returntype = DataType.GetDataType(returnTypeId.Value);
+            _type = type;
+        }
+        public Operator(Token token, UInt16 arguments, UInt16 priority, IDataType returnType, otOperatorType type)
+        {
+            _token = token;
+            _arguments = arguments;
+            _priority = priority;
+            _returntype = returnType;
             _type = type;
         }
         public Operator(uint tokenID, UInt16 arguments, UInt16 priority, otDataType? returnTypeId, otOperatorType type)
@@ -414,9 +422,17 @@ namespace OnTrack.Rulez
             _token = new Token(tokenID);
             _arguments = arguments;
             _priority = priority;
-            if (returnTypeId.HasValue)  _returntype = DataType.GetDataType(returnTypeId.Value); ;
+            if (returnTypeId.HasValue) _returntype = DataType.GetDataType(returnTypeId.Value); ;
             _type = type;
 
+        }
+        public Operator(uint tokenID, UInt16 arguments, UInt16 priority, IDataType returnType, otOperatorType type)
+        {
+            _token = new Token(tokenID);
+            _arguments = arguments;
+            _priority = priority;
+            _returntype = returnType;
+            _type = type;
         }
         #region "Properties"
         /// <summary>
@@ -435,24 +451,32 @@ namespace OnTrack.Rulez
         public UInt16 Priority { get { return _priority; } }
 
         /// <summary>
-        /// gets or sets the return type of the operation
+        /// gets or sets the return type id
         /// </summary>
-        public otDataType? ReturnTypeId { get { return _returntype != null ? _returntype.TypeId : new otDataType? () ; } 
-            set { if (value.HasValue )_returntype = DataType.GetDataType(value.Value); } }
-        public IDataType ReturnType { get { return _returntype; } set { _returntype = value; } }
+        public otDataType? ReturnTypeId
+        {
+            get { return _returntype != null ? _returntype.TypeId : new otDataType?(); }
+        }
+        /// <summary>
+        /// gets the Returntype
+        /// </summary>
+        public IDataType ReturnType
+        {
+            get { return _returntype; }
+        }
         /// <summary>
         /// gets the type of operator
         /// </summary>
         public otOperatorType Type { get { return _type; } }
         #endregion
-        
+
         /// <summary>
         /// override Hashcode
         /// </summary>
         /// <returns></returns>
         public override int GetHashCode()
         {
-            return (int)this.Token.GetHashCode();
+            return (int) this.Token.GetHashCode();
         }
         /// <summary>
         /// Equals
@@ -464,14 +488,14 @@ namespace OnTrack.Rulez
             if (obj == null || !(obj is Operator))
                 return false;
             else
-                return this.CompareTo((Operator)obj) == 0;
+                return this.CompareTo((Operator) obj) == 0;
         }
         /// <summary>
         /// implementation of comparable
         /// </summary>
         /// <param id="obj"></param>
         /// <returns></returns>
-        public  int CompareTo(Operator obj)
+        public int CompareTo(Operator obj)
         {
             return this.CompareTo(obj);
         }
@@ -490,7 +514,7 @@ namespace OnTrack.Rulez
             }
 
             // If one is null, but not both, return false.
-            if (((object)a == null) || ((object)b == null))
+            if (((object) a == null) || ((object) b == null))
             {
                 return false;
             }
@@ -519,7 +543,7 @@ namespace OnTrack.Rulez
     }
 
     /// <summary>
-    
+
     /// <summary>
     /// a scope repository unit
     /// 
@@ -601,8 +625,7 @@ namespace OnTrack.Rulez
                     VisitedScope(scope, args);
             }
         }
-        private CanonicalName _name; // name of the scope
-        private string _id; // scope id
+        private readonly CanonicalName _name; // name of the scope
         private IScope _parent; // parent scope
         private readonly ObservableCollection<IScope> _children = new ObservableCollection<IScope>(); // children scopes
         private IRepository _current; // this scope;
@@ -621,9 +644,10 @@ namespace OnTrack.Rulez
         /// </summary>
         public Scope(Engine engine, string id = null)
         {
-            if (id == null) _id = Guid.NewGuid().ToString();
-            else _id = id;
-            _name = new CanonicalName (_id);
+            if (id == null)
+                _name = new CanonicalName(Guid.NewGuid().ToString());
+            else
+                _name = new CanonicalName(id);
 
             Children.CollectionChanged += Scope_CollectionChanged;
             this.PropertyChanged += Scope_PropertyChanged;
@@ -634,15 +658,9 @@ namespace OnTrack.Rulez
         public Scope(Engine engine, CanonicalName name = null)
         {
             if (name == null)
-            {
-                _id = Guid.NewGuid().ToString();
-                _name = new CanonicalName(_id);
-            }
+                _name = new CanonicalName(Guid.NewGuid().ToString());
             else
-            {
                 _name = name;
-                _id = name.FullId;
-            }
 
             Children.CollectionChanged += Scope_CollectionChanged;
             this.PropertyChanged += Scope_PropertyChanged;
@@ -652,7 +670,7 @@ namespace OnTrack.Rulez
         }
 
         #region "Properties"
-        
+
         /// <summary>
         /// gets the unique id of this scope level
         /// </summary>
@@ -660,9 +678,8 @@ namespace OnTrack.Rulez
         {
             get
             {
-                return _id;
+                return _name.FullId;
             }
-            set { _id = value; _name = new CanonicalName(_id); }
         }
         /// <summary>
         /// gets or sets the name
@@ -670,7 +687,6 @@ namespace OnTrack.Rulez
         public virtual CanonicalName Name
         {
             get { return _name; }
-            set { _name = value; _id = _name.FullId; }
         }
         /// <summary>
         /// gets or sets the parent scope
@@ -697,7 +713,7 @@ namespace OnTrack.Rulez
                 return _children;
             }
         }
-        
+
         /// <summary>
         /// gets or sets the repository of this scope
         /// </summary>
@@ -713,7 +729,7 @@ namespace OnTrack.Rulez
                 RaisePropertyChanged(ConstPropertyRepository);
             }
         }
-        
+
         /// <summary>
         /// gets or sets the Engine
         /// </summary>
@@ -729,9 +745,9 @@ namespace OnTrack.Rulez
                 RaisePropertyChanged(ConstPropertyEngine);
             }
         }
-       
+
         #endregion
-        
+
         /// <summary>
         /// raise the property changed event
         /// </summary>
@@ -756,7 +772,7 @@ namespace OnTrack.Rulez
                     this.Repository.RegisterDataObjectRepository(anEngine.Objects);
                 this.Engine.DataObjectRepositoryAdded += Scope_DataObjectRepositoryAdded;
                 // add the engine also to the children
-                foreach (IScope aScope in Children) 
+                foreach (IScope aScope in Children)
                     if (aScope != null)
                         aScope.Engine = this.Engine;
             }
@@ -857,7 +873,7 @@ namespace OnTrack.Rulez
                 if (String.Compare(normalized.IDs.First(), aSub.Name.IDs.First(), ignoreCase: true) == 00)
                     return aSub.HasScope(name);
             }
-            
+
             return false;
         }
         /// <summary>
@@ -876,7 +892,7 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public virtual IScope GetSubScope(string id)
         {
-            return this.Children.Where(x => String.Compare(x.Id, id, true) == 00).FirstOrDefault() ;
+            return this.Children.Where(x => String.Compare(x.Id, id, true) == 00).FirstOrDefault();
         }
         /// <summary>
         /// returns a scope object from the scope descendants by name
@@ -936,7 +952,7 @@ namespace OnTrack.Rulez
                 IScope aSub;
                 CanonicalName normalized = scope.Name.Reduce(this.Name);
                 if (!HasSubScope(normalized.IDs.First()))
-                    aSub = CreateScope (CanonicalName.Push(this.Id, normalized.IDs.First()));
+                    aSub = CreateScope(CanonicalName.Push(this.Id, normalized.IDs.First()));
                 else aSub = GetSubScope(normalized.IDs.First());
 
                 return aSub.AddScope(scope);
@@ -987,7 +1003,7 @@ namespace OnTrack.Rulez
                     aNestedName = new CanonicalName(subscope);
                     // create or get
                     if (this.Engine.HasScope(aNestedName)) aScope = this.Engine.GetScope(aNestedName);
-                    else aScope = CreateScope( aNestedName.FullId);
+                    else aScope = CreateScope(aNestedName.FullId);
                 }
                 else
                 {
@@ -997,12 +1013,12 @@ namespace OnTrack.Rulez
 
                     aNestedName = new CanonicalName(aNestedName.Push(subscope));
                     // create
-                    aScope.AddSubScope (aNestedName.FullId) ;
+                    aScope.AddSubScope(aNestedName.FullId);
                 }
-                
+
             }
             // return the scope
-            return this.Engine.GetScope (name);
+            return this.Engine.GetScope(name);
         }
         /// <summary>
         /// returns a rule rule from the repository or creates a new one and returns this
@@ -1051,7 +1067,7 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public virtual  bool HasOperator(Token id)
+        public virtual bool HasOperator(Token id)
         {
             if (Repository.HasOperator(id))
                 return true;
@@ -1064,7 +1080,7 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
-        public virtual  @Function GetFunction(Token id)
+        public virtual @Function GetFunction(Token id)
         {
             if (Repository.HasFunction(id))
                 return Repository.GetFunction(id);
@@ -1157,26 +1173,26 @@ namespace OnTrack.Rulez
     /// <summary>
     /// a repository
     /// </summary>
-    public class Repository : IRepository 
+    public class Repository : IRepository
     {
-        private string _id; // ID of the Repository
-        private Engine _engine; // my engine
+        private readonly string _id; // ID of the Repository
+        private readonly Engine _engine; // my engine
         // Dictionary of operators
-        protected Dictionary<Token, Operator> _Operators = new Dictionary<Token, Operator>();
+        protected readonly Dictionary<Token, Operator> _operators = new Dictionary<Token, Operator>();
         // Dictionary of functions
-        protected Dictionary<Token, @Function> _Functions = new Dictionary<Token, @Function>();
+        protected readonly Dictionary<Token, @Function> _functions = new Dictionary<Token, @Function>();
         // Dictionary of the rule rules
-        protected Dictionary<String, SelectionRule> _selectionrules = new Dictionary<string, SelectionRule>();
+        protected readonly Dictionary<String, SelectionRule> _selectionrules = new Dictionary<string, SelectionRule>();
         // Stack of dataObject Repositories
-        protected List<IDataObjectRepository> _dataobjectRepositories = new List<IDataObjectRepository>();
+        protected readonly List<IDataObjectRepository> _dataobjectRepositories = new List<IDataObjectRepository>();
         // dictionary of types
-        protected Dictionary<string, IDataType> _datatypes = new Dictionary<string, IDataType>();
-        protected Dictionary<string, List<IDataType>> _datatypesSignature = new Dictionary<string, List<IDataType>>();
+        protected readonly Dictionary<string, IDataType> _datatypes = new Dictionary<string, IDataType>();
+        protected readonly Dictionary<string, List<IDataType>> _datatypesSignature = new Dictionary<string, List<IDataType>>();
         // dictionary of symbols
-        protected Dictionary<string, ISymbol> _symbols = new Dictionary<string, ISymbol>();
+        protected readonly Dictionary<string, ISymbol> _symbols = new Dictionary<string, ISymbol>();
 
         // initialize Flag
-        private bool _IsInitialized = false;
+        private bool _isInitialized = false;
 
         /// <summary>
         /// constructor of an engine
@@ -1191,7 +1207,7 @@ namespace OnTrack.Rulez
         }
 
         #region "Properties"
-        
+
         /// <summary>
         /// gets the unique handle of the engine
         /// </summary>
@@ -1202,7 +1218,7 @@ namespace OnTrack.Rulez
                 return _id;
             }
         }
-        
+
         /// <summary>
         /// returns the Engine
         /// </summary>
@@ -1213,7 +1229,7 @@ namespace OnTrack.Rulez
                 return _engine;
             }
         }
-        
+
         /// <summary>
         /// gets all the rule rules in the repository
         /// </summary>
@@ -1221,10 +1237,10 @@ namespace OnTrack.Rulez
         {
             get
             {
-                return _selectionrules.Values.ToList() ;
+                return _selectionrules.Values.ToList();
             }
         }
-        
+
         /// <summary>
         /// gets all rule rule IDs in the repository
         /// </summary>
@@ -1235,7 +1251,7 @@ namespace OnTrack.Rulez
                 return _selectionrules.Keys.ToList();
             }
         }
-        
+
         /// <summary>
         /// gets all the operators in the repository
         /// </summary>
@@ -1243,10 +1259,10 @@ namespace OnTrack.Rulez
         {
             get
             {
-                return _Operators.Values.ToList();
+                return _operators.Values.ToList();
             }
         }
-        
+
         /// <summary>
         /// gets all operator tokens rule IDs in the repository
         /// </summary>
@@ -1254,10 +1270,10 @@ namespace OnTrack.Rulez
         {
             get
             {
-                return _Operators.Keys.ToList();
+                return _operators.Keys.ToList();
             }
         }
-        
+
         /// <summary>
         /// return true if initialized
         /// </summary>
@@ -1265,12 +1281,12 @@ namespace OnTrack.Rulez
         {
             get
             {
-                return _IsInitialized;
+                return _isInitialized;
             }
         }
-        
+
         #endregion
-        
+
         /// <summary>
         /// register the DataObjectEntrySymbol Repository
         /// </summary>
@@ -1305,21 +1321,21 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         private bool Initialize()
         {
-            if (_IsInitialized)
+            if (_isInitialized)
                 return false;
-            
+
             // operator
             foreach (Operator anOperator in Operator.BuildInOperators())
             {
-                if (! _Operators.ContainsKey(anOperator.Token)) 
-                    _Operators.Add(anOperator.Token, anOperator);
+                if (!_operators.ContainsKey(anOperator.Token))
+                    _operators.Add(anOperator.Token, anOperator);
             }
-            
+
             // Functions
             foreach (@Function aFunction in @Function.BuildInFunctions())
             {
-                if (!_Functions.ContainsKey(aFunction.Token))
-                    _Functions.Add(aFunction.Token, aFunction);
+                if (!_functions.ContainsKey(aFunction.Token))
+                    _functions.Add(aFunction.Token, aFunction);
             }
             // primitve Datatypes
             foreach (IDataType aDatatype in PrimitiveType.DataTypes)
@@ -1327,7 +1343,7 @@ namespace OnTrack.Rulez
                 if (!_datatypes.ContainsKey(aDatatype.Id.ToUpper()))
                 {
                     _datatypes.Add(aDatatype.Id.ToUpper(), aDatatype);
-                    if (! _datatypesSignature.ContainsKey(aDatatype.Signature.ToUpper()))
+                    if (!_datatypesSignature.ContainsKey(aDatatype.Signature.ToUpper()))
                         _datatypesSignature.Add(aDatatype.Signature.ToUpper(), new List<IDataType>());
                     List<IDataType> aList = _datatypesSignature[aDatatype.Signature.ToUpper()];
                     // remove all existing
@@ -1335,8 +1351,8 @@ namespace OnTrack.Rulez
                     aList.Add(aDatatype);
                 }
             }
-            _IsInitialized = true;
-            return _IsInitialized;
+            _isInitialized = true;
+            return _isInitialized;
         }
         /// <summary>
         /// returns true if the repository has the rule rule
@@ -1395,7 +1411,7 @@ namespace OnTrack.Rulez
         public bool HasFunction(Token id)
         {
             Initialize();
-            return _Functions.ContainsKey(id);
+            return _functions.ContainsKey(id);
         }
         /// <summary>
         /// returns the function by handle
@@ -1406,7 +1422,7 @@ namespace OnTrack.Rulez
         {
             Initialize();
             if (this.HasFunction(id))
-                return _Functions[id];
+                return _functions[id];
             throw new KeyNotFoundException(id + " was not found in repository");
         }
         /// <summary>
@@ -1419,8 +1435,8 @@ namespace OnTrack.Rulez
         {
             Initialize();
             if (this.HasFunction(function.Token))
-                _Functions.Remove(function.Token);
-            _Functions.Add(function.Token, function);
+                _functions.Remove(function.Token);
+            _functions.Add(function.Token, function);
             return true;
         }
         /// <summary>
@@ -1432,7 +1448,7 @@ namespace OnTrack.Rulez
         {
             Initialize();
             if (id != null)
-                return _Operators.ContainsKey(id);
+                return _operators.ContainsKey(id);
             return false;
         }
         /// <summary>
@@ -1444,7 +1460,7 @@ namespace OnTrack.Rulez
         {
             Initialize();
             if (this.HasOperator(id))
-                return _Operators[id];
+                return _operators[id];
             throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[] { id.ToString(), "Operator" });
         }
         /// <summary>
@@ -1457,8 +1473,8 @@ namespace OnTrack.Rulez
         {
             Initialize();
             if (this.HasOperator(Operator.Token))
-                _Operators.Remove(Operator.Token);
-            _Operators.Add(Operator.Token, Operator);
+                _operators.Remove(Operator.Token);
+            _operators.Add(Operator.Token, Operator);
             return true;
         }
         /// <summary>
@@ -1471,7 +1487,7 @@ namespace OnTrack.Rulez
         {
             Initialize();
             if (this.HasOperator(id))
-                return _Operators.Remove(id);
+                return _operators.Remove(id);
             return false;
         }
         /// <summary>
@@ -1574,7 +1590,7 @@ namespace OnTrack.Rulez
         public bool HasSymbol(string id)
         {
             Initialize();
-            if (!String.IsNullOrEmpty (id))
+            if (!String.IsNullOrEmpty(id))
                 return _symbols.ContainsKey(id.ToUpper());
             return false;
         }

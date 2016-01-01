@@ -401,12 +401,14 @@ namespace OnTrack.Rulez
     /// </summary>
     internal class XPTDataObjectDefinition : IObjectDefinition
     {
+        private readonly ObjectName _name;
         private  ObservableCollection<IObjectEntryDefinition> _entries = new ObservableCollection<IObjectEntryDefinition> ();
         /// <summary>
         /// constructor
         /// </summary>
-        public XPTDataObjectDefinition()
+        public XPTDataObjectDefinition(ObjectName name) 
         {
+            _name = name;
             _entries.CollectionChanged += _entries_CollectionChanged;
         }
         /// <summary>
@@ -432,12 +434,14 @@ namespace OnTrack.Rulez
         /// gets the object name
         /// </summary>
         /// <value></value>
-        public string Id
+        public ObjectName Name
         {
-            get;
-            set;
+            get { return _name; }
         }
-
+        public string Id 
+        {
+            get { return _name.FullId; }
+        }
         /// <summary>
         /// gets the System.Type of the object implementation class
         /// </summary>
@@ -454,8 +458,7 @@ namespace OnTrack.Rulez
         /// <value></value>
         public string ModuleId
         {
-            get;
-            set;
+            get { return _name.ModuleId; }
         }
         /// <summary>
         /// gets the .net class name
@@ -463,8 +466,7 @@ namespace OnTrack.Rulez
         /// <value></value>
         public string Classname
         {
-            get;
-            set;
+           get { return _name.Id; }
         }
         /// <summary>
         /// gets the description

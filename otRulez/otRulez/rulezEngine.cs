@@ -435,26 +435,26 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public INode Verify(string source)
         {
-            RulezParser.MessageListener aListener = new RulezParser.MessageListener();
+            var aListener = new RulezParser.MessageListener();
             RulezParser.RulezUnitContext aCtx = null;
             try
             {
-                RulezLexer aLexer = new RulezLexer(new Antlr4.Runtime.AntlrInputStream(source));
+                var aLexer = new RulezLexer(new Antlr4.Runtime.AntlrInputStream(source));
                 // wrap a token-stream around the lexer
-                Antlr4.Runtime.CommonTokenStream theTokens = new Antlr4.Runtime.CommonTokenStream(aLexer);
+                var theTokens = new Antlr4.Runtime.CommonTokenStream(aLexer);
                 // create the aParser
-                RulezParser aParser = new RulezParser(theTokens);
+                var aParser = new RulezParser(theTokens);
                 aParser.Trace = true;
                 aParser.Engine = this;
                 aParser.AddErrorListener(aListener);
                 // step 1: parse
                 aCtx = aParser.rulezUnit();
                 // step 2: generate the declarations
-                XPTDeclGen theDeclGen = new XPTDeclGen(aParser);
-                Antlr4.Runtime.Tree.ParseTreeWalker.Default.Walk(theDeclGen, aCtx);
+                var aDeclarator = new XPTDeclarator(aParser);
+                Antlr4.Runtime.Tree.ParseTreeWalker.Default.Walk(aDeclarator, aCtx);
                 // step 3: generate the XPTree of the code
-                XPTGenerator theXPTGen = new XPTGenerator(aParser);
-                Antlr4.Runtime.Tree.ParseTreeWalker.Default.Walk(theXPTGen, aCtx);
+                var aGenerator = new XPTGenerator(aParser, declaration: aDeclarator);
+                Antlr4.Runtime.Tree.ParseTreeWalker.Default.Walk(aGenerator, aCtx);
                 // return the XPTree
                 if (aCtx != null) return aCtx.XPTreeNode;
                 return null;
@@ -480,28 +480,28 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         private bool Generate(Antlr4.Runtime.ICharStream input)
         {
-            RulezParser.MessageListener aListener = new RulezParser.MessageListener();
+            var aListener = new RulezParser.MessageListener();
             RulezParser.RulezUnitContext aCtx = null;
             try
             {
-                RulezLexer aLexer = new RulezLexer(input);
+                var aLexer = new RulezLexer(input);
                 // wrap a token-stream around the lexer
-                Antlr4.Runtime.CommonTokenStream theTokens = new Antlr4.Runtime.CommonTokenStream(aLexer);
+                var theTokens = new Antlr4.Runtime.CommonTokenStream(aLexer);
                 // create the aParser
-                RulezParser aParser = new RulezParser(theTokens);
+                var aParser = new RulezParser(theTokens);
                 aParser.Trace = true;
                 aParser.Engine = this;
                 aParser.AddErrorListener(aListener);
                 // step 1: parse
                 aCtx = aParser.rulezUnit();
                 // step 2: generate the declarations
-                XPTDeclGen theDeclGen = new XPTDeclGen(aParser);
-                Antlr4.Runtime.Tree.ParseTreeWalker.Default.Walk(theDeclGen, aCtx);
+                var aDeclarator = new XPTDeclarator(aParser);
+                Antlr4.Runtime.Tree.ParseTreeWalker.Default.Walk(aDeclarator, aCtx);
                 // step 3: generate the XPTree of the code
-                XPTGenerator theXPTGen = new XPTGenerator(aParser);
-                Antlr4.Runtime.Tree.ParseTreeWalker.Default.Walk(theXPTGen, aCtx);
+                var aGenerator = new XPTGenerator(aParser, declaration: aDeclarator);
+                Antlr4.Runtime.Tree.ParseTreeWalker.Default.Walk(aGenerator, aCtx);
                 // result -> Generate and store from the XPTree
-                return Generate((IRule)theXPTGen);
+                return Generate((IRule)aGenerator);
 
             }
             catch (Exception ex)
@@ -515,7 +515,7 @@ namespace OnTrack.Rulez
                 }
                 return false;
             }
-                   }
+        }
         /// <summary>
         /// Generate from a rule the intermediate Code and store it
         /// </summary>
@@ -637,9 +637,9 @@ namespace OnTrack.Rulez
     /// </summary>
     public class Context
     {
-        private Engine _engine ; // reference engine
-        private Dictionary <String, object> _heap = new Dictionary<string,object> () ;
-        private Stack<Object> _stack = new Stack<Object>();
+        private readonly Engine _engine ; // reference engine
+        private readonly Dictionary <String, object> _heap = new Dictionary<string,object> () ;
+        private readonly Stack<Object> _stack = new Stack<Object>();
 
         /// <summary>
         /// constructor

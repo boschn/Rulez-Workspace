@@ -37,11 +37,11 @@ namespace OnTrack.Core
         public const string ConstPropertySignature = "Signature";
         public const string ConstPropertyDefaultValue = "DefaultValue";
         // Instance data
-        private otDataType _type = otDataType.@Null; // datatype
-        private Rulez.Engine _engine;
+        private readonly otDataType _type = otDataType.@Null; // datatype
+        private readonly Rulez.Engine _engine;
         private object _defaultvalue;
        
-        private Rulez.ObjectName _name;
+        protected Rulez.ObjectName _name; // raise event if changing
         protected string _signature = String.Empty;
         // event
         public event PropertyChangedEventHandler PropertyChanged;
@@ -536,7 +536,11 @@ namespace OnTrack.Core
         public string Id
         {
             get { return _name.FullId; }
-            protected set { _name.FullId = (value != null) ? value.ToUpper() : System.Guid.NewGuid().ToString(); RaiseOnPropertyChanged(this, ConstPropertyDefaultId); }
+            protected set
+            {
+                _name = new Rulez.ObjectName((value != null) ? value.ToUpper() : System.Guid.NewGuid().ToString());
+                RaiseOnPropertyChanged(this, ConstPropertyDefaultId);
+            }
         }
         /// <summary>
         /// gets the Signature of the  Datatype
@@ -733,7 +737,12 @@ namespace OnTrack.Core
                 return String.Empty;
             }
         }
-
+        /// <summary>
+        /// convert an enumerable to a string with a delimiter
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="delimiter"></param>
+        /// <returns></returns>
         public static string Enumerable2StringList(IEnumerable input, char delimiter =',')
         {
             string aStrValue = String.Empty;
@@ -796,7 +805,6 @@ namespace OnTrack.Core
             string formattimestamp = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.ShortDatePattern + " " + System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.LongTimePattern;
             return datevalue.ToString (formattimestamp);
         }
-
         /// <summary>
         /// return a date in the date localTime
         /// </summary>
@@ -863,7 +871,6 @@ namespace OnTrack.Core
             blue = value / 0x10000 & 0xffL;
             return System.Drawing.Color.FromArgb(red: Convert.ToInt32(red), green: Convert.ToInt32(green), blue: Convert.ToInt32(blue));
         }
-
         /// <summary>
         /// returns a color value to hexadecimal (bgr of rgb) 
         /// </summary>

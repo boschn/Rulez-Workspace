@@ -157,11 +157,11 @@ namespace OnTrack.Rulez
         /// <summary>
         /// gets or sets the ID of the scope
         /// </summary>
-        string Id { get; set; }
+        string Id { get;  }
         /// <summary>
         /// gets or sets the Name of the Scope
         /// </summary>
-        CanonicalName Name { get; set; }
+        CanonicalName Name { get;  }
         /// <summary>
         /// event handler for dataObjectRepository Added
         /// </summary>

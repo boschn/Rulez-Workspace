@@ -24,15 +24,14 @@ using OnTrack.Rulez.eXPressionTree;
 namespace OnTrack.Rulez
 {
     /// <summary>
-    /// class for working with canonical names
+    /// class for working with canonical names of the  form id { '.' id }
     /// </summary>
     public class CanonicalName : IEqualityComparer<CanonicalName>, IEquatable<CanonicalName>
     {
         public const string GlobalID = "";
+        public const char ConstDelimiter = '.';
 
         #region Static
-
-        public static char ConstDelimiter = '.';
         /// <summary>
         /// static Property Global (for GlobalName)
         /// </summary>
@@ -55,11 +54,12 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public static string Push (string canonicalID, string id)
         {
-            if (String.IsNullOrEmpty(canonicalID) || string.Compare (id, GlobalID, true) == 0) return id;
+            if (String.IsNullOrEmpty(canonicalID) || string.Compare (id, GlobalID, ignoreCase: true) == 0)
+                return id;
             return canonicalID + ConstDelimiter + id;
         }
         /// <summary>
-        /// pops a id on a canonical id and returns it
+        /// pops an id of a canonical id and returns the rest and the id in the ref parameter
         /// </summary>
         /// <param id="canonicalID"></param>
         /// <param id="id"></param>
@@ -84,7 +84,7 @@ namespace OnTrack.Rulez
             return String.Empty;
         }
         /// <summary>
-        /// pops a id on a canonical id and returns it
+        /// pops of an id on a canonical id and returns the rest
         /// </summary>
         /// <param id="canonicalID"></param>
         /// <param id="id"></param>
@@ -155,8 +155,11 @@ namespace OnTrack.Rulez
         }
 #endregion
         // hold the names in an array
-        protected string[] _ids;
-        protected CanonicalName()
+        protected readonly string[] _ids = (new List<string>()).ToArray();
+        /// <summary>
+        /// empty constructor - forbidden
+        /// </summary>
+        private CanonicalName()
         {
 
         }
@@ -166,7 +169,7 @@ namespace OnTrack.Rulez
         /// <param id="id"></param>
         public CanonicalName (string id)
         {
-            this.FullId = id;
+            if (!String.IsNullOrEmpty (id)) _ids = id.ToUpper().Split(ConstDelimiter);
         }
         /// <summary>
         /// gets the individual parts of the canonical name
@@ -181,11 +184,6 @@ namespace OnTrack.Rulez
             {
                 return StringFrom(_ids);
             }
-            set
-            {
-                if (String.IsNullOrEmpty(value)) _ids = (new List<string> ()).ToArray() ;
-                _ids = value.ToUpper().Split(ConstDelimiter);
-            }
         }
         /// <summary>
         /// returns true if the name is in canonical Form
@@ -195,17 +193,15 @@ namespace OnTrack.Rulez
         /// <summary>
         /// pushes a name on a canonical name and returns it
         /// </summary>
-        /// <param name="canonicalName"></param>
-        /// <param name="name"></param>
+        /// <param name="id"></param>
         /// <returns></returns>
-        public virtual string Push(string name)
+        public virtual string Push(string id)
         {
-            return CanonicalName.Push(this.FullId, name.ToUpper());
+            return CanonicalName.Push(this.FullId, id.ToUpper());
         }
         /// <summary>
         /// pops a id on a canonical id and returns it
         /// </summary>
-        /// <param id="canonicalName"></param>
         /// <param id="id"></param>
         /// <returns></returns>
         public virtual string Pop(ref string id)
@@ -243,7 +239,7 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <returns></returns>
         public override string ToString()        { return this.FullId; }
-        #region "IEqualComparer"
+        #region IEqualComparer
         /// <summary>
         /// Equality Comparer
         /// </summary>
@@ -252,7 +248,7 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public bool Equals(CanonicalName y)
         {
-            return Equals(this, y);
+            return String.Compare (this.FullId, y.FullId, ignoreCase:true)==0;
         }
         /// <summary>
         /// Equality Comparer
@@ -328,7 +324,7 @@ namespace OnTrack.Rulez
         #endregion
     }
     /// <summary>
-    /// class for working objectnames Modulename = [ID ( . ID )* .] ID with canonical names
+    /// class for working objectnames Modulename = [ID ( . ID )* .] OBJECTID with canonical names
     /// </summary>
     public class ObjectName : CanonicalName
     {
@@ -392,15 +388,12 @@ namespace OnTrack.Rulez
         /// constructor
         /// </summary>
         /// <param id="id"></param>
-        public ObjectName(string id) 
+        public ObjectName(string id):base(id)
         {
-            this.FullId = id;
         }
         public ObjectName(string moduleid, string objectid)
-            : base(objectid)
+            : base((String.IsNullOrEmpty(moduleid) ? (moduleid + ConstDelimiter) : String.Empty)+ objectid)
         {
-            this.FullId = (String.IsNullOrEmpty(moduleid) ? (moduleid + ConstDelimiter) : String.Empty)  
-                        + objectid;
         }
         /// <summary>
         /// get or sets the Id
@@ -411,6 +404,7 @@ namespace OnTrack.Rulez
             {
                 return base.FullId;
             }
+            /*
             set
             {
                 if (value == null) base.FullId = String.Empty;
@@ -423,6 +417,7 @@ namespace OnTrack.Rulez
                   _ids = names.ToArray();
                 }
             }
+            */
         }
         
         /// <summary>
@@ -432,10 +427,11 @@ namespace OnTrack.Rulez
         {
             get
             {
-                string[] names = (string[]) _ids.Clone();
+                var names = (string[]) _ids.Clone();
                 names[names.GetUpperBound(0)] = string.Empty;
                 return StringFrom (names);
             }
+            /*
             set
             {
                 if (!String.IsNullOrEmpty(value))
@@ -450,11 +446,15 @@ namespace OnTrack.Rulez
                     _ids = n;
                 }
             }
+            */
         }
         /// <summary>
         /// gets the Objectname itself
         /// </summary>
-        public virtual string Id { get { return _ids[_ids.GetUpperBound(0)]; } set { _ids[_ids.GetUpperBound(0)] = value.ToUpper(); } }
+        public virtual string Id
+        {
+            get { return _ids[_ids.GetUpperBound(0)]; } set { _ids[_ids.GetUpperBound(0)] = value.ToUpper(); }
+        }
         /// <summary>
         /// returns true if the name is in canonical Form
         /// </summary>
@@ -468,8 +468,7 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public string PushModule(string id)
         {
-            this.ModuleId = CanonicalName.Push(ModuleId, id);
-            return this.FullId;
+            return CanonicalName.Push(ModuleId, id);
         }
         /// <summary>
         /// pops a modulename from the canonical id and returns the rest
@@ -479,8 +478,7 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public string PopModule(ref string id)
         {
-            this.ModuleId = CanonicalName.Pop(ModuleId, ref id);
-            return this.FullId;
+            return CanonicalName.Pop(ModuleId, ref id);
         }
     }
     /// <summary>
@@ -488,6 +486,7 @@ namespace OnTrack.Rulez
     /// </summary>
     public class EntryName : ObjectName
     {
+        private readonly string _entryID;
 
         #region Static
         /// <summary>
@@ -566,14 +565,25 @@ namespace OnTrack.Rulez
         public EntryName(string id)
             : base(id)
         {
-            this.FullId = id;
+           
         }
-        public EntryName(string moduleid, string objectid, string entryid) : base(moduleid)
+        public EntryName(string moduleid, string objectid, string entryid) 
+            : base((!String.IsNullOrEmpty(moduleid) ? (moduleid + ConstDelimiter) : String.Empty) +
+                   (!String.IsNullOrEmpty(objectid) ? (objectid + ConstDelimiter) : String.Empty) + 
+                   entryid)
         {
-            this.FullId = (String.IsNullOrEmpty(moduleid) ? (moduleid + ConstDelimiter) : String.Empty) + 
-                        (String.IsNullOrEmpty(objectid) & String.IsNullOrEmpty(moduleid) ? (objectid + ConstDelimiter) : String.Empty) 
-                        + entryid;
+            
         }
+        /// <summary>
+        /// constructor with objectid (including moduleID)
+        /// </summary>
+        /// <param name="objectid"></param>
+        /// <param name="entryid"></param>
+        public EntryName(string objectid, string entryid):
+            base(!String.IsNullOrEmpty (objectid) ? (objectid + ConstDelimiter + entryid) : entryid)
+        {
+        }
+
         /// <summary>
         /// get or sets the Id
         /// </summary>
@@ -583,6 +593,7 @@ namespace OnTrack.Rulez
             {
                 return base.FullId;
             }
+            /*
             set
             {
                 if (value == null) base.FullId = String.Empty;
@@ -597,6 +608,7 @@ namespace OnTrack.Rulez
                         _ids = names.ToArray();
                     }
             }
+            */
         }
         /// <summary>
         /// gets or sets the ModuleName
@@ -605,11 +617,12 @@ namespace OnTrack.Rulez
         {
             get
             {
-                string[] names = (string[])_ids.Clone();
-                names[names.GetUpperBound(0)] = string.Empty;
-                names[names.GetUpperBound(0)-1] = string.Empty;
+                var names = (string[])_ids.Clone();
+                names[names.GetUpperBound(dimension:0)] = string.Empty;
+                names[names.GetUpperBound(dimension:0)-1] = string.Empty;
                 return StringFrom(names);
             }
+            /*
             set
             {
                 if (!String.IsNullOrEmpty(value))
@@ -625,6 +638,7 @@ namespace OnTrack.Rulez
                     _ids = n;
                 }
             }
+            */
         }
         /// <summary>
         /// gets or sets the entry name
@@ -633,11 +647,17 @@ namespace OnTrack.Rulez
         /// <summary>
         /// gets te obectname object
         /// </summary>
-        public virtual ObjectName ObjectName { get { return new ObjectName(String.IsNullOrEmpty(ModuleId) ? this.ObjectId : (this.ModuleId + ConstDelimiter + ObjectId)); } }
+        public virtual ObjectName ObjectName
+        {
+            get { return new ObjectName(String.IsNullOrEmpty(ModuleId) ? this.ObjectId : (this.ModuleId + ConstDelimiter + ObjectId)); }
+        }
         /// <summary>
         /// gets or sets the entry name
         /// </summary>
-        public override string Id { get { return _ids[_ids.GetUpperBound(0)]; } set { _ids[_ids.GetUpperBound(0)] = value.ToUpper(); } }
+        public override string Id
+        {
+            get { return _ids[_ids.GetUpperBound(0)]; } set { _ids[_ids.GetUpperBound(0)] = value.ToUpper(); }
+        }
         /// <summary>
         /// returns true if the name is in canonical Form
         /// </summary>

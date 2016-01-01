@@ -698,7 +698,7 @@ namespace OnTrack.Rulez
     public abstract class CompositeType : DataType
     {
         // additional combined data types
-        protected Dictionary<string, IDataType> _structure = new Dictionary<string, IDataType>();
+        protected readonly Dictionary<string, IDataType> _structure = new Dictionary<string, IDataType>();
         /// <summary>
         /// returns the best fit System.Type for a OnTrack Datatype
         /// </summary>
@@ -899,7 +899,7 @@ namespace OnTrack.Rulez
         {
             this.ComplexTypeName = ConstTypeName;
             // anonymous name
-            if (String.IsNullOrEmpty(id)) this.Id = Guid.NewGuid().ToString();
+            if (String.IsNullOrEmpty(id)) _name = new ObjectName(Guid.NewGuid().ToString());
             // define the structure
             AddMember(ConstSYMBOL, DataType.GetDataType(otDataType.Text));
             AddMember(ConstValue, DataType.GetDataType(innerTypeId));
@@ -1500,7 +1500,7 @@ namespace OnTrack.Rulez
         {
             if (!String.IsNullOrEmpty(id))
             {
-                ObjectName aName = new ObjectName(id);
+                var aName = new ObjectName(id);
                 IDataType aDatatype = null;
                 if (aName.IsObjectName())
                 {

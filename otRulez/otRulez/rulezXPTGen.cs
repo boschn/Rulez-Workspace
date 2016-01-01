@@ -33,18 +33,18 @@ namespace OnTrack.Rulez
     /// <summary>
     /// lister to generate all the declarations in a XPT Scope
     /// </summary>
-    public class XPTDeclGen : RulezParserBaseListener
+    public class XPTDeclarator : RulezParserBaseListener
     {
-        private RulezParser _parser;
-        private eXPressionTree.XPTree _xptree; // the output tree
-        private Engine _engine;
+        private readonly RulezParser _parser;
+        private readonly eXPressionTree.XPTree _xptree; // the output tree
+        private readonly Engine _engine;
         private IScope _currentScope;
-        private Stack<IScope> _scopeStack = new Stack<IScope>();
+        private readonly Stack<IScope> _scopeStack = new Stack<IScope>();
         /// <summary>
         /// constructor
         /// </summary>
         /// <param id="parser"></param>
-        public XPTDeclGen(RulezParser parser, Engine engine = null)
+        public XPTDeclarator(RulezParser parser, Engine engine = null)
         {
             _parser = parser;
             if (engine == null) _engine = parser.Engine;
@@ -271,17 +271,19 @@ namespace OnTrack.Rulez
     /// </summary>
     public class XPTGenerator : RulezParserBaseListener 
     {
-        private RulezParser _parser;
+        private readonly RulezParser _parser;
+        private readonly XPTDeclarator _declarations;
         private eXPressionTree.XPTree _xptree; // the output tree
-        private Engine _engine;
+        private readonly Engine _engine;
 
         /// <summary>
         /// constructor
         /// </summary>
         /// <param name="parser"></param>
-        public XPTGenerator(RulezParser parser, Engine engine = null)
+        public XPTGenerator(RulezParser parser, XPTDeclarator declaration,  Engine engine = null)
         {
             _parser = parser;
+            _declarations = declaration;
             if (engine == null) _engine = parser.Engine;
             else { _engine = engine; }
         }
@@ -296,6 +298,13 @@ namespace OnTrack.Rulez
                 return _xptree;
             }
             private set { _xptree = value; }
+        }
+        /// <summary>
+        /// returns the Declaration Tree
+        /// </summary>
+        public XPTDeclarator Declarations
+        {
+            get { return _declarations; }
         }
         /// <summary>
         /// gets the associated Engine

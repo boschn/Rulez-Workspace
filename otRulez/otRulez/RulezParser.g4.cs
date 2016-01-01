@@ -301,12 +301,11 @@ namespace OnTrack.Rulez
                 else anID += CanonicalName.ConstDelimiter + contexts[i].GetText();
             }
 
-            ObjectName aName = new ObjectName(anID);
+            var aName = new ObjectName(anID);
             if (aName.IsObjectName()) return aName;
             // we need a modulename
             string aModuleID = GetCurrentScopeID(current);
-            aName.ModuleId = aModuleID;
-            return aName;
+            return new ObjectName (moduleid:aModuleID, objectid: aName.FullId);
         }
         /// <summary>
         /// returns an Objectname from an array of contexts texts
@@ -322,13 +321,11 @@ namespace OnTrack.Rulez
                     if (String.IsNullOrEmpty(anID)) anID = contexts[i].GetText();
                     else anID += CanonicalName.ConstDelimiter + contexts[i].GetText();
                 }
-
-            EntryName aName = new EntryName(anID);
+            var aName = new EntryName(anID);
             if (aName.IsEntryName()) return aName;
             // we need a modulename
             string aModuleID = GetCurrentScopeID(current);
-            aName.ModuleId = aModuleID;
-            return aName;
+            return new EntryName(objectid: aName.FullId, entryid: anID);
         }
         /// <summary>
         /// returns the ancestor node context of a certain type of root from this context

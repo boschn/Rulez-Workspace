@@ -589,7 +589,6 @@ namespace OnTrack.Rulez.eXPressionTree
         public string Id
         {
             get { return _name.FullId; }
-            set { _name.FullId = value; }
         }
         /// <summary>
         /// returns the ObjectID of the entry
@@ -756,7 +755,6 @@ namespace OnTrack.Rulez.eXPressionTree
         public string Id
         {
             get { return _name.FullId; }
-            set { _name.FullId = value; }
         }
         /// <summary>
         /// returns the IObjectDefinition

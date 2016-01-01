@@ -15,9 +15,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Collections.ObjectModel;
 
 namespace OnTrack.Rulez.eXPressionTree
@@ -179,7 +176,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// gets or sets the ID of the variable
         /// </summary>
-        String Id { get; set; }
+        String Id { get; }
         /// <summary>
         /// defines the IeXPressionTree scope of the symbol
         /// </summary>

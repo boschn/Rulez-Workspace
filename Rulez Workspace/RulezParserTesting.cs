@@ -74,14 +74,21 @@ namespace OnTrack.Testing
         private Dictionary <String, IObjectEntryDefinition> _entries = new Dictionary<String, IObjectEntryDefinition>();
         private List<string> _keynames = new List<string>();
         /// <summary>
-        /// constructor
+        /// constructor with full canonical id
         /// </summary>
         /// <param name="id"></param>
         public ObjectDefinition(String id)
         {
             _objectname = new ObjectName(id);
         }
-
+        /// <summary>
+        /// constructor with object name
+        /// </summary>
+        /// <param name="name"></param>
+        public ObjectDefinition(ObjectName name)
+        {
+            _objectname = name;
+        }
         public bool AddEntry(IObjectEntryDefinition entry)
         {
             if (_entries.ContainsKey (entry.EntryId.ToUpper())) _entries .Remove (entry.EntryId.ToUpper() );
@@ -89,7 +96,10 @@ namespace OnTrack.Testing
             _entries .Add(entry.EntryId.ToUpper(), entry);
             return true;
         }
-        public ObjectName Objectname
+        /// <summary>
+        /// gets the object name
+        /// </summary>
+        public ObjectName Name
         {
             get
             {
@@ -111,17 +121,16 @@ namespace OnTrack.Testing
                 throw new NotImplementedException();
             }
         }
-
+        /// <summary>
+        /// gets the ModuleID
+        /// </summary>
         public string ModuleId
         {
             get
             {
                 return _objectname.ModuleId;
             }
-            set
-            {
-                _objectname.ModuleId = value;
-            }
+            
         }
 
         public string Classname
@@ -130,10 +139,7 @@ namespace OnTrack.Testing
             {
                 return _objectname.FullId;
             }
-            set
-            {
-                _objectname.FullId = value;
-            }
+          
         }
 
         public string Description
@@ -253,7 +259,7 @@ namespace OnTrack.Testing
             theDeliverables.AddEntry(new ObjectEntryDefinition(theDeliverables, "UID", otDataType.Number, false));
             theDeliverables.AddEntry(new ObjectEntryDefinition(theDeliverables, "DATE", otDataType.Date, true));
             theDeliverables.Keys = new string[] {"uid"};
-            _objects.Add(theDeliverables.Objectname, theDeliverables);
+            _objects.Add(theDeliverables.Name, theDeliverables);
             // testobject1 class
             ObjectDefinition aTestObject = new ObjectDefinition("testobject1");
             aTestObject.AddEntry(new ObjectEntryDefinition(aTestObject, "UID", otDataType.Number, false));
@@ -261,7 +267,7 @@ namespace OnTrack.Testing
             aTestObject.AddEntry(new ObjectEntryDefinition(aTestObject, "CREATED", otDataType.Date, true));
             aTestObject.AddEntry(new ObjectEntryDefinition(aTestObject, "DESC", otDataType.Text, true));
             aTestObject.Keys = new string[] { "UID", "VER" };
-            _objects.Add(aTestObject.Objectname, aTestObject);
+            _objects.Add(aTestObject.Name, aTestObject);
             
         }
 

@@ -34,6 +34,10 @@ namespace OnTrack.Core
         /// <summary>
         /// gets the object name
         /// </summary>
+        ObjectName Name { get; }
+        /// <summary>
+        /// gets the object Id
+        /// </summary>
         String Id { get; }
         /// <summary>
         /// gets the System.Type of the object implementation class
@@ -42,11 +46,11 @@ namespace OnTrack.Core
         /// <summary>
         /// gets the module id space
         /// </summary>
-        String ModuleId { get; set; }
+        String ModuleId { get;  }
         /// <summary>
         /// gets the .net class name
         /// </summary>
-        String Classname { get; set; }
+        String Classname { get;  }
         /// <summary>
         /// gets the description
         /// </summary>
@@ -279,7 +283,6 @@ namespace OnTrack.Core
         /// <returns></returns>
         IObjectDefinition ObjectDefinition {get;}
     }
-      
     /// <summary>
     /// declares an data object Engine
     /// </summary>
