@@ -148,7 +148,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// returns the ID of the rule
         /// </summary>
-        String Id { get; set; }
+        String Id { get;  }
         /// <summary>
         /// returns the state of the rule
         /// </summary>

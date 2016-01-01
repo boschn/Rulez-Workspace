@@ -189,10 +189,10 @@ returns [  OnTrack.Rulez.IScope Scope, OnTrack.Rulez.eXPressionTree.INode XPTree
 locals [ 
 		// parameters
 		 Dictionary<string,ParameterDefinition> names = new Dictionary<string,ParameterDefinition>() ]
-@init{ $XPTreeNode = new SelectionRule(); RegisterMessages($XPTreeNode);}
+@init{  RegisterMessages($XPTreeNode);}
 @after { DeRegisterMessages($XPTreeNode);}
 
-    : SELECTION id = ruleid {((SelectionRule)$XPTreeNode).ID = $ctx.id.GetText(); } (LPAREN parameters RPAREN)? AS ( selectStatementBlock | selection ) 
+    : SELECTION id = ruleid {$XPTreeNode = new SelectionRule(id:$ctx.id.GetText());} (LPAREN parameters RPAREN)? AS ( selectStatementBlock | selection ) 
 	
     ;
 // rulename

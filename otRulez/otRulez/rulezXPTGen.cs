@@ -229,7 +229,7 @@ namespace OnTrack.Rulez
          public override void EnterSelectStatementBlock(RulezParser.SelectStatementBlockContext ctx)
         {
             // create a scope and assign
-            if (ctx.XPTreeNode == null) ctx.XPTreeNode = new OnTrack.Rulez.eXPressionTree.SelectionStatementBlock("BLOCK-" + Guid.NewGuid().ToString());
+            if (ctx.XPTreeNode == null) ctx.XPTreeNode = new OnTrack.Rulez.eXPressionTree.SelectionStatementBlock();
             var aBlock = (SelectionStatementBlock)ctx.XPTreeNode;
             // push the new scope to the current scope
             ctx.Scope = PushNewScope(aBlock.Id);

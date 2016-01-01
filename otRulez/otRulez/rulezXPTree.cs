@@ -220,7 +220,7 @@ namespace OnTrack.Rulez.eXPressionTree
         // instance variables
         private readonly ObservableCollection<INode> _nodes = new ObservableCollection<INode>();
         protected Engine _engine;
-        private otXPTNodeType _nodeType;
+        private readonly otXPTNodeType _nodeType;
         private IXPTree _parent;
         private readonly List<Message> _errorlist = new List<Message>();
         private IScope _scope; 
@@ -234,8 +234,9 @@ namespace OnTrack.Rulez.eXPressionTree
         /// constructor
         /// </summary>
         /// <param name="engine"></param>
-        protected XPTree(Engine engine = null)
+        protected XPTree(otXPTNodeType nodetype, Engine engine = null)
         {
+            _nodeType = nodetype;
             // default engine
             if (engine == null) engine = OnTrack.Rules.Engine;
             _scope = new XPTScope(engine);
@@ -271,7 +272,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// return the node type
         /// </summary>
-        public otXPTNodeType NodeType { get { return _nodeType; } protected set { _nodeType = value; } }
+        public otXPTNodeType NodeType { get { return _nodeType; } }
         /// <summary>
         /// set or get all the leaves .. setting is merging
         /// </summary>
@@ -438,7 +439,7 @@ namespace OnTrack.Rulez.eXPressionTree
     /// </summary>
     public abstract class Rule : XPTree, IRule
     {
-        private string _id; // unique ID of the rule
+        private readonly string _id; // unique ID of the rule
         private otRuleState _state; // state of the rule
         private String _handle; // handle of the rule theCode in the engine
 
@@ -450,10 +451,9 @@ namespace OnTrack.Rulez.eXPressionTree
         /// constructor
         /// </summary>
         /// <param id="handle"></param>
-        public Rule( string id = null,  Engine engine = null): base(engine: engine)
+        public Rule( string id = null,  Engine engine = null, otXPTNodeType? nodetype= null) 
+            : base(nodetype: (nodetype.HasValue ) ? nodetype.Value: otXPTNodeType.Rule, engine: engine)
         {
-            this.NodeType = otXPTNodeType.Rule;
-
             if (id == null) { _id = Guid.NewGuid().ToString(); }
             else { _id = id; }
             _state = otRuleState.Created;
@@ -463,7 +463,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// sets or gets the handle of the rule
         /// </summary>
-        public string Id { get { return _id; } set { _id = value; RaiseOnPropertyChanged(this, ConstPropertyID); } }
+        public string Id { get { return _id; }  }
         /// <summary>
         /// returns the theCode handle
         /// </summary>
@@ -491,12 +491,12 @@ namespace OnTrack.Rulez.eXPressionTree
         /// constructor
         /// </summary>
         /// <param name="handle"></param>
-        /// <param name="typeID"></param>
+        /// <param name="dataTypeId"></param>
         /// <param name="scope"></param>
-        public Variable(string id, otDataType typeID, IXPTree scope): base(nodetype: otXPTNodeType.Variable, engine: null)
+        public Variable(string id, otDataType dataTypeId, IXPTree scope): base(nodetype: otXPTNodeType.Variable, engine: null)
         {
             _id = id;
-            _datatype = Core.DataType.GetDataType (typeID);
+            _datatype = Core.DataType.GetDataType (dataTypeId);
             _scope = scope;
         }
         public Variable(string id, IDataType datatype, IXPTree scope)
@@ -855,9 +855,8 @@ namespace OnTrack.Rulez.eXPressionTree
         /// constructor
         /// </summary>
         public IfThenElse(Engine engine = null)
-            : base(engine)
+            : base(nodetype: otXPTNodeType.IfThenElse,engine: engine)
         {
-            this.NodeType = otXPTNodeType.IfThenElse;
         }
         /// <summary>
         /// constructor
@@ -865,10 +864,9 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <param name="token"></param>
         /// <param name="arguments"></param>
         public IfThenElse(LogicalExpression expression, IStatement @do, IStatement @else=null, Engine engine = null)
-            : base(engine)
+            : base(nodetype: otXPTNodeType.IfThenElse, engine:engine)
         {
             // TODO: check the argumetns
-            this.NodeType = otXPTNodeType.IfThenElse;
             if (@else != null)
                 this.Nodes = new ObservableCollection<INode>(new INode[]{expression, @do, @else});
             else this.Nodes = new ObservableCollection<INode>(new INode[] { expression, @do });
@@ -915,9 +913,8 @@ namespace OnTrack.Rulez.eXPressionTree
         /// constructor
         /// </summary>
         public @Return(Engine engine = null)
-            : base(engine)
+            : base(nodetype: otXPTNodeType.Return, engine:engine)
         {
-            this.NodeType = otXPTNodeType.Return;
         }
         /// <summary>
         /// constructor
@@ -925,9 +922,8 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <param name="token"></param>
         /// <param name="arguments"></param>
         public @Return(IExpression @return, Engine engine = null)
-            : base(engine)
+            : base(nodetype: otXPTNodeType.Return, engine: engine)
         {
-            this.NodeType = otXPTNodeType.Return;
             Nodes.Add (@return);
         }
         /// <summary>
@@ -972,27 +968,18 @@ namespace OnTrack.Rulez.eXPressionTree
     /// </summary>
     public class StatementBlock : XPTree, IStatement
     {
-        private Dictionary<string, ISymbol> _variables = new Dictionary<string, ISymbol>(); // variables
-        private string _ID;
-        /// <summary>
-        /// constructor
-        /// </summary>
-        public StatementBlock(string id = null, Engine engine = null)
-            : base(engine)
-        {
-            this.NodeType = otXPTNodeType.StatementBlock;
-            if (id == null) Id = "BLOCK-" + Guid.NewGuid().ToString();
-        }
+        private readonly Dictionary<string, ISymbol> _variables = new Dictionary<string, ISymbol>(); // variables
+        private readonly string _id;
         /// <summary>
         /// constructor
         /// </summary>
         /// <param name="token"></param>
         /// <param name="arguments"></param>
-        public StatementBlock(INode[] arguments, Engine engine = null)
-            : base(engine)
+        public StatementBlock(INode[] arguments = null, string id = null, Engine engine = null, otXPTNodeType? nodetype = null)
+            : base(nodetype: (nodetype.HasValue) ? nodetype.Value : otXPTNodeType.StatementBlock, engine: engine)
         {
-            this.NodeType = otXPTNodeType.StatementBlock;
-            this.Nodes = new ObservableCollection<INode>(arguments.ToList());
+            if (id == null) _id = "BLOCK-" + Guid.NewGuid().ToString();
+            if (arguments != null) this.Nodes = new ObservableCollection<INode>(arguments.ToList());
         }
         #region "Properties"
         /// <summary>
@@ -1002,7 +989,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// sets the ID of the block
         /// </summary>
-        public string Id { get {  if (_ID == null) _ID = "BLOCK-" + Guid.NewGuid().ToString (); return _ID; } set { _ID = value; } }
+        public string Id { get {  return _id; }  }
         #endregion
         /// <summary>
         /// Add a node to the block
@@ -1055,7 +1042,7 @@ namespace OnTrack.Rulez.eXPressionTree
             {
                 throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { id, this.Id });
             }
-            Variable aVar = new Variable(id: id, typeID: typeId, scope: this);
+            Variable aVar = new Variable(id: id, dataTypeId: typeId, scope: this);
             _variables.Add(aVar.Id, aVar);
             // add the symbol
             if (this.Scope != null) this.Scope.AddSymbol(aVar);
@@ -1087,22 +1074,13 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// constructor
         /// </summary>
-        public SelectionStatementBlock(string id = null, Engine engine = null)
-            : base(id,engine)
-        {
-            this.NodeType = otXPTNodeType.SelectionStatementBlock;
-        }
-        /// <summary>
-        /// constructor
-        /// </summary>
         /// <param name="token"></param>
         /// <param name="arguments"></param>
-        public SelectionStatementBlock(INode[] arguments, string id= null, Engine engine = null)
-            : base(id, engine)
+        public SelectionStatementBlock(INode[] arguments=null, string id= null, Engine engine = null)
+            : base(nodetype: otXPTNodeType.SelectionStatementBlock, id:id,engine: engine)
         {
-            this.NodeType = otXPTNodeType.SelectionStatementBlock;
             // arguments will be checked in event
-            this.Nodes = new ObservableCollection<INode>(arguments.ToList());
+            if (arguments != null) this.Nodes = new ObservableCollection<INode>(arguments.ToList());
         }
         #region "Properties"
         /// <summary>
@@ -1116,11 +1094,7 @@ namespace OnTrack.Rulez.eXPressionTree
                 if (_result != null) return _result.TypeId;
                 return otDataType.Null;
             }
-            set
-            {
-                throw new InvalidOperationException();
-            }
-        }
+          }
 
         /// <summary>
         /// gets or sets the type
@@ -1133,10 +1107,6 @@ namespace OnTrack.Rulez.eXPressionTree
                 if (_result != null) return _result.DataType;
                 return null;
             }
-            set
-            {
-                throw new InvalidOperationException();
-            }
         }
 
         /// <summary>
@@ -1146,16 +1116,10 @@ namespace OnTrack.Rulez.eXPressionTree
         {
             get
             {
-                if (_result != null)
+               
                     return _result;
-                return null;
             }
-            set
-            {
-                //TO-DO: do not allow to change if not null thow exception if not equal
-                _result = value;
-                if (_result.Engine == null) _result.Engine = this.Engine;
-            }
+            
         }
 
         #endregion
@@ -1177,7 +1141,7 @@ namespace OnTrack.Rulez.eXPressionTree
                     // check if return is added -> check if the resultlist is the same is in the Property
                     if (aNode != null && aNode is @Return)
                        // return expression must be a selectionExpression (or to-do a variable)
-                       if ((((@Return)aNode).Expression) is SelectionExpression) this.Result = ((SelectionExpression)((@Return)aNode).Expression).Results;
+                       if ((((@Return)aNode).Expression) is SelectionExpression)_result = ((SelectionExpression)((@Return)aNode).Expression).Results;
                        else throw new RulezException(RulezException.Types.InvalidNodeType, arguments: new object[] { aNode.NodeType.ToString(), "SelectionExpression" });
                     else
                     // only statements are allowed
@@ -1235,7 +1199,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// constructor
         /// </summary>
         /// <param name="name"></param>
-        public Module(CanonicalName name)
+        public Module(CanonicalName name) : base(nodetype: otXPTNodeType.Unit)
         {
             _name = name;
         }
@@ -1261,41 +1225,34 @@ namespace OnTrack.Rulez.eXPressionTree
     public class FunctionCall: XPTree , IStatement, IExpression
     {
         protected readonly Token _function; // function Token
-
-        #region "Properties"
-
-        /// <summary>
-        /// gets or sets the Operation
-        /// </summary>
-        public Token TokenID { get { return _function; }  }
-
-        /// <summary>
-        /// gets the Operator definition
-        /// </summary>
-        public @Function Function { get { return OnTrack.Rules.Engine.GetFunctions(_function).FirstOrDefault (); } }
-      
-        #endregion
-
         /// <summary>
         /// constructor
         /// </summary>
         /// <param name="token"></param>
         /// <param name="arguments"></param>
-        public FunctionCall(Token token, INode [] arguments, Engine engine = null) : base(engine: engine)
+        public FunctionCall(Token token, INode [] arguments, Engine engine = null) : base(nodetype: otXPTNodeType.FunctionCall, engine: engine)
         {
             // TODO: check the argumetns
             _function = token;
             this.Nodes = new ObservableCollection<INode> (arguments.ToList());
         }
-        #region "Properties"
+        #region Properties
+        /// <summary>
+        /// gets the Operation
+        /// </summary>
+        public Token TokenID { get { return _function; } }
+        /// <summary>
+        /// gets the Operator definition
+        /// </summary>
+        public @Function Function { get { return OnTrack.Rules.Engine.GetFunctions(_function).FirstOrDefault(); } }
         /// <summary>
         /// gets the Datatype of this Expression
         /// </summary>
-        public IDataType DataType { get { return Scope.GetFunction(this.TokenID).ReturnType; } set { throw new InvalidOperationException(); } }
+        public IDataType DataType { get { return Scope.GetFunction(this.TokenID).ReturnType; }  }
         /// <summary>
         /// gets the typeId of this Expression
         /// </summary>
-        public otDataType TypeId { get { return Scope.GetFunction(this.TokenID).ReturnType.TypeId; ; } set { throw new InvalidOperationException(); } }
+        public otDataType TypeId { get { return Scope.GetFunction(this.TokenID).ReturnType.TypeId; ; }  }
         #endregion
         /// <summary>
         /// handler for changing the nodes list
@@ -1320,22 +1277,19 @@ namespace OnTrack.Rulez.eXPressionTree
     /// </summary>
     public class Assignment : XPTree,  IStatement
     {
-
-        #region "Properties"
-
-        #endregion
-
         /// <summary>
         /// constructor
         /// </summary>
         /// <param name="token"></param>
         /// <param name="arguments"></param>
         public Assignment(ISymbol symbol,IExpression expression)
-            : base()
+            : base(nodetype: otXPTNodeType.Assignment)
         {
-            this.NodeType = otXPTNodeType.Assignment;
             this.Nodes = new ObservableCollection<INode>(new INode []{symbol, expression});
         }
+        #region Properties
+
+        #endregion
         /// <summary>
         /// handler for changing the nodes list
         /// </summary>
@@ -1359,14 +1313,121 @@ namespace OnTrack.Rulez.eXPressionTree
     {
         protected readonly Token _token; // operation Token
         protected uint? _prio; // overwrite priority of the operator
+        /// <summary>
+        /// constructor
+        /// </summary>
+        /// <param name="op"></param>
+        /// <param name="operand"></param>
+        public OperationExpression(otXPTNodeType? nodetype = null, Engine engine = null)
+            : base(nodetype: (!nodetype.HasValue) ? otXPTNodeType.OperationExpression : nodetype.Value, engine: engine)
+        {
+        }
+        public OperationExpression(Token token, otXPTNodeType? nodetype = null, Engine engine = null)
+            : base(nodetype: (!nodetype.HasValue) ? otXPTNodeType.OperationExpression : nodetype.Value, engine: engine)
+        {
+            if (token == null)
+                throw new RulezException(RulezException.Types.OperatorNotDefined, arguments: new object[] { "null" });
+            if (OnTrack.Rules.Engine.GetOperators(token) == null)
+                throw new RulezException(RulezException.Types.OperatorNotDefined, arguments: new object[] { token.ToString() });
+            _token = token;
+            if (this.Operator.Arguments != 0)
+                throw new RulezException(RulezException.Types.OperandsNotEqualOperatorDefinition, arguments: new object[] { token.ToString(), this.Operator.Arguments, 0 });
+        }
+        public OperationExpression(Token token, INode operand, Engine engine = null, otXPTNodeType? nodetype = null)
+            : base(nodetype: (!nodetype.HasValue) ? otXPTNodeType.OperationExpression : nodetype.Value, engine: engine)
+        {
+            if (token == null)
+                throw new RulezException(RulezException.Types.OperatorNotDefined, arguments: new object[] { "null" });
+            if (OnTrack.Rules.Engine.GetOperators(token) == null)
+                throw new RulezException(RulezException.Types.OperatorNotDefined, arguments: new object[] { token.ToString() });
+            _token = token;
+            if (this.Operator.Arguments != 1)
+                throw new RulezException(RulezException.Types.OperandsNotEqualOperatorDefinition, arguments: new object[] { token.ToString(), this.Operator.Arguments, 1 });
+            if (operand != null)
+                this.Nodes.Add(operand);
+            else throw new RulezException(RulezException.Types.OperandNull, arguments: new object[] { token.ToString(), "" });
+        }
+        public OperationExpression(Operator op, INode operand, Engine engine = null, otXPTNodeType? nodetype = null)
+            : base(nodetype: (!nodetype.HasValue) ? otXPTNodeType.OperationExpression : nodetype.Value, engine: engine)
+        {
 
-        #region "Properties"
-    
+            if (op == null)
+                throw new RulezException(RulezException.Types.OperatorNotDefined, arguments: new object[] { "(null)" });
+            else _token = op.Token;
+
+            if (this.Operator.Arguments != 1)
+                throw new RulezException(RulezException.Types.OperandsNotEqualOperatorDefinition, arguments: new object[] { op.Token.ToString(), op.Arguments, 1 });
+
+            if (operand != null) this.Nodes.Add(operand);
+            else throw new RulezException(RulezException.Types.OperandNull, arguments: new object[] { op.Token.ToString(), "" });
+
+        }
+        /// <summary>
+        /// constructor of an expression
+        /// </summary>
+        /// <param name="operation"></param>
+        /// <param name="leftoperand"></param>
+        /// <param name="rightoperand"></param>
+        public OperationExpression(Token token, INode leftoperand, INode rightoperand, Engine engine = null, otXPTNodeType? nodetype = null)
+            : base(nodetype: (!nodetype.HasValue) ? otXPTNodeType.OperationExpression : nodetype.Value, engine: engine)
+        {
+            // default engine
+            if (engine == null) engine = OnTrack.Rules.Engine;
+
+            if (OnTrack.Rules.Engine.GetOperators(token) == null)
+                throw new RulezException(RulezException.Types.OperatorNotDefined, arguments: new object[] { token.ToString() });
+
+            _token = token;
+
+            if (this.Operator.Arguments != 2)
+                throw new RulezException(RulezException.Types.OperandsNotEqualOperatorDefinition, arguments: new object[] { token.ToString(), this.Operator.Arguments, 2 });
+
+            if (leftoperand != null) this.Nodes.Add(leftoperand);
+            else throw new RulezException(RulezException.Types.OperandNull, arguments: new object[] { token.ToString(), "left" });
+
+            if (rightoperand != null) this.Nodes.Add(rightoperand);
+            else throw new RulezException(RulezException.Types.OperandNull, arguments: new object[] { token.ToString(), "right" });
+
+        }
+        public OperationExpression(Operator op, INode leftoperand, INode rightoperand, Engine engine = null, otXPTNodeType? nodetype = null)
+            : base(nodetype: (!nodetype.HasValue) ? otXPTNodeType.OperationExpression : nodetype.Value, engine: engine)
+        {
+            // default engine
+            if (engine == null) engine = OnTrack.Rules.Engine;
+
+            _token = op.Token;
+
+            if (op.Arguments != 2)
+                throw new RulezException(RulezException.Types.OperandsNotEqualOperatorDefinition, arguments: new object[] { op.Token.ToString(), op.Arguments, 2 });
+
+            if (leftoperand != null) this.Nodes.Add(leftoperand);
+            else throw new RulezException(RulezException.Types.OperandNull, arguments: new object[] { op.Token.ToString(), "left" });
+
+            if (rightoperand != null) this.Nodes.Add(rightoperand);
+            else throw new RulezException(RulezException.Types.OperandNull, arguments: new object[] { op.Token.ToString(), "right" });
+        }
+        /// <summary>
+        /// handler for changing the nodes list
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        protected override void XPTree_Nodes_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            base.XPTree_Nodes_CollectionChanged(sender, e);
+            // check the nodes which are added
+            foreach (INode aNode in Nodes)
+            {
+                if (aNode != null && !aNode.GetType().GetInterfaces().Contains(typeof(IExpression)))
+                    throw new RulezException(RulezException.Types.InvalidNodeType, arguments: new object[] { aNode.NodeType.ToString(), "Expression" });
+
+            }
+
+        }
+        #region Properties
         /// <summary>
         /// gets or sets the Operation
         /// </summary>
         public Token TokenID { get { return _token; } }
-
         /// <summary>
         /// gets the Operator definition
         /// </summary>
@@ -1458,127 +1519,6 @@ namespace OnTrack.Rulez.eXPressionTree
             // return the single node
             return this.Nodes[i];
         }
-       
-
-         /// <summary>
-        /// constructor
-        /// </summary>
-        /// <param name="op"></param>
-        /// <param name="operand"></param>
-        public OperationExpression(Engine engine = null): base(engine)
-        { 
-        }
-        public OperationExpression(Token token,  Engine engine = null)
-            : base(engine)
-        {
-            if (token == null)
-                throw new RulezException(RulezException.Types.OperatorNotDefined, arguments: new object[] { "null" });
-            if (OnTrack.Rules.Engine.GetOperators(token) == null)
-                throw new RulezException(RulezException.Types.OperatorNotDefined, arguments: new object[] { token.ToString() });
-            _token = token;
-            if (this.Operator.Arguments != 0)
-                throw new RulezException(RulezException.Types.OperandsNotEqualOperatorDefinition, arguments: new object[] { token.ToString(), this.Operator.Arguments, 0 });
-            
-            _engine = engine;
-            this.NodeType = otXPTNodeType.OperationExpression;
-        }
-        public OperationExpression(Token token, INode operand, Engine engine = null): base(engine)
-        {
-            if (token == null)
-                throw new RulezException(RulezException.Types.OperatorNotDefined, arguments: new object[] { "null" });
-            if (OnTrack.Rules.Engine.GetOperators(token) == null) 
-                throw new RulezException(RulezException.Types.OperatorNotDefined, arguments: new object[] { token.ToString() });
-            _token = token;
-            if (this.Operator.Arguments != 1) 
-                throw new RulezException(RulezException.Types.OperandsNotEqualOperatorDefinition, arguments: new object[] { token.ToString(), this.Operator.Arguments, 1 });
-            if (operand != null) 
-                this.Nodes.Add(operand);
-            else throw new RulezException(RulezException.Types.OperandNull, arguments: new object[] { token.ToString(), "" });
-
-            _engine = engine;
-            this.NodeType = otXPTNodeType.OperationExpression;          
-        }
-        public OperationExpression( Operator op, INode operand, Engine engine = null): base()
-        {
-           
-            if (op == null) 
-                throw new RulezException(RulezException.Types.OperatorNotDefined, arguments: new object[] { "(null)" });
-            else _token = op.Token;
-
-            if (this.Operator.Arguments != 1) 
-                throw new RulezException(RulezException.Types.OperandsNotEqualOperatorDefinition, arguments: new object[] { op.Token.ToString(), op.Arguments, 1 });
-
-            if (operand != null) this.Nodes.Add(operand);
-            else throw new RulezException(RulezException.Types.OperandNull, arguments: new object[] { op.Token.ToString(), "" });
-
-            _engine = engine;
-            this.NodeType = otXPTNodeType.OperationExpression;     
-        }
-        /// <summary>
-        /// constructor of an expression
-        /// </summary>
-        /// <param name="operation"></param>
-        /// <param name="leftoperand"></param>
-        /// <param name="rightoperand"></param>
-        public OperationExpression( Token token, INode leftoperand, INode rightoperand, Engine engine = null): base()
-        {
-            // default engine
-            if (engine == null) engine = OnTrack.Rules.Engine;
-
-            if (OnTrack.Rules.Engine.GetOperators(token) == null ) 
-                throw new RulezException(RulezException.Types.OperatorNotDefined,arguments:new object[]{ token.ToString() });
-
-            _token = token;
-
-            if (this.Operator.Arguments != 2) 
-                throw new RulezException(RulezException.Types.OperandsNotEqualOperatorDefinition, arguments: new object[] { token.ToString(), this.Operator.Arguments, 2 });
-
-            if (leftoperand != null) this.Nodes.Add(leftoperand);
-            else throw new RulezException(RulezException.Types.OperandNull, arguments: new object[] { token.ToString(), "left" });
-
-            if (rightoperand != null) this.Nodes.Add(rightoperand);
-            else throw new RulezException(RulezException.Types.OperandNull, arguments: new object[] { token.ToString(), "right" });
-
-            _engine = engine;
-            this.NodeType = otXPTNodeType.OperationExpression;     
-        }
-        public OperationExpression(Operator op, INode leftoperand, INode rightoperand, Engine engine = null)
-            : base()
-        {
-            // default engine
-            if (engine == null) engine = OnTrack.Rules.Engine;
-            
-            _token = op.Token;
-
-            if (op.Arguments != 2) 
-                throw new RulezException(RulezException.Types.OperandsNotEqualOperatorDefinition, arguments: new object[] { op.Token.ToString(), op.Arguments, 2 });
-
-            if (leftoperand != null) this.Nodes.Add(leftoperand);
-            else throw new RulezException(RulezException.Types.OperandNull, arguments: new object[] { op.Token.ToString(), "left" });
-
-            if (rightoperand != null) this.Nodes.Add(rightoperand);
-            else throw new RulezException(RulezException.Types.OperandNull, arguments: new object[] { op.Token.ToString(), "right" });
-
-            _engine = engine;
-            this.NodeType = otXPTNodeType.OperationExpression;
-        }
-        /// <summary>
-        /// handler for changing the nodes list
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        protected override void XPTree_Nodes_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-        {
-            base.XPTree_Nodes_CollectionChanged(sender, e);
-            // check the nodes which are added
-            foreach (INode aNode in Nodes)
-            {
-                if (aNode != null && !aNode.GetType().GetInterfaces().Contains(typeof(IExpression)))
-                    throw new RulezException(RulezException.Types.InvalidNodeType, arguments: new object[] { aNode.NodeType.ToString(), "Expression" });
-             
-            }
-
-        }
         /// <summary>
         /// toString
         /// </summary>
@@ -1607,28 +1547,26 @@ namespace OnTrack.Rulez.eXPressionTree
         /// </summary>
         /// <param name="op"></param>
         /// <param name="operand"></param>
-        public LogicalExpression(Engine engine): base(engine: engine)
-        { this.NodeType = otXPTNodeType.LogicalExpression; }
-        public LogicalExpression(Token op, Engine engine = null)
-            : base(op, engine)
+        public LogicalExpression(otXPTNodeType? nodetype = null, Engine engine =null)
+            : base(nodetype: (! nodetype.HasValue) ? otXPTNodeType.LogicalExpression : nodetype.Value, engine: engine)
+        {  }
+        public LogicalExpression(Token op, Engine engine = null,otXPTNodeType ? nodetype = null)
+            : base(op, engine: engine, nodetype: (!nodetype.HasValue) ? otXPTNodeType.LogicalExpression : nodetype.Value)
         {
             if (this.Operator.Type != otOperatorType.Logical && this.Operator.Type != otOperatorType.Logical )
                 throw new RulezException(RulezException.Types.OperatorTypeNotExpected, arguments: new object[] { op.ToString(), "logical" });
-            this.NodeType = otXPTNodeType.LogicalExpression;
         }
-        public LogicalExpression(Token op, IExpression operand, Engine engine = null)
-            : base(op, operand, engine)
+        public LogicalExpression(Token op, IExpression operand, Engine engine = null, otXPTNodeType? nodetype = null)
+            : base(op, operand, nodetype: (!nodetype.HasValue) ? otXPTNodeType.LogicalExpression : nodetype.Value, engine: engine)
         {
             if (this.Operator.Type != otOperatorType.Logical && this.Operator.Type != otOperatorType.Compare)
                 throw new RulezException(RulezException.Types.OperatorTypeNotExpected , arguments: new object[] { op.ToString(), "logical" });
-            this.NodeType = otXPTNodeType.LogicalExpression;          
         }
-        public LogicalExpression(Operator op, IExpression operand, Engine engine = null)
-            : base(op, operand, engine)
+        public LogicalExpression(Operator op, IExpression operand, Engine engine = null, otXPTNodeType? nodetype = null)
+            : base(op, operand, engine, nodetype: (!nodetype.HasValue) ? otXPTNodeType.LogicalExpression : nodetype.Value)
         {
             if (this.Operator.Type != otOperatorType.Logical && this.Operator.Type != otOperatorType.Compare)
                 throw new RulezException(RulezException.Types.OperatorTypeNotExpected , arguments: new object[] { op.ToString(), "logical" });
-            this.NodeType = otXPTNodeType.LogicalExpression;          
 
         }
         /// <summary>
@@ -1637,18 +1575,17 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <param name="operation"></param>
         /// <param name="leftoperand"></param>
         /// <param name="rightoperand"></param>
-        public LogicalExpression( Token op, INode leftoperand, INode rightoperand, Engine engine = null): base( op,  leftoperand, rightoperand, engine )
+        public LogicalExpression( Token op, INode leftoperand, INode rightoperand, Engine engine = null, otXPTNodeType? nodetype = null)
+            : base( op,  leftoperand, rightoperand, engine:engine, nodetype: (!nodetype.HasValue) ? otXPTNodeType.LogicalExpression : nodetype.Value)
         {
             if (this.Operator.Type != otOperatorType.Logical && this.Operator.Type != otOperatorType.Compare)
                 throw new RulezException(RulezException.Types.OperatorTypeNotExpected , arguments: new object[] { op.ToString(), "logical" });
-            this.NodeType = otXPTNodeType.LogicalExpression;          
         }
-        public LogicalExpression(Operator op, INode leftoperand, INode rightoperand, Engine engine = null)
-            : base(op, leftoperand, rightoperand, engine)
+        public LogicalExpression(Operator op, INode leftoperand, INode rightoperand, Engine engine = null, otXPTNodeType? nodetype = null)
+            : base(op, leftoperand, rightoperand, engine: engine, nodetype: (!nodetype.HasValue) ? otXPTNodeType.LogicalExpression : nodetype.Value)
         {
             if (this.Operator.Type !=  otOperatorType.Logical  && this.Operator.Type != otOperatorType.Compare )
                 throw new RulezException(RulezException.Types.OperatorTypeNotExpected , arguments: new object[] { op.ToString(), "logical" });
-            this.NodeType = otXPTNodeType.LogicalExpression;          
         }
         #region "Properties"
         /// <summary>
@@ -1794,28 +1731,26 @@ namespace OnTrack.Rulez.eXPressionTree
         /// </summary>
         /// <param name="op"></param>
         /// <param name="operand"></param>
-        public CompareExpression(Engine engine)
-            : base(engine: engine)
-        { this.NodeType = otXPTNodeType.CompareExpression; }
+        public CompareExpression(otXPTNodeType? nodetype = null, Engine engine =null)
+            : base(nodetype: (!nodetype.HasValue) ? otXPTNodeType.CompareExpression : nodetype.Value, engine: engine)
+        {  }
         /// <summary>
         /// constructor of an expression
         /// </summary>
         /// <param name="operation"></param>
         /// <param name="leftoperand"></param>
         /// <param name="rightoperand"></param>
-        public CompareExpression(Token op, IExpression leftoperand, IExpression rightoperand, Engine engine = null)
-            : base(op, leftoperand, rightoperand, engine)
+        public CompareExpression(Token op, IExpression leftoperand, IExpression rightoperand, Engine engine = null, otXPTNodeType? nodetype = null)
+            : base(op, leftoperand, rightoperand, nodetype: (!nodetype.HasValue) ? otXPTNodeType.CompareExpression : nodetype.Value, engine:engine)
         {
             if (this.Operator.Type != otOperatorType.Logical && this.Operator.Type != otOperatorType.Compare)
                 throw new RulezException(RulezException.Types.OperatorTypeNotExpected, arguments: new object[] { op.ToString(), "compare" });
-            this.NodeType = otXPTNodeType.CompareExpression;
         }
-        public CompareExpression(Operator op, IExpression leftoperand, IExpression rightoperand, Engine engine = null)
-            : base(op, leftoperand, rightoperand, engine)
+        public CompareExpression(Operator op, IExpression leftoperand, IExpression rightoperand, Engine engine = null, otXPTNodeType? nodetype = null)
+            : base(op, leftoperand, rightoperand, nodetype: (!nodetype.HasValue) ? otXPTNodeType.CompareExpression : nodetype.Value, engine: engine)
         {
             if (this.Operator.Type != otOperatorType.Logical && this.Operator.Type != otOperatorType.Compare)
                 throw new RulezException(RulezException.Types.OperatorTypeNotExpected, arguments: new object[] { op.ToString(), "compare" });
-            this.NodeType = otXPTNodeType.CompareExpression;
         }
 
         #region "Helper"
@@ -1970,24 +1905,24 @@ namespace OnTrack.Rulez.eXPressionTree
         /// constructor
         /// </summary>
         /// <param name="results"></param>
-        public ResultList(params INode[] results)
+        public ResultList(params INode[] results) 
+            : base(nodetype: otXPTNodeType.ResultList)
         {
-            this.NodeType = otXPTNodeType.ResultList;
             foreach (INode aNode in results) this.Nodes.Add(aNode);
         }
         public ResultList(params DataObjectSymbol[] results)
+             : base(nodetype: otXPTNodeType.ResultList)
         {
-            this.NodeType = otXPTNodeType.ResultList;
             foreach (DataObjectSymbol aNode in results) this.Nodes.Add(aNode);
         }
         public ResultList(params DataObjectEntrySymbol[] results)
+            : base(nodetype: otXPTNodeType.ResultList)
         {
-            this.NodeType = otXPTNodeType.ResultList;
             foreach (DataObjectEntrySymbol aNode in results) this.Nodes.Add(aNode);
         }
         public ResultList(List<INode> results)
+             : base(nodetype: otXPTNodeType.ResultList)
         {
-            this.NodeType = otXPTNodeType.ResultList;
             foreach (INode aNode in results) this.Nodes.Add(aNode);
         }
 
@@ -2018,10 +1953,6 @@ namespace OnTrack.Rulez.eXPressionTree
                 // returns a list of the innertype
                 return otDataType.List;
             }
-            set
-            {
-                throw new InvalidOperationException();
-            }
         }
 
         /// <summary>
@@ -2035,15 +1966,11 @@ namespace OnTrack.Rulez.eXPressionTree
                 if (this.Nodes == null || this.Nodes.Count() == 0) return Core.DataType.GetDataType (otDataType.Null);
                 if (this.Nodes.Count() == 1) return ListType.GetDataType(innerDataType: ((IExpression)this.Nodes[0]).DataType, engine: this.Engine) ;
                 // get a Datatype according to the structure
-                List<IDataType> structure = new List<IDataType>();
-                List<string> names = new List<string>();
+                var structure = new List<IDataType>();
+                var names = new List<string>();
                 foreach (ISymbol aResult in Nodes) { names.Add(aResult.Id);  structure.Add(aResult.DataType);}
                 IDataType innerType = TupleType.GetDataType(structure: structure.ToArray(), memberNames: names.ToArray(), engine: this.Engine);
                 return ListType.GetDataType(innerDataType: innerType, engine: this.Engine);
-            }
-            set
-            {
-                throw new InvalidOperationException();
             }
         }
         /// <summary>
@@ -2051,7 +1978,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// </summary>
         public IList<String> DataObjectNames ()
         {
-            List<String> aList = new List<String>();
+            var aList = new List<String>();
             foreach (INode aNode in this.Nodes)
             {
                 string aName = String.Empty;
@@ -2077,16 +2004,16 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <returns></returns>
         public SelectionRule Generate(string source)
         {
-            RulezParser.MessageListener aListener = new RulezParser.MessageListener();
+            var aListener = new RulezParser.MessageListener();
             RulezParser.SelectionRulezContext aCtx = null;
 
             try
             {
-                RulezLexer aLexer = new RulezLexer(new Antlr4.Runtime.AntlrInputStream(source));
+                var aLexer = new RulezLexer(new Antlr4.Runtime.AntlrInputStream(source));
                 // wrap a token-stream around the lexer
-                Antlr4.Runtime.CommonTokenStream theTokens = new Antlr4.Runtime.CommonTokenStream(aLexer);
+                var theTokens = new Antlr4.Runtime.CommonTokenStream(aLexer);
                 // create the aParser
-                RulezParser aParser = new RulezParser(theTokens);
+                var aParser = new RulezParser(theTokens);
                 aParser.Trace = true;
                 aParser.Engine = this.Engine;
                 aParser.AddErrorListener(aListener);
@@ -2107,14 +2034,18 @@ namespace OnTrack.Rulez.eXPressionTree
             throw new NotImplementedException();
         }
         #endregion
-        private Dictionary<string, ISymbol> _parameters = new Dictionary<string, ISymbol>(); // parameters
+
+
+        private readonly Dictionary<string, ISymbol> _parameters = new Dictionary<string, ISymbol>(); // parameters
+        
+        
         /// <summary>
         /// constructor
         /// </summary>
         /// <param name="handle"></param>
-        public SelectionRule(string id = null,  Engine engine = null): base(id, engine)
+        public SelectionRule(string id = null,  Engine engine = null)
+            : base(id, nodetype: otXPTNodeType.SelectionRule, engine: engine)
         {
-            this.NodeType= otXPTNodeType.SelectionRule;
         }
         /// <summary>
         /// gets or sets the type id of the variable
@@ -2144,17 +2075,11 @@ namespace OnTrack.Rulez.eXPressionTree
                 if (Selection != null) return Selection.DataType;
                 return null;
             }
-            set
-            {
-                throw new InvalidOperationException();
-            }
         }
-
         /// <summary>
         /// gets or sets the result (which is a ResultList)
         /// </summary>
-        public ResultList Result { get { if (this.Nodes.Count > 0)  return ((SelectionStatementBlock)this.Nodes[0]).Result; return null;  } set { throw new InvalidOperationException(); } }
-
+        public ResultList Result { get { if (this.Nodes.Count > 0)  return ((SelectionStatementBlock)this.Nodes[0]).Result; return null;  } }
         /// <summary>
         /// gets or sets the selection expression
         /// </summary>
@@ -2171,7 +2096,6 @@ namespace OnTrack.Rulez.eXPressionTree
                 else throw new RulezException(RulezException.Types.InvalidNodeType, arguments: new object[] { value.NodeType.ToString() });
             }
         }
-
         /// <summary>
         /// gets the list of parameters
         /// </summary>
@@ -2203,18 +2127,16 @@ namespace OnTrack.Rulez.eXPressionTree
         /// Adds a Parameter to the Selection Rule
         /// </summary>
         /// <param name="handle"></param>
-        /// <param name="typeId"></param>
+        /// <param name="dataTypeId"></param>
         /// <returns></returns>
-        public ISymbol AddNewParameter(string id, otDataType typeId)
+        public ISymbol AddNewParameter(string id, otDataType dataTypeId)
         {
             if (_parameters.ContainsKey(id))
-            {
                 throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { id, this.Id });
-            }
-            Variable aVar = new Variable(id:id, typeID:typeId, scope:this);
+            // create and add Variable
+            var aVar = new Variable(id:id, dataTypeId:dataTypeId, scope:this);
              _parameters.Add(aVar.Id,aVar);
-
-             return aVar;
+            return aVar;
         }
         /// <summary>
         /// adds a Parameter by dataobject
@@ -2228,11 +2150,10 @@ namespace OnTrack.Rulez.eXPressionTree
             {
                 throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { id, this.Id });
             }
-            Variable aVar = new Variable(id: id, datatype: datatype, scope: this);
+            var aVar = new Variable(id: id, datatype: datatype, scope: this);
             _parameters.Add(aVar.Id, aVar);
             // add symbol to scope
             if (this.Scope != null) this.Scope.AddSymbol(aVar);
-
             return aVar;
         }
         /// <summary>
@@ -2265,15 +2186,15 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// result list
         /// </summary>
-        private ResultList _result;
+        private readonly ResultList _result;
         /// <summary>
         /// constructor
         /// </summary>
         /// <param name="handle"></param>
-        public SelectionExpression(ResultList result=null, Engine engine = null): base(engine)
+        public SelectionExpression(ResultList result=null, Engine engine = null)
+            : base(nodetype: otXPTNodeType.SelectionExpression, engine:engine)
         {
-            this.NodeType = otXPTNodeType.SelectionExpression;
-            this.Results = result;
+            _result = result;
         }
         /// <summary>
         /// gets or sets the type id of the variable
@@ -2285,42 +2206,16 @@ namespace OnTrack.Rulez.eXPressionTree
             {
                 return Results.TypeId;
             }
-            set
-            {
-                throw new InvalidOperationException();
-            }
         }
-
         /// <summary>
         /// gets or sets the type
         /// </summary>
         /// <value></value>
-        public IDataType DataType
-        {
-            get
-            {
-                return Results.DataType;
-            }
-            set
-            {
-                throw new InvalidOperationException();
-            }
-        }
-
+        public IDataType DataType  {  get  {  return Results.DataType;   }  }
         /// <summary>
         /// gets or sets the result (which is a ResultList)
         /// </summary>
-        public ResultList Results
-        {   get { return _result; }
-            set {
-                if (_result != value)
-                {
-                    _result = value;
-                    // set the engine to this Engine
-                    foreach (INode aNode in _result) aNode.Engine = this.Engine;
-                }
-            }
-        }
+        public ResultList Results {   get { return _result; }    }
         /// <summary>
         /// returns a List of object names retrieved with this rule
         /// </summary>
@@ -2361,10 +2256,9 @@ namespace OnTrack.Rulez.eXPressionTree
         /// constructor
         /// </summary>
         public Unit(string id = null, Engine engine = null)
-            : base(engine)
+            : base(nodetype: otXPTNodeType.Unit,engine:engine)
         {
             if (!String.IsNullOrEmpty(id)) _id = id;
-            this.NodeType = otXPTNodeType.Unit;
         }
         /// <summary>
         /// constructor
@@ -2372,13 +2266,12 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <param name="token"></param>
         /// <param name="arguments"></param>
         public Unit(string id, INode[] arguments, Engine engine = null)
-            : base(engine)
+             : base(nodetype: otXPTNodeType.Unit, engine: engine)
         {
             if (!String.IsNullOrEmpty(id)) _id = id;
-            this.NodeType = otXPTNodeType.Unit;
             this.Nodes = new ObservableCollection<INode>(arguments.ToList());
         }
-        #region "Properties"
+        #region Properties
         /// <summary>
         /// sets the ID of the block
         /// </summary>
