@@ -1,7 +1,7 @@
 ﻿/**
 *  ONTRACK RULEZ ENGINE
 *  
-* rulez engine eXPression Tree generator out an ANTLR parse tree
+* rulez engine eXPression Tree builder out an ANTLR parse tree
 * 
 * Version: 1.0
 * Created: 2015-07-14
@@ -123,8 +123,17 @@ namespace OnTrack.Rulez
         public override void EnterTypeDeclaration([NotNull] RulezParser.TypeDeclarationContext context)
         {
             base.EnterTypeDeclaration(context);
+            // check the name
+            string anId = context.typeid().GetText().ToUpper();
+            ObjectName aName;
+            if (!ObjectName.IsCanonical(anId))
+                aName = new ObjectName(moduleid: CurrentScope.Id, objectid: anId);
+            else aName = new ObjectName(anId);
+           
             // push the new scope of this type
-            context.Scope = PushNewScope(context.typeid().GetText());
+            context.Scope = PushNewScope(aName.FullId);
+            // to-do: here should follow the XPT for the type declaration
+            context.XPTreeNode = null;
         }
         /// <summary>
         /// exit the type declaraton
@@ -159,13 +168,23 @@ namespace OnTrack.Rulez
         /// <summary>
         /// enter the module declaration
         /// </summary>
-        /// <param name="ctx"></param>
+        /// <param name="context"></param>
         /// <returns></returns>
-        public override void EnterModuleDeclaration(RulezParser.ModuleDeclarationContext ctx)
+        public override void EnterModuleDeclaration(RulezParser.ModuleDeclarationContext context)
         {
-            // create a scope and assign
-            ctx.Scope = PushNewScope(ctx.canonicalName().GetText());
+            // check the name
+            string anId = context.canonicalName().GetText().ToUpper();
+            ObjectName aName;
+            if (!ObjectName.IsCanonical(anId))
+                aName = new ObjectName(moduleid: CurrentScope.Id, objectid: anId);
+            else aName = new ObjectName(anId);
 
+            // push the new scope of this type
+            context.Scope = PushNewScope(aName.FullId);
+            // create XPTreeNode
+            var aXPTNode = new Module(aName);
+            // aXPTNode.Version = 
+            context.XPTreeNode = aXPTNode;
         }
         /// <summary>
         /// exit the module declaration
@@ -180,16 +199,29 @@ namespace OnTrack.Rulez
         /// <summary>
         /// enter the selection rulez
         /// </summary>
-        /// <param name="ctx"></param>
-        public override void EnterSelectionRulez(RulezParser.SelectionRulezContext ctx)
+        /// <param name="context"></param>
+        public override void EnterSelectionRulez(RulezParser.SelectionRulezContext context)
         {
-            base.EnterSelectionRulez(ctx);
-            
+            base.EnterSelectionRulez(context);
+            // check the name
+            string anId = context.ruleid().GetText().ToUpper();
             // create new scope
-            if (this.CurrentScope.HasSelectionRule(ctx.ruleid().GetText()))
-                Parser.NotifyErrorListeners(string.Format(Messages.RCM_13, ctx.ruleid().GetText()));
-            // set scope
-            ctx.Scope = PushNewScope(ctx.ruleid().GetText());
+            if (this.CurrentScope.HasSelectionRule(anId);
+            Parser.NotifyErrorListeners(string.Format(Messages.RCM_13, context.ruleid().GetText()));
+            ObjectName aName;
+            if (!ObjectName.IsCanonical(anId))
+                aName = new ObjectName(moduleid: CurrentScope.Id, objectid: anId);
+            else aName = new ObjectName(anId);
+
+            // push the new scope of this type
+            context.Scope = PushNewScope(aName.FullId);
+            // create an XPTreeNode
+            if (context.XPTreeNode == null)
+            {
+                // create XPTreeNode
+                var aXPTNode = new SelectionRule(id: aName.FullId);
+                context.XPTreeNode = aXPTNode;
+            }
            
         }
         /// <summary>
@@ -199,15 +231,7 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public override void ExitSelectionRulez(RulezParser.SelectionRulezContext ctx)
         {
-            // store the symbol for the rule
-            // plus signature
-
-            // create local scope and add the parameters
-
-            // $ctx.XPTreeNode = (eXPressionTree.IeXPressionTree) new SelectionRule($ctx.ruleid().GetText(), engine: this.Engine);
-            // get the name
-            var aRule = new SelectionRule(ctx.ruleid().GetText(), engine: this.Engine);
-            ctx.XPTreeNode = aRule;
+            var aRule = (SelectionRule)ctx.XPTreeNode;
             // add the parameters
             foreach (RulezParser.ParameterDefinition aParameter in ctx.names.Values)
             {
@@ -229,7 +253,8 @@ namespace OnTrack.Rulez
          public override void EnterSelectStatementBlock(RulezParser.SelectStatementBlockContext ctx)
         {
             // create a scope and assign
-            if (ctx.XPTreeNode == null) ctx.XPTreeNode = new OnTrack.Rulez.eXPressionTree.SelectionStatementBlock();
+            if (ctx.XPTreeNode == null)
+                ctx.XPTreeNode = new SelectionStatementBlock(id: ((SelectionRule)((RulezParser.SelectionRulezContext) ctx.parent).XPTreeNode).Id);
             var aBlock = (SelectionStatementBlock)ctx.XPTreeNode;
             // push the new scope to the current scope
             ctx.Scope = PushNewScope(aBlock.Id);

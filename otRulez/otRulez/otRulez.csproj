@@ -75,7 +75,7 @@
     </Compile>
     <Compile Include="rulezRepository.cs" />
     <Compile Include="rulezXPTDeclaration.cs" />
-    <Compile Include="rulezXPTGen.cs" />
+    <Compile Include="rulezXPTBuilder.cs" />
     <Compile Include="rulezXPTree.cs" />
     <Compile Include="rulezXPTRepository.cs" />
     <Compile Include="rulezXPTVisitor.cs" />
