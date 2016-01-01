@@ -134,11 +134,11 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// gets or sets the type id of the variable
         /// </summary>
-        Core.otDataType TypeId { get; set; }
+        Core.otDataType TypeId { get;  }
         /// <summary>
         /// gets or sets the type 
         /// </summary>
-        Core.IDataType DataType { get; set; }
+        Core.IDataType DataType { get;}
     }
     /// <summary>
     /// describes a rule which is the top level
@@ -180,7 +180,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// defines the IeXPressionTree scope of the symbol
         /// </summary>
-        IXPTree Scope { get; set; }
+        IXPTree Scope { get;  }
         /// <summary>
         /// returns true if the symbol is valid in the engine (late binding)
         /// </summary>
