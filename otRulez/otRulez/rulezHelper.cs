@@ -13,12 +13,14 @@
  * 
  */
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using OnTrack.Core;
+using OnTrack.Rulez;
 using OnTrack.Rulez.eXPressionTree;
 
 namespace OnTrack.Rulez
@@ -664,4 +666,657 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public bool IsEntryName() { return IsCanonical(this.FullId); }
     }
+   
 }
+/// <summary>
+/// defines a Signature out of a string as id or by a datatype
+/// </summary>
+public class TypeSignature : ISignature
+{
+    protected string _id; // signature id
+    /// <summary>
+    /// constructor from a string
+    /// </summary>
+    /// <param name="id"></param>
+    public TypeSignature(string id = null)
+    {
+        if (string.IsNullOrEmpty(id)) _id = Guid.NewGuid().ToString();
+        else _id = id.ToUpper();
+    }
+    /// <summary>
+    /// constructor from a datatype
+    /// </summary>
+    /// <param name="datatypeid"></param>
+    public TypeSignature(otDataType datatypeid)
+    {
+        if ((datatypeid & otDataType.IsNullable) == otDataType.IsNullable)
+            _id = (datatypeid ^ otDataType.IsNullable).ToString().ToUpper() + "?";
+        
+        else _id = datatypeid.ToString().ToUpper();
+    }
+    public TypeSignature(IDataType datatype)
+    {
+         _id = datatype.Signature.ToString().ToUpper();
+    }
+    #region Properties
+    /// <summary>
+    /// gets the unique id of the signature
+    /// </summary>
+    public string Uid
+    {
+        get
+        {
+            return _id;
+        }
+    }
+    #endregion
+    /// <summary>
+    /// compares two signatures
+    /// </summary>
+    /// <param name="x"></param>
+    /// <param name="y"></param>
+    /// <returns></returns>
+    public virtual bool Equals(ISignature x)
+    {
+        return this.Equals(this, x);
+    }
+    /// <summary>
+    /// compares two signatures
+    /// </summary>
+    /// <param name="x"></param>
+    /// <param name="y"></param>
+    /// <returns></returns>
+    public virtual bool Equals(ISignature x, ISignature y)
+    {
+        return string.Compare(x.Uid, y.Uid, ignoreCase: true) == 0;
+    }
+    /// <summary>
+    /// returns HashCode
+    /// </summary>
+    /// <param name="obj"></param>
+    /// <returns></returns>
+    public virtual int GetHashCode(ISignature obj)
+    {
+        return obj.Uid.GetHashCode();
+    }
+    /// == comparerer on datatypes
+    /// </summary>
+    /// <param name="a"></param>
+    /// <param name="b"></param>
+    /// <returns></returns>
+    public static bool operator ==(TypeSignature a, TypeSignature b)
+    {
+        // If both are null, or both are same instance, return true.
+        if (System.Object.ReferenceEquals(a, b))
+        {
+            return true;
+        }
+
+        // If one is null, but not both, return false.
+        if (((object)a == null) || ((object)b == null))
+        {
+            return false;
+        }
+
+        // Return true if the fields match:
+        return a.Equals(a, b);
+    }
+    /// <summary>
+    /// != comparer
+    /// </summary>
+    /// <param name="a"></param>
+    /// <param name="b"></param>
+    /// <returns></returns>
+    public static bool operator !=(TypeSignature a, TypeSignature b)
+    {
+        return !(a == b);
+    }
+    /// <summary>
+    /// returns Hashcode
+    /// </summary>
+    /// <returns></returns>
+    public override int GetHashCode()
+    {
+        return this.GetHashCode();
+    }
+    /// <summary>
+    /// returns the string representation
+    /// </summary>
+    /// <returns></returns>
+    public override string ToString()
+    {
+        return this.Uid;
+    }
+
+    public int CompareTo(ISignature other)
+    {
+        return this.Uid.CompareTo(other.Uid);
+    }
+}
+public class StructuredTypeSignature : TypeSignature
+{
+    // Constructor
+    public StructuredTypeSignature(IEnumerable<IDataType> structure, bool isNullable = false, string typename = null, string id = null):
+        base(id: (!String.IsNullOrWhiteSpace(id)) ? id.ToUpper() : String.Empty)
+    {
+        string sig = String.Empty;
+        foreach (IDataType dt in structure)
+        {
+            if (sig != String.Empty) sig += ",";
+            sig += dt.Signature;
+        }
+        _id = (!String.IsNullOrWhiteSpace(typename) ? typename.ToUpper() : "COMPOSITE") + (isNullable ? "?" : String.Empty) + "<" + sig + ">";
+    }
+}
+/// <summary>
+/// defines a typed Signature of an datatype with canonical name
+/// </summary>
+public class TypedNameSignature : ISignature
+{
+    
+    /// <summar
+    /// 
+    private readonly CanonicalName _entityname;
+    private readonly IDataType _entitydatatype;
+    #region Properties
+    public TypedNameSignature(CanonicalName name, IDataType datatype)
+    {
+        _entityname = name;
+        _entitydatatype = datatype;
+    }
+    public CanonicalName Name
+    {
+        get
+        {
+            return _entityname;
+        }
+    }
+    public IDataType DataType
+    {
+        get
+        {
+            return _entitydatatype;
+        }
+    }
+    /// <summary>
+    /// gets the unique id of the signature
+    /// </summary>
+    public virtual string Uid
+    {
+        get
+        {
+            return Name.ToString().ToUpper() + ":" + this.DataType.Signature;
+        }
+    }
+    #endregion
+    /// <summary>
+    /// compares two signatures
+    /// </summary>
+    /// <param name="x"></param>
+    /// <param name="y"></param>
+    /// <returns></returns>
+    public virtual bool Equals(ISignature x)
+    {
+        return this.Equals(this, x);
+    }
+    /// <summary>
+    /// compares two signatures
+    /// </summary>
+    /// <param name="x"></param>
+    /// <param name="y"></param>
+    /// <returns></returns>
+    public virtual bool Equals(ISignature x, ISignature y)
+    {
+        return string.Compare(x.Uid, y.Uid, ignoreCase: true) == 0;
+    }
+    /// <summary>
+    /// returns HashCode
+    /// </summary>
+    /// <param name="obj"></param>
+    /// <returns></returns>
+    public virtual int GetHashCode(ISignature obj)
+    {
+        return obj.Uid.GetHashCode();
+    }
+    /// == comparerer on datatypes
+    /// </summary>
+    /// <param name="a"></param>
+    /// <param name="b"></param>
+    /// <returns></returns>
+    public static bool operator ==(TypedNameSignature a, TypedNameSignature b)
+    {
+        // If both are null, or both are same instance, return true.
+        if (System.Object.ReferenceEquals(a, b))
+        {
+            return true;
+        }
+
+        // If one is null, but not both, return false.
+        if (((object)a == null) || ((object)b == null))
+        {
+            return false;
+        }
+
+        // Return true if the fields match:
+        return a.Equals(a, b);
+    }
+    /// <summary>
+    /// != comparer
+    /// </summary>
+    /// <param name="a"></param>
+    /// <param name="b"></param>
+    /// <returns></returns>
+    public static bool operator !=(TypedNameSignature a, TypedNameSignature b)
+    {
+        return !(a == b);
+    }
+    /// <summary>
+    /// returns Hashcode
+    /// </summary>
+    /// <returns></returns>
+    public override int GetHashCode()
+    {
+        return this.GetHashCode();
+    }
+    /// <summary>
+    /// returns the string representation
+    /// </summary>
+    /// <returns></returns>
+    public override string ToString()
+    {
+        return this.Uid;
+    }
+
+    public int CompareTo(ISignature other)
+    {
+        return this.Uid.CompareTo(other.Uid);
+    }
+}
+/// <summary>
+/// defines a parameter description consisting of an id (which might be null) and a datatype
+/// 2 parameters are equal if the name and datatype are equal 
+/// </summary>
+public sealed class Parameter : IEqualityComparer, IEqualityComparer<Parameter>, ISigned
+{
+    private readonly string _id;
+    private readonly IDataType _datatype;
+    private string id;
+    private otDataType dataTypeId;
+
+    /// <summary>
+    /// constructor for parameter by name and datatype
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="datatype"></param>
+    public Parameter(string id, IDataType datatype)
+    {
+        _id = id;
+        _datatype = datatype;
+    }
+    /// <summary>
+    /// constructor for parameter by name and data type id
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="dataTypeId"></param>
+    public Parameter(string id, otDataType dataTypeId)
+    {
+        _id = id;
+        _datatype = OnTrack.Core.DataType.GetDataType(dataTypeId);
+    }
+    /// <summary>
+    /// gets the id
+    /// </summary>
+    public string Id { get { return _id; } }
+    /// <summary>
+    /// gets the datatype
+    /// </summary>
+    public IDataType DataType { get { return _datatype; } }
+    /// <summary>
+    /// gets the Signature
+    /// </summary>
+    public ISignature Signature
+    {
+        get
+        {
+            return new TypedNameSignature(new CanonicalName(Id), DataType);
+        }
+    }
+    public new bool Equals(object x, object y)
+    {
+        if (!(x is Parameter) && !(y is Parameter)) return false;
+        if (String.Compare(((Parameter)x).Id, ((Parameter)y).Id) == 00 && ((Parameter)x).DataType.Equals (((Parameter)y).DataType))
+            return true;
+
+        return false;
+    }
+    /// <summary>
+    /// return hashcode
+    /// </summary>
+    /// <param name="obj"></param>
+    /// <returns></returns>
+    public int GetHashCode(object obj)
+    {
+        if (obj is Parameter) return ((Parameter)obj).Id.GetHashCode() ^ ((Parameter)obj).DataType.GetHashCode();
+        return obj.GetHashCode();
+    }
+
+    public bool Equals(Parameter x, Parameter y)
+    {
+        if (string.Compare(x.Id, y.Id) == 00 && x.DataType == y.DataType)
+            return true;
+
+        return false;
+    }
+
+    public int GetHashCode(Parameter obj)
+    {
+        return obj.Id.GetHashCode() ^ ((Parameter)obj).DataType.GetHashCode();
+    }
+
+    public bool Equals(ISigned x, ISigned y)
+    {
+        return x.Signature.Equals(y.Signature);
+    }
+
+    public int GetHashCode(ISigned obj)
+    {
+        return obj.Signature.GetHashCode();
+    }
+
+    /// == comparerer on datatypes
+    /// </summary>
+    /// <param name="a"></param>
+    /// <param name="b"></param>
+    /// <returns></returns>
+    public static bool operator ==(Parameter a, Parameter b)
+    {
+        // If both are null, or both are same instance, return true.
+        if (System.Object.ReferenceEquals(a, b))
+        {
+            return true;
+        }
+
+        // If one is null, but not both, return false.
+        if (((object)a == null) || ((object)b == null))
+        {
+            return false;
+        }
+
+        // Return true if the fields match:
+        return a.Equals(a, b);
+    }
+    /// <summary>
+    /// != comparer
+    /// </summary>
+    /// <param name="a"></param>
+    /// <param name="b"></param>
+    /// <returns></returns>
+    public static bool operator !=(Parameter a, Parameter b)
+    {
+        return !(a == b);
+    }
+}
+/// <summary>
+/// defines a list of named parameters
+/// </summary>
+public sealed class ParameterList : IList<Parameter>, ISigned
+{
+    private readonly List<Parameter> _list = new List<Parameter>();
+    /// <summary>
+    /// constructor with parameters
+    /// </summary>
+    /// <param name="parameters"></param>
+    public ParameterList(params Parameter[] parameters)
+    {
+        foreach (var item in parameters)
+            _list.Add(item);
+    }
+    /// <summary>
+    /// the nth parameter
+    /// </summary>
+    /// <param name="index"></param>
+    /// <returns></returns>
+    public Parameter this[int index]
+    {
+        get
+        {
+            return _list[index];
+        }
+
+        set
+        {
+            _list[index] = value;
+        }
+    }
+    /// <summary>
+    /// gets the number of items in the list
+    /// </summary>
+    public int Count
+    {
+        get
+        {
+            return _list.Count;
+        }
+    }
+    /// <summary>
+    /// get or sets the readonly flag
+    /// </summary>
+    public bool IsReadOnly
+    {
+        get; set;
+    }
+
+    public ISignature Signature
+    {
+        get
+        {
+            return new ListSignature(this);
+        }
+    }
+
+    /// <summary>
+    /// adds a parameter to the parameter list - substitutes null or empty names with the parameter number
+    /// </summary>
+    /// <param name="item"></param>
+    public void Add(Parameter item)
+    {
+        if (String.IsNullOrWhiteSpace(item.Id)) _list.Add(new Parameter(_list.Count.ToString(), item.DataType));
+        else _list.Add(item);
+    }
+    /// <summary>
+    /// adds a parameter to the parameter list - substitutes null or empty names with the parameter number
+    /// </summary>
+    /// <param name="item"></param>
+    public void AddRange(IEnumerable<Parameter> parameters)
+    {
+        foreach(var item in parameters)
+            if(item != null)_list.Add(item);
+    }
+    /// <summary>
+    /// clear the list of parameters
+    /// </summary>
+    public void Clear()
+    {
+        _list.Clear();
+    }
+    /// <summary>
+    /// returns true if the parameters in in the list
+    /// </summary>
+    /// <param name="item"></param>
+    /// <returns></returns>
+    public bool Contains(Parameter item)
+    {
+        return _list.Contains(item);
+    }
+    /// <summary>
+    /// copies nth items to the array
+    /// </summary>
+    /// <param name="array"></param>
+    /// <param name="arrayIndex"></param>
+    public void CopyTo(Parameter[] array, int arrayIndex)
+    {
+        _list.CopyTo(array, arrayIndex);
+    }
+
+    public bool Equals(ISigned x, ISigned y)
+    {
+        return x.Signature.Equals(y.Signature);
+    }
+
+    /// <summary>
+    /// gets an IEnumerator
+    /// </summary>
+    /// <returns></returns>
+    public IEnumerator<Parameter> GetEnumerator()
+    {
+        return _list.GetEnumerator();
+    }
+
+    public int GetHashCode(ISigned obj)
+    {
+        return obj.Signature.GetHashCode();
+    }
+
+    /// <summary>
+    /// gets the index of an parameter
+    /// </summary>
+    /// <param name="item"></param>
+    /// <returns></returns>
+    public int IndexOf(Parameter item)
+    {
+        return _list.IndexOf(item);
+    }
+    /// <summary>
+    /// inserts the parameter at the index
+    /// </summary>
+    /// <param name="index"></param>
+    /// <param name="item"></param>
+    public void Insert(int index, Parameter item)
+    {
+        _list.Insert(index, item);
+    }
+    /// <summary>
+    /// remove an parameter out of the list
+    /// </summary>
+    /// <param name="item"></param>
+    /// <returns></returns>
+    public bool Remove(Parameter item)
+    {
+        return _list.Remove(item);
+    }
+    /// <summary>
+    /// remove the nth parameter
+    /// </summary>
+    /// <param name="index"></param>
+    public void RemoveAt(int index)
+    {
+        _list.RemoveAt(index);
+    }
+    /// <summary>
+    /// gets an enumerator
+    /// </summary>
+    /// <returns></returns>
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+        return _list.GetEnumerator();
+    }
+}
+
+/// <summary>
+/// defines a signature whichs is derived from a typed signature but extended by typed or named arguments
+/// </summary>
+public class NamedListSignature : TypedNameSignature
+{
+
+    // the parameterlist
+    private readonly ListSignature _listSignature;
+    /// <summary>
+    /// constructor with the canonical name of the object, its datatype and the parameters
+    /// </summary>
+    /// <param name="name"></param>
+    /// <param name="datatype"></param>
+    /// <param name="parameters"></param>
+    public NamedListSignature(CanonicalName name, IDataType datatype, params Parameter[] parameters)
+        : base(name, datatype)
+    {
+        _listSignature = new ListSignature(parameters);
+    }
+    public NamedListSignature(CanonicalName name, IDataType datatype, ParameterList parameters)
+        : base(name, datatype)
+    {
+        _listSignature = new ListSignature(parameters);
+    }
+    /// <summary>
+    /// gets the unique id of the signature
+    /// </summary>
+    public override string Uid
+    {
+        get
+        {
+            return Name.ToString().ToUpper() + ":" + this.DataType.Signature + "<" + _listSignature.Uid + ">";
+        }
+    }
+}
+/// <summary>
+/// defines a signature whichs is derived from a typed signature but extended by typed or named arguments
+/// </summary>
+public class ListSignature : ISignature
+{
+
+    // the parameterlist
+    private readonly ParameterList _parameters = new ParameterList();
+    /// <summary>
+    /// constructor with the canonical name of the object, its datatype and the parameters
+    /// </summary>
+    /// <param name="name"></param>
+    /// <param name="datatype"></param>
+    /// <param name="parameters"></param>
+    public ListSignature(params Parameter[] parameters)
+    {
+        // add all parameters to the parameterlist
+        foreach (var item in parameters)
+            if (item != null)  _parameters.Add(item);
+    }
+    public ListSignature(IEnumerable<Parameter> parameters)
+    {
+        // add all parameters to the parameterlist
+        foreach (var item in parameters)
+            if (item != null) _parameters.Add(item);
+    }
+    /// <summary>
+    /// gets the unique id of the signature
+    /// </summary>
+    public string Uid
+    {
+        get
+        {
+            string sig = String.Empty;
+            foreach (var item in _parameters)
+            {
+                if (!String.IsNullOrEmpty(sig)) sig += ",";
+                sig += item.Signature.ToString();
+            }
+
+            return "<" + sig + ">";
+        }
+    }
+
+    public override string ToString()
+    {
+        return this.Uid;
+    }
+    public bool Equals(ISignature x, ISignature y)
+    {
+        return x.Equals(y);
+    }
+
+    public int GetHashCode(ISignature obj)
+    {
+        return Uid.GetHashCode();
+    }
+    public int CompareTo(ISignature other)
+    {
+        return this.Uid.CompareTo(other.Uid);
+    }
+}
+

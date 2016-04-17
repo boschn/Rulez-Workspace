@@ -29,7 +29,8 @@ namespace OnTrack.Core
     /// <summary>
     /// declares a data object meta description
     /// </summary>
-    public interface IObjectDefinition
+    [Repository.StoreType(true)]
+    public interface IObjectDefinition : ISigned
     {
         /// <summary>
         /// gets the object name
@@ -136,21 +137,38 @@ namespace OnTrack.Core
         Composite ,
         DataStructure
     }
-
+    /// <summary>
+    /// describes a signature
+    /// </summary>
+    public interface ISignature : IEqualityComparer<ISignature>, IComparable<ISignature>
+    {
+        /// <summary>
+        /// gets the unique string id of the signature
+        /// </summary>
+        string Uid { get; }
+    }
+    /// <summary>
+    /// describes a class which uses unique signatures 
+    /// </summary>
+    public interface ISigned : IEqualityComparer<ISigned>
+    {
+        /// <summary>
+        /// returns the Signature
+        /// </summary>
+        /// <returns></returns>
+        ISignature Signature { get; }
+    }
     /// <summary>
     /// Interface for an data type description
     /// </summary>
-    public interface IDataType : IEqualityComparer<IDataType>, IEquatable<IDataType>
+    [Repository.StoreType()]
+    public interface IDataType : IEqualityComparer<IDataType>, IEquatable<IDataType>, ISigned
     {
         /// <summary>
         /// gets the name of the data type
         /// </summary>
         string Id { get; }
         ObjectName Name { get;  }
-        /// <summary>
-        /// gets the signature of the data type
-        /// </summary>
-        string Signature { get; }
         /// <summary>
         /// gets the typeid of the DataType
         /// </summary>
@@ -163,13 +181,18 @@ namespace OnTrack.Core
         /// gets the aquivalent .NET type
         /// </summary>
         System.Type NativeType { get; }
+        /// <summary>
+        /// returns true if the type is nullable
+        /// </summary>
+        bool IsNullable { get; }
     }
 
     /// <summary>
     /// Interface for Object Entries
     /// </summary>
     /// <remarks></remarks>
-    public interface IObjectEntryDefinition 
+     [Repository.StoreType(true)]
+    public interface IObjectEntryDefinition : ISigned
     {
         /// <summary>
         /// returns true if the Entry is mapped to a class member field
@@ -218,6 +241,10 @@ namespace OnTrack.Core
         /// <returns></returns>
         /// <remarks></remarks>
         String EntryId {get;set;}
+        /// <summary>
+        /// gets the Entry name
+        /// </summary>
+        EntryName Name { get; }
         /// <summary>
         /// returns the field data type
         /// </summary>
@@ -313,7 +340,7 @@ namespace OnTrack.Core
     /// <summary>
     /// declares an repository for data objects 
     /// </summary>
-    public interface IDataObjectRepository
+    public interface IDataObjectRepository :IRepository
     {
         /// <summary>
         /// returns an object definition by object name

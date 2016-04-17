@@ -42,7 +42,7 @@ namespace OnTrack.Core
         private object _defaultvalue;
        
         protected Rulez.ObjectName _name; // raise event if changing
-        protected string _signature = String.Empty;
+        protected ISignature _signature ;
         // event
         public event PropertyChangedEventHandler PropertyChanged;
         /// <summary>
@@ -136,13 +136,13 @@ namespace OnTrack.Core
             switch (GetCategory(typeId))
             {
                 case otDataTypeCategory.Primitive:
-                    return (IDataType) Rulez.PrimitiveType.GetPrimitiveType(typeId);
+                    return Rulez.PrimitiveType.GetPrimitiveType(typeId);
                 case otDataTypeCategory.Composite:
                     return (IDataType) Rulez.CompositeType.GetCompositeType(typeId);
                 case otDataTypeCategory.DataStructure:
                     return (IDataType) Rulez.DataStructureType.GetStructuredType(typeId);
                 default:
-                    throw new Rulez.RulezException(Rulez.RulezException.Types.DataTypeNotImplementedByClass, arguments: new object[] { typeId.ToString(), "DataType.GetDataType" });
+                    throw new Rulez.RulezException(Rulez.RulezException.Types.DataTypeNotImplementedByClass, arguments: new object[] { typeId.ToString(), "DataType.Get<IDataType>" });
             }
         }
         /// <summary>
@@ -499,7 +499,7 @@ namespace OnTrack.Core
         protected DataType(otDataType typeId, bool isNullable = false, object defaultvalue = null, string id = null, Rulez.Engine engine = null)
         {
             _type = isNullable ? typeId | otDataType.IsNullable : typeId;
-            _name = new Rulez.ObjectName ((String.IsNullOrWhiteSpace(id)) ? this.Signature : id.ToUpper() + (isNullable ? "?" : String.Empty));
+            _name = new Rulez.ObjectName ((String.IsNullOrWhiteSpace(id)) ? this.Signature.ToString () : id.ToUpper() + (isNullable ? "?" : String.Empty));
             _engine = engine;
             _defaultvalue = defaultvalue;
         }
@@ -545,10 +545,14 @@ namespace OnTrack.Core
         /// <summary>
         /// gets the Signature of the  Datatype
         /// </summary>
-        public virtual string Signature
+        public virtual ISignature Signature
         {
             get { return _signature; }
-            protected set { _signature = value; RaiseOnPropertyChanged(this, ConstPropertySignature); }
+            protected set
+            {
+                            _signature = value;
+                            RaiseOnPropertyChanged(this, ConstPropertySignature);
+            }
         }
         /// <summary>
         /// return true if the type is Nullable
@@ -628,26 +632,45 @@ namespace OnTrack.Core
         /// <param name="x"></param>
         /// <param name="y"></param>
         /// <returns></returns>
-         bool System.Collections.Generic.IEqualityComparer<IDataType>.Equals(IDataType x,IDataType y)
+         bool System.Collections.Generic.IEqualityComparer<ISigned>.Equals(ISigned x,ISigned y)
          {
-             return String.Compare(x.Signature, y.Signature, ignoreCase: true) == 0;
+            return x.Signature == y.Signature;
          }
-         /// <summary>
-         /// Gets the hash code.
-         /// </summary>
-         /// <param name="obj">The obj.</param>
-         /// <returns></returns>
-          int System.Collections.Generic.IEqualityComparer<IDataType>.GetHashCode(IDataType obj)
+        /// <summary>
+        /// compares 2 types by name 
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+        bool System.Collections.Generic.IEqualityComparer<IDataType>.Equals(IDataType x, IDataType y)
+        {
+            return x.Signature == y.Signature;
+        }
+        /// <summary>
+        /// Gets the hash code.
+        /// </summary>
+        /// <param name="obj">The obj.</param>
+        /// <returns></returns>
+        int System.Collections.Generic.IEqualityComparer<IDataType>.GetHashCode(IDataType obj)
          {
              return this.Id.GetHashCode();
          }
-          /// <summary>
-          /// == comparerer on datatypes
-          /// </summary>
-          /// <param name="a"></param>
-          /// <param name="b"></param>
-          /// <returns></returns>
-          public static bool operator ==(DataType a, DataType b)
+        /// <summary>
+        /// Gets the hash code.
+        /// </summary>
+        /// <param name="obj">The obj.</param>
+        /// <returns></returns>
+        int System.Collections.Generic.IEqualityComparer<ISigned>.GetHashCode(ISigned obj)
+        {
+            return this.Signature.GetHashCode();
+        }
+        /// <summary>
+        /// == comparerer on datatypes
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static bool operator ==(DataType a, DataType b)
           {
               // If both are null, or both are same instance, return true.
               if (System.Object.ReferenceEquals(a, b))
@@ -661,8 +684,8 @@ namespace OnTrack.Core
                   return false;
               }
 
-              // Return true if the fields match:
-              return String.Compare(a.Signature, b.Signature, ignoreCase: true) == 0;
+            // Return true if the fields match:
+            return Equals(a.Signature, b.Signature);
           }
           /// <summary>
           /// != comparer
@@ -689,7 +712,7 @@ namespace OnTrack.Core
         /// <returns></returns>
         public override string  ToString()
         {
-            return this.Signature ;
+            return this.Signature.ToString () ;
         }
         /// <summary>
         /// raise the Property Changed Event

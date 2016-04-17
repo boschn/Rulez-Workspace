@@ -28,6 +28,10 @@ namespace OnTrack.Testing
             this.IsNullable = isNull;
             this.ObjectDefinition = objectdefinition ;
         }
+        public EntryName Name
+        {
+            get { return new EntryName(objectid: this.ObjectId, entryid: this.EntryId); }
+        }
         public bool IsMapped { get ; set; }
 
         public long? LowerRangeValue { get ; set; }
@@ -62,7 +66,24 @@ namespace OnTrack.Testing
        
 
         public IObjectDefinition ObjectDefinition { get ; set; }
-       
+
+        public ISignature Signature
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public bool Equals(ISigned x, ISigned y)
+        {
+            throw new NotImplementedException();
+        }
+
+        public int GetHashCode(ISigned obj)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     /// <summary>
@@ -219,6 +240,14 @@ namespace OnTrack.Testing
             }
         }
 
+        public ISignature Signature
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+        }
+
         public IList<string> EntryNameIds(bool onlyActive = true)
         {
             return _entries.Keys.ToList();
@@ -233,6 +262,16 @@ namespace OnTrack.Testing
         public bool HasEntry(string entryname)
         {
            return _entries.ContainsKey(entryname.ToUpper());
+        }
+
+        public bool Equals(ISigned x, ISigned y)
+        {
+            throw new NotImplementedException();
+        }
+
+        public int GetHashCode(ISigned obj)
+        {
+            throw new NotImplementedException();
         }
     }
 
@@ -339,6 +378,61 @@ namespace OnTrack.Testing
             throw new NotImplementedException();
         }
 
+        public bool RegisterDataObjectRepository(IDataObjectRepository dataObjectRepository)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool DeRegisterDataObjectRepository(IDataObjectRepository dataObjectRepository)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Add(ISigned signed)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Has(ISignature signature)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Has<T>(ISignature signature = null) where T : ISigned
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Has(CanonicalName name)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Has<T>(CanonicalName name) where T : ISigned
+        {
+            throw new NotImplementedException();
+        }
+
+        public IList<ISigned> Get(ISignature signature)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IList<T> Get<T>(ISignature signature = null) where T : ISigned
+        {
+            throw new NotImplementedException();
+        }
+
+        public IList<T> Get<T>(CanonicalName name) where T : OnTrack.Core.ISigned
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Remove(ISignature signature)
+        {
+            throw new NotImplementedException();
+        }
+
         public System.Collections.Generic.IEnumerable<IObjectDefinition> IObjectDefinitions
         {
             get
@@ -361,6 +455,14 @@ namespace OnTrack.Testing
                 List<CanonicalName> aList = new List<CanonicalName>();
                 aList.Add(CanonicalName.GlobalName);
                 return aList;
+            }
+        }
+
+        public string Id
+        {
+            get
+            {
+                throw new NotImplementedException();
             }
         }
     }
@@ -600,7 +702,7 @@ namespace OnTrack.Testing
         {
             {
                 // data context
-                Engine.AddDataEngine(new DataObjectEngine("test"));
+                Engine.Add(new DataObjectEngine("test"));
 
                 for (uint i = 0; i < postiveSyntaxTest.GetUpperBound(0); i++)
                 {
@@ -618,7 +720,7 @@ namespace OnTrack.Testing
         public void RunDevelopmentTest()
         {
             // data context
-            Engine.AddDataEngine(new DataObjectEngine("test"));
+            Engine.Add(new DataObjectEngine("test"));
             uint i = 15;
             RunPositiveSyntaxTest(i, postiveSyntaxTest[i-1], expected: expectedTree[i-1]);
         }

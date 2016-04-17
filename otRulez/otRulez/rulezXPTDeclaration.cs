@@ -53,6 +53,8 @@ namespace OnTrack.Rulez.eXPressionTree
         IfThenElse,
         Return,
         Unit,
+        OperatorDefinition,
+        FunctionDefinition,
     }
 
     /// <summary>
@@ -70,6 +72,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <param name="node"></param>
         void Visit(T node);
     }
+    
     /// <summary>
     /// defines a node of the AST
     /// </summary>
@@ -134,16 +137,16 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// gets or sets the type id of the variable
         /// </summary>
-        Core.otDataType TypeId { get;  }
+        Core.otDataType ReturnTypeId { get;  }
         /// <summary>
         /// gets or sets the type 
         /// </summary>
-        Core.IDataType DataType { get;}
+        Core.IDataType ReturnType { get;}
     }
     /// <summary>
     /// describes a rule which is the top level
     /// </summary>
-    public interface IRule : IXPTree
+    public interface IRule : IXPTree, Core.ISigned
     {
         /// <summary>
         /// returns the ID of the rule
@@ -159,9 +162,82 @@ namespace OnTrack.Rulez.eXPressionTree
         string Handle { get; set; }
     }
     /// <summary>
+    /// describes a selection rule
+    /// </summary>
+    [Repository.StoreType()]
+    public interface ISelectionRule : IRule, IExpression
+    {
+        /// <summary>
+        /// gets the parameters
+        /// </summary>
+        ParameterList Parameters { get; }
+        /// <summary>
+        /// gets the resulting list definition
+        /// </summary>
+        ResultList Result { get; }
+        /// <summary>
+        /// gets or sets the selection statement block
+        /// </summary>
+        SelectionStatementBlock Selection { get; set; }
+        /// <summary>
+        /// creates and adds a new parameter by datatype id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="dataTypeId"></param>
+        /// <returns></returns>
+        Parameter AddNewParameter(string id, Core.otDataType dataTypeId);
+        /// <summary>
+        /// creates and adds a new parameter by datatype
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="dataTypeId"></param>
+        /// <returns></returns>
+        Parameter AddNewParameter(string id, Core.IDataType datatype);
+        /// <summary>
+        /// gets a parameter by id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        Parameter GetParameter(string id);
+        /// <summary>
+        /// returns true if the rule has the parameter by id
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        bool HasParameter(string id);
+        /// <summary>
+        /// returns the resulting list of data object ids
+        /// </summary>
+        /// <returns></returns>
+        IList<string> ResultObjectIds();
+    }
+    /// <summary>
+    /// defines a function
+    /// </summary>
+    [Repository.StoreType()]
+    public interface IFunctionDefinition
+    {
+        ObjectName Name { get; }
+        ParameterList Parameters { get; }
+        Core.IDataType ReturnType { get; }
+    }
+    /// <summary>
+    /// defines an Operator
+    /// </summary>
+     [Repository.StoreType()]
+    public interface IOperatorDefinition : IXPTree, Core.ISigned
+    {
+        ushort Arguments { get; }
+        ushort Priority { get; }
+        Core.IDataType ReturnType { get; }
+        Core.otDataType? ReturnTypeId { get; }
+        Token Token { get; }
+        otOperatorType Type { get; }
+    }
+    /// <summary>
     /// function calls
     /// </summary>
-    public interface IFunction: IXPTree, IStatement, IExpression
+    public interface IFunctionCall: IXPTree, IStatement, IExpression, Core.ISigned
     {
         /// <summary>
         /// gets or sets the ID of the function
@@ -171,19 +247,48 @@ namespace OnTrack.Rulez.eXPressionTree
     /// <summary>
     /// describes a expression tree symbol 
     /// </summary>
-    public interface ISymbol : INode, IExpression
+    [Repository.StoreType()]
+    public interface ISymbol : INode, IExpression, Core.ISigned
     {
         /// <summary>
         /// gets or sets the ID of the variable
         /// </summary>
         String Id { get; }
         /// <summary>
-        /// defines the IeXPressionTree scope of the symbol
+        /// defines the scope where this symbol lives
         /// </summary>
-        IXPTree Scope { get;  }
+        IScope Scope { get;  }
         /// <summary>
         /// returns true if the symbol is valid in the engine (late binding)
         /// </summary>
         bool? IsValid { get; }
+        /// <summary>
+        /// create a parameter
+        /// </summary>
+        /// <returns></returns>
+        Parameter ToParameter();
+    }
+    /// <summary>
+    /// describes a Module
+    /// </summary>
+     [Repository.StoreType()]
+    public interface IModule : INode, Core.ISigned
+    {
+        /// <summary>
+        /// gets the ID
+        /// </summary>
+        string Id { get; }
+        /// <summary>
+        /// gets the name
+        /// </summary>
+        CanonicalName Name { get; }
+        /// <summary>
+        /// gets the version
+        /// </summary>
+        ulong Version { get; }
+        /// <summary>
+        /// defines the IeXPressionTree scope of the dataobject
+        /// </summary>
+        IScope Scope { get; }
     }
 }

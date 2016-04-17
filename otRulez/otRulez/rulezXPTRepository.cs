@@ -74,6 +74,17 @@ namespace OnTrack.Rulez
         {
             return new XPTScope(engine: this.Engine, id: id);
         }
+        /*
+        /// <summary>
+        /// add a rule to the scope
+        /// </summary>
+        /// <param name="rule"></param>
+        public override bool AddSelectionRule(SelectionRule rule)
+        {
+            if (!this.Repository.HasSelectionRule(rule.Id))
+                return this.Repository.AddSelectionRule(rule);
+            return false;
+        }
         /// <summary>
         /// returns a rule rule from the repository or creates a new one and returns this
         /// </summary>
@@ -88,17 +99,16 @@ namespace OnTrack.Rulez
                 if (EngineScope!=null && EngineScope.Repository.HasSelectionRule(id)) 
                     return EngineScope.Repository.GetSelectionRule(id);
             else 
-                    if (Parent != null && Parent.HasSelectionRule(id))
-                        return Parent.GetSelectionRule(id);
+                    if (IScope != null && IScope.HasSelectionRule(id))
+                        return IScope.GetSelectionRule(id);
             
 
 
             // create a selection rule and return
             var aRule = new SelectionRule(id);
-            Repository.AddSelectionRule(aRule.Id, aRule);
+            Repository.AddSelectionRule(aRule);
             return aRule;
         }
-
         /// <summary>
         /// returns true if the selection rule by id is found in this Scope
         /// </summary>
@@ -110,8 +120,8 @@ namespace OnTrack.Rulez
                 return true;
             else if (EngineScope != null && EngineScope.Repository.HasSelectionRule(id)) 
                 return true;
-            else if (Parent != null)
-                return Parent.HasSelectionRule(id);
+            else if (IScope != null)
+                return IScope.HasSelectionRule(id);
 
             return false;
         }
@@ -127,8 +137,8 @@ namespace OnTrack.Rulez
                 return Repository.GetOperator(id);
             else if (EngineScope != null && EngineScope.Repository.HasOperator(id)) 
                 return EngineScope.Repository.GetOperator(id);
-            else if (Parent != null && Parent.HasOperator(id))
-                return Parent.GetOperator(id);
+            else if (IScope != null && IScope.HasOperator(id))
+                return IScope.GetOperator(id);
             return null;
         }
 
@@ -143,8 +153,8 @@ namespace OnTrack.Rulez
                 return true;
             else if (EngineScope != null && EngineScope.Repository.HasOperator(id))
                 return true;
-            else if (Parent != null)
-                return Parent.HasOperator(id);
+            else if (IScope != null)
+                return IScope.HasOperator(id);
             return false;
         }
 
@@ -153,14 +163,14 @@ namespace OnTrack.Rulez
         /// </summary>
         /// <param name="handle"></param>
         /// <returns></returns>
-        public override @Function GetFunction(Token id)
+        public override Function GetFunction(Token id)
         {
             if (Repository.HasFunction(id))
                 return Repository.GetFunction(id);
             else if (EngineScope != null && EngineScope.Repository.HasFunction(id)) 
                 return EngineScope.GetFunction(id);
-            else if (Parent != null && Parent.HasFunction(id))
-                return Parent.GetFunction(id);
+            else if (IScope != null && IScope.HasFunction(id))
+                return IScope.GetFunction(id);
             return null;
         }
 
@@ -175,11 +185,20 @@ namespace OnTrack.Rulez
                 return true;
             else if (EngineScope!=null && EngineScope.Repository.HasFunction(id))
                 return true;
-            else if (Parent != null)
-                return Parent.HasFunction(id);
+            else if (IScope != null)
+                return IScope.HasFunction(id);
             return false;
         }
-
+        /// <summary>
+        /// add a dataobject to the scope
+        /// </summary>
+        /// <param name="dataobject"></param>
+        public override bool AddDataObjectDefinition(IObjectDefinition dataobject)
+        {
+            if (!this.Repository.HasDataObjectDefinition(dataobject.Id))
+                return this.Repository.AddDataObjectDefinition(dataobject);
+            return false;
+        }
         /// <summary>
         /// gets the Operator definition for the ID
         /// </summary>
@@ -191,8 +210,8 @@ namespace OnTrack.Rulez
                 return Repository.GetDataObjectDefinition(id);
             else if (EngineScope != null && EngineScope.Repository.HasDataObjectDefinition(id))
                 return EngineScope.Repository.GetDataObjectDefinition(id);
-            else if (Parent != null && Parent.HasDataObjectDefinition(id))
-                return Parent.GetDataObjectDefinition(id);
+            else if (IScope != null && IScope.HasDataObjectDefinition(id))
+                return IScope.GetDataObjectDefinition(id);
             return null;
         }
 
@@ -207,8 +226,8 @@ namespace OnTrack.Rulez
                 return true;
             else if (EngineScope != null && EngineScope.Repository.HasDataObjectDefinition(new ObjectName(moduleid: this.Id, objectid: id))) 
                 return true;
-            else if (Parent != null)
-                return Parent.HasDataObjectDefinition(id);
+            else if (IScope != null)
+                return IScope.HasDataObjectDefinition(id);
             return false;
         }
         /// <summary>
@@ -242,8 +261,8 @@ namespace OnTrack.Rulez
                 return true;
             else if (EngineScope != null && EngineScope.Repository.HasSymbol(id))
                 return true;
-            else if (Parent != null)
-                return Parent.HasSymbol(id);
+            else if (IScope != null)
+                return IScope.HasSymbol(id);
             return false;
         }
         /// <summary>
@@ -257,11 +276,62 @@ namespace OnTrack.Rulez
                 return this.Repository.GetSymbol(id);
             else if (EngineScope != null && EngineScope.Repository.HasSymbol(id))
                 return EngineScope.Repository.GetSymbol(id);
-            else if (Parent != null)
-                return Parent.GetSymbol(id);
+            else if (IScope != null)
+                return IScope.GetSymbol(id);
 
             return null;
         }
+        /// <summary>
+        /// add a module to the scope
+        /// </summary>
+        /// <param name="rule"></param>
+        public override bool AddModule(Module module)
+        {
+            if (!this.Repository.HasModule(module.Id))
+                return this.Repository.AddModule(module);
+            return false;
+        }
+        /// <summary>
+        /// returns a module from the repository or creates a new one and returns this
+        /// </summary>
+        /// <param name="handle"></param>
+        /// <returns></returns>
+        public override Module GetModule(string id = null)
+        {
+            if (Repository.HasModule(id))
+                return Repository.GetModule(id);
+            else
+                /// look into Engine Scope
+                if (EngineScope != null && EngineScope.Repository.HasModule(id))
+                    return EngineScope.Repository.GetModule(id);
+                else
+                    if (IScope != null && IScope.HasModule(id))
+                        return IScope.GetModule(id);
+
+
+
+            // create a module and return
+            var aModule = new Module(new CanonicalName(id));
+            Repository.AddModule(aModule);
+            return aModule;
+        }
+        /// <summary>
+        /// returns true if the selection rule by id is found in this Scope
+        /// </summary>
+        /// <param id="id"></param>
+        /// <returns></returns>
+        public override bool HasModule(string id)
+        {
+            if (Repository.HasModule(id))
+                return true;
+            else if (EngineScope != null && EngineScope.Repository.HasModule(id))
+                return true;
+            else if (IScope != null)
+                return IScope.HasModule(id);
+
+            return false;
+        }
+        */
     }
     /// <summary>
     /// XPT Generation Repository
@@ -367,6 +437,62 @@ namespace OnTrack.Rulez
         {
             return _objects.Values.Where(x => x.ObjectType == type).FirstOrDefault() != null;
         }
+
+        public bool RegisterDataObjectRepository(IDataObjectRepository dataObjectRepository)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool DeRegisterDataObjectRepository(IDataObjectRepository dataObjectRepository)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Add(ISigned signed)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Has(ISignature signature)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Has<T>(ISignature signature = null) where T : ISigned
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Has(CanonicalName name)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Has<T>(CanonicalName name) where T : ISigned
+        {
+            throw new NotImplementedException();
+        }
+
+        public IList<ISigned> Get(ISignature signature)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IList<T> Get<T>(ISignature signature = null) where T : ISigned
+        {
+            throw new NotImplementedException();
+        }
+
+        public IList<T> Get<T>(CanonicalName name) where T : ISigned
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Remove(ISignature signature)
+        {
+            throw new NotImplementedException();
+        }
+
         /// <summary>
         /// returns all object definitions
         /// </summary>
@@ -395,6 +521,14 @@ namespace OnTrack.Rulez
 
             }
         }
+
+        public string Id
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+        }
     }
     /// <summary>
     /// XPT data object definition - simply a fake
@@ -402,21 +536,21 @@ namespace OnTrack.Rulez
     internal class XPTDataObjectDefinition : IObjectDefinition
     {
         private readonly ObjectName _name;
-        private  ObservableCollection<IObjectEntryDefinition> _entries = new ObservableCollection<IObjectEntryDefinition> ();
+        private readonly ObservableCollection<IObjectEntryDefinition> _entries = new ObservableCollection<IObjectEntryDefinition> ();
         /// <summary>
         /// constructor
         /// </summary>
         public XPTDataObjectDefinition(ObjectName name) 
         {
             _name = name;
-            _entries.CollectionChanged += _entries_CollectionChanged;
+            _entries.CollectionChanged += XPTDataObjectDefinition_entries_CollectionChanged;
         }
         /// <summary>
         /// event handler for entries add
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        void _entries_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        void XPTDataObjectDefinition_entries_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
             if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Add )
             {
@@ -548,7 +682,15 @@ namespace OnTrack.Rulez
         {
             get { return _entries; }
         }
-#endregion
+
+        public ISignature Signature
+        {
+            get
+            {
+                return new TypedNameSignature(this.Name, DataObjectType.GetDataType(id: this.Id, engine: Rules.Engine));
+            }
+        }
+        #endregion
         /// <summary>
         /// returns the (active) names of the Entries
         /// </summary>
@@ -576,12 +718,23 @@ namespace OnTrack.Rulez
         {
             return _entries.Where(x => String.Compare(x.EntryId, entryNameId, true)==00).FirstOrDefault() != null;
         }
+
+        public bool Equals(ISigned x, ISigned y)
+        {
+            return x.Signature.Equals(y.Signature);
+        }
+
+        public int GetHashCode(ISigned obj)
+        {
+            return obj.Signature.GetHashCode();
+        }
     }
     /// <summary>
     /// XPT data object entry definition
     /// </summary>
     internal class XPTDataObjectEntryDefinition : IObjectEntryDefinition
     {
+
         #region Properties
         /// <summary>
         /// returns true if the Entry is mapped to a class member field
@@ -640,7 +793,13 @@ namespace OnTrack.Rulez
             get;
             set;
         }
-
+        /// <summary>
+        /// gets the entry name
+        /// </summary>
+        public EntryName Name
+        {
+            get { return new EntryName(objectid: this.ObjectId, entryid: this.EntryId); }
+        }
         /// <summary>
         /// sets or gets the object name of the entry
         /// </summary>
@@ -782,7 +941,25 @@ namespace OnTrack.Rulez
             get;
             set;
         }
+
+        public ISignature Signature
+        {
+            get
+            {
+                return new TypedNameSignature(name: this.Name, datatype: this.DataType);
+            }
+        }
+
+        public bool Equals(ISigned x, ISigned y)
+        {
+           return x.Signature.Equals(y.Signature);
+        }
+
+        public int GetHashCode(ISigned obj)
+        {
+            return obj.Signature.GetHashCode();
+        }
         #endregion
-        
+
     }
 }

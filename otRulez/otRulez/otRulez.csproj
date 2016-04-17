@@ -53,6 +53,7 @@
     <Reference Include="TelerikCommon, Version=2015.1.225.40, Culture=neutral, PublicKeyToken=5bb2a467cbec794e, processorArchitecture=MSIL" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="coreDataStructures.cs" />
     <Compile Include="coreDatatypes.cs" />
     <Compile Include="coreDeclaration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

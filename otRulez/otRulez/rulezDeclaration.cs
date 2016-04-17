@@ -29,14 +29,14 @@ using OnTrack.Rulez.eXPressionTree;
 namespace OnTrack.Rulez
 {
     /// <summary>
-    /// nested scope definition
+    /// defines a nested repository
     /// </summary>
-    public interface IScope
+    public interface IScope : IRepository
     {
         /// <summary>
         /// gets the list of children
         /// </summary>
-        ObservableCollection<IScope> Children { get; }
+        ObservableCollection<IScope> SubScopes { get; }
         /// <summary>
         /// gets the Repository of the Scope
         /// </summary>
@@ -103,54 +103,6 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         IScope NewScope(CanonicalName name);
         /// <summary>
-        /// returns a rule rule from the repository or creates a new one and returns this
-        /// </summary>
-        /// <param name="handle"></param>
-        /// <returns></returns>
-        SelectionRule GetSelectionRule(string id = null);
-        /// <summary>
-        /// returns true if the selection rule by id is found in this Scope
-        /// </summary>
-        /// <param id="id"></param>
-        /// <returns></returns>
-        bool HasSelectionRule(string id);
-        /// <summary>
-        /// gets the Operator definition for the Token ID
-        /// </summary>
-        /// <param name="handle"></param>
-        /// <returns></returns>
-        Operator GetOperator(Token id);
-        /// <summary>
-        /// return true if the operator is found here
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        bool HasOperator(Token id);
-        /// <summary>
-        /// gets the Operator definition for the Token ID
-        /// </summary>
-        /// <param name="handle"></param>
-        /// <returns></returns>
-        @Function GetFunction(Token id);
-        /// <summary>
-        /// returns true if the function is in scope
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        bool HasFunction(Token id);
-        /// <summary>
-        /// gets the Operator definition for the ID
-        /// </summary>
-        /// <param name="handle"></param>
-        /// <returns></returns>
-        IObjectDefinition GetDataObjectDefinition(string id);
-        /// <summary>
-        /// returns true if the data object is in scope
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        bool HasDataObjectDefinition(string id);
-        /// <summary>
         /// gets the Parent of this Scope
         /// </summary>
         IScope Parent { get; set; }
@@ -162,29 +114,14 @@ namespace OnTrack.Rulez
         /// gets or sets the Name of the Scope
         /// </summary>
         CanonicalName Name { get;  }
+        
+
         /// <summary>
         /// event handler for dataObjectRepository Added
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
         void Scope_DataObjectRepositoryAdded(object sender, Rulez.Engine.EventArgs e);
-        /// <summary>
-        /// returns true if the scope has the symbol by id
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        bool HasSymbol(string id);
-        /// <summary>
-        /// returns the symbol by ID from the scope
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        ISymbol GetSymbol(string id);
-        /// <summary>
-        /// adds a symbol to the Scope
-        /// </summary>
-        /// <param name="symbol"></param>
-        bool AddSymbol(ISymbol symbol);
     }
     /// <summary>
     /// Interface for Engine Repositories
@@ -195,208 +132,80 @@ namespace OnTrack.Rulez
         /// gets the unique handle of the engine
         /// </summary>
         string Id { get; }
-
         /// <summary>
-        /// gets all the rule rules in the repository
+        /// register the data object repository for this repository
         /// </summary>
-        List<SelectionRule> SelectionRules { get; }
-
-        /// <summary>
-        /// gets all rule rule IDs in the repository
-        /// </summary>
-        List<String> SelectionRuleIDs { get; }
-
-        /// <summary>
-        /// gets all the operators in the repository
-        /// </summary>
-        List<Operator> Operators { get; }
-
-        /// <summary>
-        /// gets all operator tokens rule IDs in the repository
-        /// </summary>
-        List<Token> OperatorTokens { get; }
-
-        /// <summary>
-        /// return true if initialized
-        /// </summary>
-        bool IsInitialized { get; }
-
-        /// <summary>
-        /// returns true if the repository has the rule rule
-        /// </summary>
-        /// <param name="handle"></param>
+        /// <param name="dataObjectRepository"></param>
         /// <returns></returns>
-        bool HasSelectionRule(string id);
-
+        bool RegisterDataObjectRepository(IDataObjectRepository dataObjectRepository);
         /// <summary>
-        /// returns the selectionrule by handle
+        /// deregister the data object repository for this repository
         /// </summary>
-        /// <param name="handle"></param>
+        /// <param name="dataObjectRepository"></param>
         /// <returns></returns>
-        SelectionRule GetSelectionRule(string id);
-
+        bool DeRegisterDataObjectRepository(IDataObjectRepository dataObjectRepository);
         /// <summary>
-        /// adds a rule rule to the repository by handle
+        /// adds a ISigned object to the repository
         /// </summary>
-        /// <param name="handle"></param>
-        /// <param name="rule"></param>
+        /// <param name="signed"></param>
         /// <returns></returns>
-        bool AddSelectionRule(string id, SelectionRule rule);
-
+        bool Add(ISigned signed);
         /// <summary>
-        /// adds a rule rule to the repository by handle
+        /// returns true if the repository has an ISigned object with signature
         /// </summary>
-        /// <param name="handle"></param>
-        /// <param id="rule"></param>
+        /// <param name="signature"></param>
         /// <returns></returns>
-        bool RemoveSelectionRule(string id);
-
+        bool Has(ISignature signature);
         /// <summary>
-        /// returns true if the repository has the function
+        /// returns true if the ISigned derived type T is in the repository
+        /// optional: AND an ISigned of T with the signature exists
         /// </summary>
-        /// <param name="handle"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="signature"></param>
         /// <returns></returns>
-        bool HasFunction(Token id);
-
+        bool Has<T>(ISignature signature = null) where T : ISigned;
         /// <summary>
-        /// returns the function by handle
+        /// returns true if the repository has an ISigned object with the canonical name
         /// </summary>
-        /// <param name="handle"></param>
+        /// <param name="name"></param>
         /// <returns></returns>
-        @Function GetFunction(Token id);
-
+        bool Has(CanonicalName name);
         /// <summary>
-        /// adds a function to the repository by handle
+        /// returns true if the repository has an ISigned object derived Class T and
+        /// the CanonicalName name
         /// </summary>
-        /// <param name="handle"></param>
-        /// <param name="rule"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="name"></param>
         /// <returns></returns>
-        bool AddFunction(@Function function);
-
+        bool Has<T>(CanonicalName name) where T : ISigned;
         /// <summary>
-        /// returns true if the repository has the rule rule
+        /// gets all ISigned objects in the repository with the signature or empty list
         /// </summary>
-        /// <param name="handle"></param>
+        /// <param name="signature"></param>
         /// <returns></returns>
-        bool HasOperator(Token id);
-
+        IList<ISigned> Get(ISignature signature);
         /// <summary>
-        /// returns the selectionrule by handle
+        /// gets all ISigned derived objects with the optional signature
+        /// or empty list
         /// </summary>
-        /// <param name="handle"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="signed"></param>
         /// <returns></returns>
-        Operator GetOperator(Token id);
-
+        IList<T> Get<T>(ISignature signature = null) where T : ISigned;
         /// <summary>
-        /// adds a rule rule to the repository by handle
+        /// gets all ISigned derived objects whith the canonical name
+        /// or empty list
         /// </summary>
-        /// <param name="handle"></param>
-        /// <param name="rule"></param>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="signed"></param>
         /// <returns></returns>
-        bool AddOperator(Operator Operator);
-
+        IList<T> Get<T>(CanonicalName name) where T : ISigned;
         /// <summary>
-        /// adds a rule rule to the repository by handle
+        /// remove ISigned object in the repository with the signature
+        /// returns true on success
         /// </summary>
-        /// <param name="handle"></param>
-        /// <param name="rule"></param>
-        /// <returns></returns>
-        bool RemoveOperator(Token id);
-
-        /// <summary>
-        /// returns true if the repository has the function
-        /// </summary>
-        /// <param name="handle"></param>
-        /// <returns></returns>
-        bool HasDataType(string name);
-
-        /// <summary>
-        /// returns true if the repository has the function
-        /// </summary>
-        /// <param name="handle"></param>
-        /// <returns></returns>
-        bool HasDataType(IDataType datatype);
-
-        /// <summary>
-        /// returns true if the repository has the function
-        /// </summary>
-        /// <param signature="handle"></param>
-        /// <returns></returns>
-        bool HasDataTypeSignature(string signature);
-
-        /// <summary>
-        /// returns the datatype by name
-        /// </summary>
-        /// <param name="handle"></param>
-        /// <returns></returns>
-        IDataType GetDatatype(string Name);
-
-        /// <summary>
-        /// returns the datatype by name
-        /// </summary>
-        /// <param name="handle"></param>
-        /// <returns></returns>
-        List<IDataType> GetDatatypeBySignature(string signature);
-
-        /// <summary>
-        /// adds a datatype to the repository by handle
-        /// </summary>
-        /// <param name="handle"></param>
-        /// <param name="rule"></param>
-        /// <returns></returns>
-        bool AddDataType(IDataType datatype);
-
-        /// <summary>
-        /// adds a datatype to the repository by handle
-        /// </summary>
-        /// <param name="handle"></param>
-        /// <param name="rule"></param>
-        /// <returns></returns>
-        bool RemoveDataType(IDataType datatype);
-
-        /// <summary>
-        /// returns true if the id exists in the Repository
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        bool HasDataObjectDefinition(string id);
-
-        bool HasDataObjectDefinition(ObjectName name);
-
-        /// <summary>
-        /// returns the selectionrule by handle
-        /// </summary>
-        /// <param name="handle"></param>
-        /// <returns></returns>
-        IObjectDefinition GetDataObjectDefinition(String id);
-
-        IObjectDefinition GetDataObjectDefinition(ObjectName name);
-
-        bool RegisterDataObjectRepository(IDataObjectRepository iDataObjectRepository);
-
-        bool DeRegisterDataObjectRepository(IDataObjectRepository iDataObjectRepository);
-        /// <summary>
-        /// returns true if the symbol exists in the repository
-        /// </summary>
-        /// <param name="p"></param>
-        /// <returns></returns>
-        bool HasSymbol(string p);
-        /// <summary>
-        /// add the symbol to the repository
-        /// </summary>
-        /// <param name="symbol"></param>
-        bool AddSymbol(ISymbol symbol);
-        /// <summary>
-        /// get the symbol from the Repository
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        ISymbol GetSymbol(string id);
-        /// <summary>
-        /// remove the symbol from the Repository
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        bool RemoveSymbol(string id);
+        /// <param name="signature"></param>
+        /// <returns>True if successfull</returns>
+        bool Remove(ISignature signature);
     }
 }

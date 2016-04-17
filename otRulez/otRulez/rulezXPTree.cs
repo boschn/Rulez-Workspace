@@ -31,14 +31,14 @@ namespace OnTrack.Rulez.eXPressionTree
     /// </summary>
     public abstract class Node : INode
     {
-       
+
         protected Engine _engine; // internal engine
         protected readonly otXPTNodeType _nodeType;
         protected IXPTree _parent;
         protected List<Rulez.Message> _errorlist = new List<Message>();
         private CanonicalName _scopeName = new CanonicalName(CanonicalName.GlobalID);
         // event
-        public  event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler PropertyChanged;
         // constants
         public const string ConstPropertyParent = "Parent";
         public const string ConstPropertyEngine = "Engine";
@@ -47,7 +47,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// constructor
         /// </summary>
         /// <param name="engine"></partm>
-        protected Node(otXPTNodeType nodetype, Engine engine=null)
+        protected Node(otXPTNodeType nodetype, Engine engine = null)
         {
             _nodeType = nodetype;
             // default engine
@@ -102,7 +102,7 @@ namespace OnTrack.Rulez.eXPressionTree
             get { return _scopeName.ToString(); }
             set
             {
-                _scopeName = new CanonicalName (value);
+                _scopeName = new CanonicalName(value);
                 RaiseOnPropertyChanged(this, ConstPropertyScopeID);
             }
         }
@@ -114,11 +114,11 @@ namespace OnTrack.Rulez.eXPressionTree
         {
             var aList = new List<INode>();
             aList.Add(this);
-            return aList.GetEnumerator ();
+            return aList.GetEnumerator();
         }
         public IEnumerator<INode> GetEnumerator()
         {
-           var aList = new List<INode>();
+            var aList = new List<INode>();
             aList.Add(this);
             return aList.GetEnumerator();
         }
@@ -137,14 +137,14 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <returns></returns>
         public override string ToString()
         {
-            return "<" + NodeType.ToString()+">";
+            return "<" + NodeType.ToString() + ">";
         }
-     }
+    }
 
     /// <summary>
     /// declare a constant node in an AST
     /// </summary>
-    public class Literal: Node, IExpression
+    public class Literal : Node, IExpression
     {
         private readonly object _value;
         private readonly bool _hasValue = false;
@@ -153,9 +153,9 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// constructor
         /// </summary>
-        public Literal(object value = null, otDataType? typeId = null): base(nodetype: otXPTNodeType.Literal)
+        public Literal(object value = null, otDataType? typeId = null) : base(nodetype: otXPTNodeType.Literal)
         {
-            if (typeId != null && typeId.HasValue ) _datatype = Core.DataType.GetDataType(typeId.Value);
+            if (typeId != null && typeId.HasValue) _datatype = Core.DataType.GetDataType(typeId.Value);
             if (value != null) _value = value;
 
             if ((typeId == null) && (value != null))
@@ -181,15 +181,15 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// gets or sets the constant value
         /// </summary>
-        public object Value { get { return _value; } } 
+        public object Value { get { return _value; } }
         /// <summary>
         /// returns the datatype of the literal
         /// </summary>
-        public otDataType TypeId { get { return _datatype.TypeId; } }
+        public otDataType ReturnTypeId { get { return _datatype.TypeId; } }
         /// <summary>
         /// returns the datatype of the literal
         /// </summary>
-        public IDataType DataType { get { return _datatype; }  }
+        public IDataType ReturnType { get { return _datatype; } }
         /// <summary>
         /// gets or sets the type of the literal
         /// </summary>
@@ -198,7 +198,7 @@ namespace OnTrack.Rulez.eXPressionTree
             get
             {
                 if (this.HasValue) if (this.Value != null) return this.Value.GetType();
-                else return this.DataType.NativeType;
+                    else return this.ReturnType.NativeType;
                 else return null;
             }
         }
@@ -208,7 +208,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <returns></returns>
         public override string ToString()
         {
-            return String.Format("<{0}:{1}>", (this.DataType != null) ? this.DataType.ToString(): NodeType.ToString(),  this.Value);
+            return String.Format("<{0}:{1}>", (this.ReturnType != null) ? this.ReturnType.ToString() : NodeType.ToString(), this.Value);
         }
     }
 
@@ -223,7 +223,7 @@ namespace OnTrack.Rulez.eXPressionTree
         private readonly otXPTNodeType _nodeType;
         private IXPTree _parent;
         private readonly List<Message> _errorlist = new List<Message>();
-        private IScope _scope; 
+        private IScope _scope;
         // constants
         public const string ConstPropertyParent = "Parent";
         public const string ConstPropertyEngine = "Engine";
@@ -240,7 +240,7 @@ namespace OnTrack.Rulez.eXPressionTree
             // default engine
             if (engine == null) engine = OnTrack.Rules.Engine;
             _scope = new XPTScope(engine);
-            
+
             this.Nodes.CollectionChanged += XPTree_Nodes_CollectionChanged;
             this.PropertyChanged += XPTree_PropertyChanged;
 
@@ -250,7 +250,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        protected virtual void  XPTree_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        protected virtual void XPTree_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             // set the engine property also to the nodes
             if (e.PropertyName == ConstPropertyEngine)
@@ -280,8 +280,8 @@ namespace OnTrack.Rulez.eXPressionTree
         {
             get { return _nodes; }
             set {   // add all nodes
-                    foreach (var aNode in value) if (!_nodes.Contains(aNode)) _nodes.Add(aNode);
-                }
+                foreach (var aNode in value) if (!_nodes.Contains(aNode)) _nodes.Add(aNode);
+            }
         }
         /// <summary>
         /// returns true if node is a leaf
@@ -315,7 +315,7 @@ namespace OnTrack.Rulez.eXPressionTree
         {
             get
             {
-                return _scope.Id ;
+                return _scope.Id;
             }
             set
             {
@@ -338,7 +338,7 @@ namespace OnTrack.Rulez.eXPressionTree
                 RaiseOnPropertyChanged(this, ConstPropertyEngine);
             }
         }
-        
+
         /// <summary>
         /// Scope of the XPTree
         /// </summary>
@@ -380,11 +380,11 @@ namespace OnTrack.Rulez.eXPressionTree
             List<String> aList = new List<string>();
             Visitor<String> aVistor = new Visitor<String>();
             // define a simple handler via lambda
-            Visitor<String>.Eventhandler aVisitingHandling 
+            Visitor<String>.Eventhandler aVisitingHandling
                 = (o, e) => {
-                if (e.CurrentNode.GetType() == typeof(DataObjectEntrySymbol))
+                    if (e.CurrentNode.GetType() == typeof(DataObjectEntrySymbol))
                         e.Stack.Push((e.CurrentNode as DataObjectEntrySymbol).Name.ToString());
-               };
+                };
             aVistor.VisitingDataObjectSymbol += aVisitingHandling; // register
             aVistor.Visit(this); // run
             // get uniques
@@ -401,7 +401,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <param name="property"></param>
         protected void RaiseOnPropertyChanged(object sender, string property)
         {
-            if (PropertyChanged != null ) PropertyChanged(sender, new PropertyChangedEventArgs(property));
+            if (PropertyChanged != null) PropertyChanged(sender, new PropertyChangedEventArgs(property));
         }
         /// <summary>
         /// toString
@@ -413,7 +413,7 @@ namespace OnTrack.Rulez.eXPressionTree
             string aString = "{" + this.NodeType.ToString() + ":";
             foreach (INode aNode in Nodes)
             {
-                aString += (( first==false )? "," : String.Empty) + ((aNode != null) ? aNode.ToString() : "<NULL>");
+                aString += ((first == false) ? "," : String.Empty) + ((aNode != null) ? aNode.ToString() : "<NULL>");
                 if (first) first = false;
             }
             aString += "}";
@@ -431,6 +431,268 @@ namespace OnTrack.Rulez.eXPressionTree
             {
                 throw new NotImplementedException();
             }
+        }
+    }
+    /// <summary>
+    /// defines the operators
+    /// </summary>
+    public class Operator : XPTree, IComparable<IOperatorDefinition>, IOperatorDefinition
+    {
+
+        /// <summary>
+        /// get the _BuildInFunctions -> must be in Order of the TokenID
+        /// </summary>
+        private readonly static IOperatorDefinition[] _buildInOperators = {
+
+                                                  // logical Operations
+                                                  new Operator(Token.TRUE,arguments:0,priority:7,returnTypeId:otDataType .Bool ,   type:otOperatorType.Logical  ) ,
+                                                  new Operator(Token.AND,arguments:2,priority:5,  returnTypeId:otDataType .Bool , type: otOperatorType.Logical ) ,
+                                                  new Operator(Token.ANDALSO,arguments:2,priority:5 ,  returnTypeId:otDataType .Bool,  type:otOperatorType.Logical ) ,
+                                                  new Operator(Token.OR,arguments:2,priority:6, returnTypeId: otDataType .Bool ,  type:otOperatorType.Logical ) ,
+                                                  new Operator(Token.ORELSE,arguments:2,priority:6,  returnTypeId:otDataType .Bool ,  type:otOperatorType.Logical ) ,
+                                                  new Operator(Token.NOT,arguments:1,priority:7, returnTypeId:otDataType .Bool,  type:otOperatorType.Logical   ) ,
+                                                  new Operator(Token.EQ,arguments:2,priority:8,  returnTypeId:otDataType .Bool ,  type:otOperatorType.Compare ) ,
+                                                  new Operator(Token.NEQ,arguments:2,priority:8, returnTypeId: otDataType .Bool ,  type:otOperatorType.Compare ) ,
+                                                  new Operator(Token.GT,arguments:2,priority:8, returnTypeId: otDataType .Bool ,  type:otOperatorType.Compare ) ,
+                                                  new Operator(Token.GE,arguments:2,priority:8, returnTypeId: otDataType .Bool,  type:otOperatorType.Compare  ) ,
+                                                  new Operator(Token.LT,arguments:2,priority:8, returnTypeId: otDataType .Bool ,  type:otOperatorType.Compare ) ,
+                                                  new Operator(Token.LE,arguments:2,priority:8, returnTypeId: otDataType .Bool ,  type:otOperatorType.Compare ) ,
+
+                                                  // Arithmetic - null means return type is determined by the operands
+                                                  new Operator(Token.PLUS,arguments:2,priority:2, returnTypeId: null ,  type:otOperatorType.Arithmetic ) ,
+                                                  new Operator(Token.MINUS,arguments:2,priority:2, returnTypeId: null ,  type:otOperatorType.Arithmetic ) ,
+                                                  new Operator(Token.MULT,arguments:2,priority:1, returnTypeId: null ,  type:otOperatorType.Arithmetic ) ,
+                                                  new Operator(Token.DIV,arguments:2,priority:1, returnTypeId: null ,  type:otOperatorType.Arithmetic ) ,
+                                                  new Operator(Token.MOD,arguments:2,priority:1, returnTypeId: null ,  type:otOperatorType.Arithmetic ) ,
+                                                  new Operator(Token.CONCAT,arguments: 2, priority: 1, returnTypeId:  null , type: otOperatorType.Arithmetic ) ,
+
+        };
+
+        /// <summary>
+        /// inner variables
+        /// </summary>
+        private readonly Token _token;
+        private readonly ObjectName _name;
+        private readonly ParameterList _parameters = new ParameterList();
+        private readonly UInt16 _arguments;
+        private readonly UInt16 _priority;
+        private readonly IDataType _returntype;
+        private readonly otOperatorType _type;
+
+        /// <summary>
+        /// returns a List of BuildInFunctions
+        /// </summary>
+        /// <returns></returns>
+        public static List<IOperatorDefinition> BuildInOperators()
+        {
+            return _buildInOperators.ToList();
+        }
+        /// <summary>
+        /// return the Operator Definition
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        public static IOperatorDefinition GetOperator(Token token)
+        {
+            IOperatorDefinition o = _buildInOperators.Where(x => x.Token == token).FirstOrDefault();
+            if (o == null) throw new RulezException(RulezException.Types.OperatorNotDefined, arguments: new object[] { token.ToString() });
+            return o;
+        }
+        /// <summary>
+        /// return the Operator Definition
+        /// </summary>
+        /// <param name="token"></param>
+        /// <returns></returns>
+        public static IOperatorDefinition GetOperator(uint tokenid)
+        {
+            if (tokenid < _buildInOperators.Length) return _buildInOperators[tokenid];
+            throw new RulezException(RulezException.Types.OutOfArraySize, arguments: new object[] { tokenid, _buildInOperators.Length });
+        }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param id="types"></param>
+        /// <returns></returns>
+        public static string CreateSignature(Token token, UInt16 arguments, UInt16 priority, IDataType returnType)
+        {
+            return token.ToString() + "<" + arguments.ToString() + "," + priority.ToString() + "," + (returnType == null ? returnType.ToString() : "*") + ">";
+        }
+        /// <summary>
+        /// constructor
+        /// </summary>
+        /// <param id="Token"></param>
+        /// <param id="arguments"></param>
+        /// <param id="priority"></param>
+        public Operator(Token token, UInt16 arguments, UInt16 priority, otDataType? returnTypeId, otOperatorType type, Engine engine = null)
+             : base(nodetype: otXPTNodeType.OperatorDefinition, engine: engine)
+        {
+            _token = token;
+            _arguments = arguments;
+            _priority = priority;
+            if (returnTypeId.HasValue) _returntype = DataType.GetDataType(returnTypeId.Value);
+            _type = type;
+        }
+        public Operator(Token token, UInt16 arguments, UInt16 priority, IDataType returnType, otOperatorType type, Engine engine = null)
+            : base(nodetype: otXPTNodeType.OperatorDefinition, engine: engine)
+        {
+            _token = token;
+            _arguments = arguments;
+            _priority = priority;
+            _returntype = returnType;
+            _type = type;
+        }
+        public Operator(uint tokenID, UInt16 arguments, UInt16 priority, otDataType? returnTypeId, otOperatorType type, Engine engine = null)
+            : base(nodetype: otXPTNodeType.OperatorDefinition, engine: engine)
+        {
+            _token = new Token(tokenID);
+            _arguments = arguments;
+            _priority = priority;
+            if (returnTypeId.HasValue) _returntype = DataType.GetDataType(returnTypeId.Value); ;
+            _type = type;
+
+        }
+        public Operator(uint tokenID, UInt16 arguments, UInt16 priority, IDataType returnType, otOperatorType type, Engine engine = null)
+             : base(nodetype: otXPTNodeType.OperatorDefinition, engine: engine)
+        {
+            _token = new Token(tokenID);
+            _arguments = arguments;
+            _priority = priority;
+            _returntype = returnType;
+            _type = type;
+        }
+        #region "Properties"
+        /// <summary>
+        /// returns the object name
+        /// </summary>
+        public ObjectName Name { get { return _name; } }
+        /// <summary>
+        /// gets the Token
+        /// </summary>
+        public Token Token { get { return _token; } }
+
+        /// <summary>
+        /// gets the Number of Arguments
+        /// </summary>
+        public UInt16 Arguments { get { return _arguments; } }
+
+        /// <summary>
+        /// gets the Priority
+        /// </summary>
+        public UInt16 Priority { get { return _priority; } }
+
+        /// <summary>
+        /// gets or sets the return type id
+        /// </summary>
+        public otDataType? ReturnTypeId
+        {
+            get { return _returntype != null ? _returntype.TypeId : new otDataType?(); }
+        }
+        /// <summary>
+        /// gets the Returntype
+        /// </summary>
+        public IDataType ReturnType
+        {
+            get { return _returntype; }
+        }
+        /// <summary>
+        /// gets the type of operator
+        /// </summary>
+        public otOperatorType Type { get { return _type; } }
+        /// <summary>
+        /// return list of parameters of the operator
+        /// </summary>
+        public ParameterList Parameters { get { return _parameters; } }
+        /// <summary>
+        /// gets the signature
+        /// </summary>
+        public ISignature Signature
+        {
+            get
+            {
+                return new NamedListSignature(name: this.Name, datatype: this.ReturnType, parameters: this.Parameters);
+            }
+        }
+        #endregion
+
+        /// <summary>
+        /// override Hashcode
+        /// </summary>
+        /// <returns></returns>
+        public override int GetHashCode()
+        {
+            return (int)this.Signature.GetHashCode();
+        }
+        /// <summary>
+        /// Equals
+        /// </summary>
+        /// <param id="obj"></param>
+        /// <returns></returns>
+        public override bool Equals(Object obj)
+        {
+            if (obj == null || !(obj.GetType().GetInterfaces().Where(x => x.Equals(typeof(IOperatorDefinition))).FirstOrDefault() == null))
+                return false;
+            else
+                return this.CompareTo((IOperatorDefinition)obj) == 0;
+        }
+        /// <summary>
+        /// implementation of comparable
+        /// </summary>
+        /// <param id="obj"></param>
+        /// <returns></returns>
+        public int CompareTo(IOperatorDefinition obj)
+        {
+            return this.Signature.CompareTo(obj.Signature);
+        }
+        /// <summary>
+        /// == comparerer on datatypes
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static bool operator ==(Operator a, IOperatorDefinition b)
+        {
+            // If both are null, or both are same instance, return true.
+            if (System.Object.ReferenceEquals(a, b))
+            {
+                return true;
+            }
+
+            // If one is null, but not both, return false.
+            if (((object)a == null) || ((object)b == null))
+            {
+                return false;
+            }
+
+            // Return true if the fields match:
+            return a.Signature == b.Signature;
+        }
+        /// <summary>
+        /// != comparer
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static bool operator !=(Operator a, IOperatorDefinition b)
+        {
+            return !(a == b);
+        }
+        /// <summary>
+        /// To string
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return this.Name.ToString();
+        }
+
+        public bool Equals(ISigned x, ISigned y)
+        {
+            return x.Signature.Equals(y.Signature);
+        }
+
+        public int GetHashCode(ISigned obj)
+        {
+            return obj.Signature.GetHashCode();
         }
     }
 
@@ -451,11 +713,11 @@ namespace OnTrack.Rulez.eXPressionTree
         /// constructor
         /// </summary>
         /// <param id="handle"></param>
-        public Rule( string id = null,  Engine engine = null, otXPTNodeType? nodetype= null) 
-            : base(nodetype: (nodetype.HasValue ) ? nodetype.Value: otXPTNodeType.Rule, engine: engine)
+        public Rule(string id = null, Engine engine = null, otXPTNodeType? nodetype = null)
+            : base(nodetype: (nodetype.HasValue) ? nodetype.Value : otXPTNodeType.Rule, engine: engine)
         {
             if (id == null) { _id = Guid.NewGuid().ToString(); }
-            else { _id = id; }
+            else { _id = id.ToUpper(); }
             _state = otRuleState.Created;
             _engine = engine;
             _handle = Guid.NewGuid().ToString();
@@ -463,7 +725,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// sets or gets the handle of the rule
         /// </summary>
-        public string Id { get { return _id; }  }
+        public string Id { get { return _id; } }
         /// <summary>
         /// returns the theCode handle
         /// </summary>
@@ -473,37 +735,75 @@ namespace OnTrack.Rulez.eXPressionTree
         /// </summary>
         public otRuleState RuleState { get { return _state; } set { _state = value; RaiseOnPropertyChanged(this, ConstPropertyState); } }
         /// <summary>
+        /// gets the Signature
+        /// </summary>
+        public ISignature Signature
+        {
+            get
+            {
+                return new TypeSignature(Id);
+            }
+        }
+
+        /// <summary>
         /// set the state of the rule
         /// </summary>
         /// <param name="newState"></param>
-        protected void SetState(otRuleState newState) { _state = newState; RaiseOnPropertyChanged(this,ConstPropertyState); }
+        protected void SetState(otRuleState newState) { _state = newState; RaiseOnPropertyChanged(this, ConstPropertyState); }
+        /// <summary>
+        /// compares a signed object
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+        public bool Equals(ISigned x, ISigned y)
+        {
+            return x.Signature.Equals(y.Signature);
+        }
+        /// <summary>
+        /// returns the hashcode of a signed object
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public int GetHashCode(ISigned obj)
+        {
+            return obj.Signature.GetHashCode();
+        }
     }
 
     /// <summary>
     /// defines a data object in a IeXPressionTree object
     /// </summary>
-    public class Variable : Node, ISymbol
+    public class Variable : Node, ISymbol, ISigned
     {
         private readonly string _id;
         private readonly IDataType _datatype;
-        private readonly IXPTree _scope;
+        private readonly IScope _scope;
         /// <summary>
         /// constructor
         /// </summary>
         /// <param name="handle"></param>
         /// <param name="dataTypeId"></param>
         /// <param name="scope"></param>
-        public Variable(string id, otDataType dataTypeId, IXPTree scope): base(nodetype: otXPTNodeType.Variable, engine: null)
+        public Variable(string id, otDataType dataTypeId, IScope scope)
+            : base(nodetype: otXPTNodeType.Variable, engine: null)
         {
             _id = id;
-            _datatype = Core.DataType.GetDataType (dataTypeId);
+            _datatype = Core.DataType.GetDataType(dataTypeId);
             _scope = scope;
         }
-        public Variable(string id, IDataType datatype, IXPTree scope)
+        public Variable(string id, IDataType datatype, IScope scope)
             : base(nodetype: otXPTNodeType.Variable, engine: null)
         {
             _id = id;
             _datatype = datatype;
+            _scope = scope;
+        }
+        public Variable(Parameter parameter, IScope scope)
+            : base(nodetype: otXPTNodeType.Variable, engine: null)
+        {
+            _id = parameter.Id;
+            _datatype = parameter.DataType;
             _scope = scope;
         }
         /// <summary>
@@ -516,28 +816,28 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// gets or sets the Type of the variable
         /// </summary>
-        public otDataType TypeId
+        public otDataType ReturnTypeId
         {
-            get{ return _datatype.TypeId; }
+            get { return _datatype.TypeId; }
         }
         /// <summary>
         /// sets or gets the datatype
         /// </summary>
-        public IDataType DataType
+        public IDataType ReturnType
         {
             get { return _datatype; }
         }
         /// <summary>
         /// sets or gets the Scope
         /// </summary>
-        public IXPTree Scope
+        public IScope Scope
         {
             get { return _scope; }
         }
         /// <summary>
         /// returns true if node is a leaf
         /// </summary>
-        public override bool HasSubNodes { get { return false; }}
+        public override bool HasSubNodes { get { return false; } }
         /// <summary>
         /// gets true if the symbol is valid in the engine
         /// </summary>
@@ -547,7 +847,7 @@ namespace OnTrack.Rulez.eXPressionTree
             {
                 if (Scope != null)
                 {
-                    if (Scope is StatementBlock) return ((StatementBlock)Scope).HasVariable (this.Id);
+                    if (Scope is StatementBlock) return ((StatementBlock)Scope).HasVariable(this.Id);
                     if (Scope is SelectionRule) return ((SelectionRule)Scope).HasParameter(this.Id);
                 }
                 return null;
@@ -555,12 +855,40 @@ namespace OnTrack.Rulez.eXPressionTree
             }
         }
         /// <summary>
+        /// gets the signature of this variable
+        /// </summary>
+        public ISignature Signature
+        {
+            get
+            {
+                return new TypedNameSignature(new ObjectName(moduleid: this.ScopeId, objectid: Id), this.ReturnType);
+            }
+        }
+        /// <summary>
+        /// gets a Parameter out of this Variable
+        /// </summary>
+        /// <returns></returns>
+        public virtual Parameter ToParameter()
+        {
+            return new Parameter(id: this.Id, datatype: this.ReturnType);
+        }
+        /// <summary>
         /// to string
         /// </summary>
         /// <returns></returns>
         public override string ToString()
         {
-            return String.Format(format: "<{0}:{1}>", arg0: NodeType.ToString(), arg1: this.Id);
+            return this.Signature.ToString();
+        }
+
+        public bool Equals(ISigned x, ISigned y)
+        {
+            return x.Signature.Equals(y.Signature);
+        }
+
+        public int GetHashCode(ISigned obj)
+        {
+            return obj.GetHashCode();
         }
     }
     /// <summary>
@@ -568,7 +896,7 @@ namespace OnTrack.Rulez.eXPressionTree
     /// </summary>
     public class DataObjectSymbol : Node, ISymbol
     {
-        private IXPTree _scope;
+        private IScope _scope;
         private IObjectDefinition _objectdefinition;
         private readonly ObjectName _name;
         private bool? _isChecked = false;
@@ -590,7 +918,7 @@ namespace OnTrack.Rulez.eXPressionTree
             _scope = null;
         }
         public DataObjectSymbol(ObjectName name, Engine engine = null)
-            : base(nodetype: otXPTNodeType.DataObjectSymbol,  engine: engine)
+            : base(nodetype: otXPTNodeType.DataObjectSymbol, engine: engine)
         {
             _engine = engine; // first
             _name = name;
@@ -622,35 +950,35 @@ namespace OnTrack.Rulez.eXPressionTree
             get
             {
                 if (_objectdefinition != null) return _objectdefinition;
-                if (_engine != null) 
-                    { CheckValidity(); return _objectdefinition;}
+                if (_engine != null)
+                { CheckValidity(); return _objectdefinition; }
                 return null;
             }
         }
         /// <summary>
         /// returns the scope
         /// </summary>
-        public IXPTree Scope
+        public IScope Scope
         {
             get { return _scope; }
             set {
-                    _scope = value;
-                    RaiseOnPropertyChanged(this, ConstPropertyScope);
-                }
+                _scope = value;
+                RaiseOnPropertyChanged(this, ConstPropertyScope);
+            }
         }
         /// <summary>
         /// gets the typeid
         /// </summary>
-        public Core.otDataType TypeId
+        public Core.otDataType ReturnTypeId
         {
             get { return otDataType.DataObject; }
         }
         /// <summary>
         /// gets the Datatype
         /// </summary>
-        public Core.IDataType DataType
+        public Core.IDataType ReturnType
         {
-            get{ return DataObjectType.GetDataType(id: Name.FullId, engine:this.Engine);  }
+            get { return DataObjectType.GetDataType(id: Name.FullId, engine: this.Engine); }
         }
         /// <summary>
         /// returns true if node is a leaf
@@ -661,12 +989,21 @@ namespace OnTrack.Rulez.eXPressionTree
         /// </summary>
         public bool? IsValid
         {
-            get 
+            get
             {
                 if (_isChecked.HasValue) return _isChecked.Value;
                 return null;
             }
         }
+
+        public ISignature Signature
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+        }
+
         /// <summary>
         /// check if the ID exists - returns true or false and if !HasValue then not checkable
         /// </summary>
@@ -676,26 +1013,17 @@ namespace OnTrack.Rulez.eXPressionTree
             if (_isChecked.HasValue) return _isChecked;
             if (this.Engine == null) return _isChecked.HasValue;
 
-            /// get the data object definition
-            if (Name.IsCanonical())
-            {
-                if (Engine.Globals.HasDataObjectDefinition(Name))
-                {
-                    _objectdefinition = Engine.Globals.GetDataObjectDefinition(Name);
-                    if (_objectdefinition == null)
-                        throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[]{ Name.Id, Name.ModuleId});
-                }
-                else
-                { throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[] { Name.ModuleId, "data object repository" }); }
 
+            if (Engine.Has<IObjectDefinition>(Name))
+            {
+                _objectdefinition = Engine.Get<IObjectDefinition>(Name).FirstOrDefault();
+                if (_objectdefinition == null)
+                    throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[] { Name.Id, Name.ModuleId });
             }
             else
-            {
-                if (Engine.Globals.HasDataObjectDefinition(Name))
-                    _objectdefinition = Engine.Globals.GetDataObjectDefinition(Name);
-                else
-                    throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[] { Name.FullId, "data object repository" });
-            }
+            { throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[] { Name.ModuleId, "data object repository" }); }
+
+
             _isChecked = true;
             return _isChecked;
         }
@@ -707,13 +1035,33 @@ namespace OnTrack.Rulez.eXPressionTree
         {
             return String.Format(format: "<{0}:{1}>", arg0: NodeType.ToString(), arg1: this.Name.FullId.ToUpper());
         }
+        /// <summary>
+        /// return a parameter
+        /// </summary>
+        /// <returns></returns>
+        public Parameter ToParameter()
+        {
+            if (this.Engine == null)
+                return new Parameter(id: this.Name.FullId, datatype: new DataObjectType(this.Name.FullId));
+            else return new Parameter(id: this.Name.FullId, datatype: DataObjectType.GetDataType(id: this.Name.FullId, engine: Rules.Engine));
+        }
+
+        public bool Equals(ISigned x, ISigned y)
+        {
+            return x.Signature.Equals(y.Signature);
+        }
+
+        public int GetHashCode(ISigned obj)
+        {
+            return obj.Signature.GetHashCode();
+        }
     }
     /// <summary>
     /// defines a local variable in a IeXPressionTree object
     /// </summary>
-    public class DataObjectEntrySymbol :  Node, ISymbol 
+    public class DataObjectEntrySymbol : Node, ISymbol
     {
-        private IXPTree _scope;
+        private IScope _scope;
         private IObjectEntryDefinition _entrydefinition;
         private readonly EntryName _name = null;
         private bool? _isChecked = false;
@@ -728,14 +1076,14 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <param name="handle"></param>
         /// <param name="Type"></param>
         /// <param name="scope"></param>
-        public DataObjectEntrySymbol(string id, Engine engine = null): base(nodetype: otXPTNodeType.DataObjectSymbol,engine: engine)
+        public DataObjectEntrySymbol(string id, Engine engine = null) : base(nodetype: otXPTNodeType.DataObjectSymbol, engine: engine)
         {
-           
+
             _scope = null;
             _engine = engine;
-            _name = new EntryName ( id);
+            _name = new EntryName(id);
         }
-        public DataObjectEntrySymbol( EntryName entryname, Engine engine = null): base(nodetype: otXPTNodeType.DataObjectSymbol)
+        public DataObjectEntrySymbol(EntryName entryname, Engine engine = null) : base(nodetype: otXPTNodeType.DataObjectSymbol)
         {
             // default engine
             _engine = engine;
@@ -748,7 +1096,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// </summary>
         public EntryName Name
         {
-            get { return _name ; }
+            get { return _name; }
         }
         /// <summary>
         /// returns the Id of the Symbol
@@ -764,11 +1112,11 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// returns the IObjectEntryDefinition
         /// </summary>
-        public IObjectEntryDefinition ObjectEntryDefinition { get { CheckValidity();  return _entrydefinition; } }
+        public IObjectEntryDefinition ObjectEntryDefinition { get { CheckValidity(); return _entrydefinition; } }
         /// <summary>
         /// returns the ObjectID of the entry
         /// </summary>
-        public String ObjectID { get { CheckValidity();  return _entrydefinition.ObjectId; } }
+        public String ObjectID { get { CheckValidity(); return _entrydefinition.ObjectId; } }
         /// <summary>
         /// returns the ObjectID of the entry
         /// </summary>
@@ -776,15 +1124,15 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// gets or sets the Type of the variable
         /// </summary>
-        public otDataType TypeId { get { CheckValidity();  return _entrydefinition.TypeId; } set { throw new NotImplementedException(); } }
+        public otDataType ReturnTypeId { get { CheckValidity(); return _entrydefinition.TypeId; } set { throw new NotImplementedException(); } }
         /// <summary>
         /// gets the Datatype
         /// </summary>
-        public Core.IDataType DataType { get { CheckValidity(); return _entrydefinition.DataType; } set { throw new InvalidOperationException(); } }
+        public Core.IDataType ReturnType { get { CheckValidity(); return _entrydefinition.DataType; } set { throw new InvalidOperationException(); } }
         /// <summary>
         /// returns the scope
         /// </summary>
-        public IXPTree Scope { get { return _scope; } set { _scope = value; RaiseOnPropertyChanged(this, ConstPropertyScope); } }
+        public IScope Scope { get { return _scope; } set { _scope = value; RaiseOnPropertyChanged(this, ConstPropertyScope); } }
         /// <summary>
         /// returns true if node is a leaf
         /// </summary>
@@ -801,6 +1149,15 @@ namespace OnTrack.Rulez.eXPressionTree
 
             }
         }
+
+        public ISignature Signature
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+        }
+
         /// <summary>
         /// check if the ID exists - returns true or false and if !HasValue then not checkable
         /// </summary>
@@ -810,12 +1167,10 @@ namespace OnTrack.Rulez.eXPressionTree
             if (_isChecked.HasValue) return _isChecked;
             if (this.Engine == null) return _isChecked.HasValue;
 
-            /// get the data object definition
-            if (Name.IsCanonical())
-            {
-                if (Engine.Globals.HasDataObjectDefinition(Name.ObjectName) )
+           
+                if (Engine.Has<IObjectDefinition>(Name.ObjectName))
                 {
-                    Core.IObjectDefinition aDefinition = Engine.Globals.GetDataObjectDefinition(Name.ObjectName);
+                    Core.IObjectDefinition aDefinition = Engine.Get<IObjectDefinition>(Name.ObjectName).FirstOrDefault();
                     _entrydefinition = aDefinition.GetiEntryDefinition(Name.Id);
                     if (_entrydefinition == null)
                     {
@@ -829,11 +1184,7 @@ namespace OnTrack.Rulez.eXPressionTree
                 else
                 { throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[] { Name.FullId, "data object repository" }); }
 
-            }
-            else
-            {
-                throw new RulezException(RulezException.Types.IdNotFound, arguments: new object[] { Name.ObjectId, "data object repository (malformed object entry name)" });
-            }
+           
             _isChecked = true;
             return _isChecked;
         }
@@ -843,7 +1194,25 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <returns></returns>
         public override string ToString()
         {
-            return String.Format (format: "<{0}:{1}>", arg0:NodeType.ToString(), arg1:this.Name );
+            return String.Format(format: "<{0}:{1}>", arg0: NodeType.ToString(), arg1: this.Name);
+        }
+        /// <summary>
+        /// return a parameter
+        /// </summary>
+        /// <returns></returns>
+        public Parameter ToParameter()
+        {
+            return new Parameter(id: this.Name.FullId, datatype: this.ReturnType);
+        }
+
+        public bool Equals(ISigned x, ISigned y)
+        {
+            return x.Signature.Equals(y.Signature);
+        }
+
+        public int GetHashCode(ISigned obj)
+        {
+            return obj.Signature.GetHashCode();
         }
     }
     /// <summary>
@@ -855,7 +1224,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// constructor
         /// </summary>
         public IfThenElse(Engine engine = null)
-            : base(nodetype: otXPTNodeType.IfThenElse,engine: engine)
+            : base(nodetype: otXPTNodeType.IfThenElse, engine: engine)
         {
         }
         /// <summary>
@@ -863,12 +1232,12 @@ namespace OnTrack.Rulez.eXPressionTree
         /// </summary>
         /// <param name="token"></param>
         /// <param name="arguments"></param>
-        public IfThenElse(LogicalExpression expression, IStatement @do, IStatement @else=null, Engine engine = null)
-            : base(nodetype: otXPTNodeType.IfThenElse, engine:engine)
+        public IfThenElse(LogicalExpression expression, IStatement @do, IStatement @else = null, Engine engine = null)
+            : base(nodetype: otXPTNodeType.IfThenElse, engine: engine)
         {
             // TODO: check the argumetns
             if (@else != null)
-                this.Nodes = new ObservableCollection<INode>(new INode[]{expression, @do, @else});
+                this.Nodes = new ObservableCollection<INode>(new INode[] { expression, @do, @else });
             else this.Nodes = new ObservableCollection<INode>(new INode[] { expression, @do });
         }
 
@@ -876,11 +1245,11 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// gets or sets the logical compare expression
         /// </summary>
-        public LogicalExpression @LogicalExpression { get { return (LogicalExpression) this.Nodes[0]; } set { this.Nodes[0] = value; } }
+        public LogicalExpression @LogicalExpression { get { return (LogicalExpression)this.Nodes[0]; } set { this.Nodes[0] = value; } }
         /// <summary>
         /// gets or sets the do 
         /// </summary>
-        public IStatement @Do { get { return (IStatement) this.Nodes[1]; } set { this.Nodes[1] = value; } }
+        public IStatement @Do { get { return (IStatement)this.Nodes[1]; } set { this.Nodes[1] = value; } }
         /// <summary>
         /// gets or sets the do 
         /// </summary>
@@ -913,7 +1282,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// constructor
         /// </summary>
         public @Return(Engine engine = null)
-            : base(nodetype: otXPTNodeType.Return, engine:engine)
+            : base(nodetype: otXPTNodeType.Return, engine: engine)
         {
         }
         /// <summary>
@@ -924,7 +1293,7 @@ namespace OnTrack.Rulez.eXPressionTree
         public @Return(IExpression @return, Engine engine = null)
             : base(nodetype: otXPTNodeType.Return, engine: engine)
         {
-            Nodes.Add (@return);
+            Nodes.Add(@return);
         }
         /// <summary>
         /// gets or sets the return Expression
@@ -940,8 +1309,8 @@ namespace OnTrack.Rulez.eXPressionTree
             base.XPTree_Nodes_CollectionChanged(sender, e);
             // check the nodes which are added
             if (!Nodes[0].GetType().GetInterfaces().Contains(typeof(IExpression)))
-                throw new RulezException(RulezException.Types.InvalidNodeType, arguments: new object[] { Nodes[0].NodeType.ToString(),"Expression" });
-            
+                throw new RulezException(RulezException.Types.InvalidNodeType, arguments: new object[] { Nodes[0].NodeType.ToString(), "Expression" });
+
         }
         /// <summary>
         /// toString
@@ -949,10 +1318,10 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <returns></returns>
         public override string ToString()
         {
-            string aString = "{" + this.NodeType.ToString()+ " ";
+            string aString = "{" + this.NodeType.ToString() + " ";
 
-            if (Nodes.Count() > 0 && Nodes.First().GetType().GetInterfaces ().Contains(typeof(IExpression))) 
-                aString += ((IExpression)Nodes.First()).DataType.ToString() + " ";
+            if (Nodes.Count() > 0 && Nodes.First().GetType().GetInterfaces().Contains(typeof(IExpression)))
+                aString += ((IExpression)Nodes.First()).ReturnType.ToString() + " ";
 
             foreach (INode aNode in Nodes)
             {
@@ -989,7 +1358,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// sets the ID of the block
         /// </summary>
-        public string Id { get {  return _id; }  }
+        public string Id { get { return _id; } }
         #endregion
         /// <summary>
         /// Add a node to the block
@@ -1006,7 +1375,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="e"></param>
-        protected override  void XPTree_Nodes_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        protected override void XPTree_Nodes_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
         {
             base.XPTree_Nodes_CollectionChanged(sender, e);
             // check the nodes which are added
@@ -1042,10 +1411,10 @@ namespace OnTrack.Rulez.eXPressionTree
             {
                 throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { id, this.Id });
             }
-            Variable aVar = new Variable(id: id, dataTypeId: typeId, scope: this);
+            var aVar = new Variable(id: id, dataTypeId: typeId, scope: this.Scope);
             _variables.Add(aVar.Id, aVar);
             // add the symbol
-            if (this.Scope != null) this.Scope.AddSymbol(aVar);
+            if (this.Scope != null) this.Scope.Add(aVar);
             return aVar;
         }
         public ISymbol AddNewVariable(string id, IDataType datatype)
@@ -1054,17 +1423,17 @@ namespace OnTrack.Rulez.eXPressionTree
             {
                 throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { id, this.Id });
             }
-            Variable aVar = new Variable(id: id, datatype: datatype, scope: this);
+            Variable aVar = new Variable(id: id, datatype: datatype, scope: this.Scope);
             _variables.Add(aVar.Id, aVar);
             // add the symbol
-            if (this.Scope != null) this.Scope.AddSymbol(aVar);
+            if (this.Scope != null) this.Scope.Add(aVar);
             return aVar;
         }
     }
     /// <summary>
     /// selection statement block
     /// </summary>
-    public class SelectionStatementBlock : StatementBlock, IStatement, IExpression 
+    public class SelectionStatementBlock : StatementBlock, IStatement, IExpression
     {
         /// <summary>
         /// result list
@@ -1076,8 +1445,8 @@ namespace OnTrack.Rulez.eXPressionTree
         /// </summary>
         /// <param name="token"></param>
         /// <param name="arguments"></param>
-        public SelectionStatementBlock(INode[] arguments=null, string id= null, Engine engine = null)
-            : base(nodetype: otXPTNodeType.SelectionStatementBlock, id:id,engine: engine)
+        public SelectionStatementBlock(INode[] arguments = null, string id = null, Engine engine = null)
+            : base(nodetype: otXPTNodeType.SelectionStatementBlock, id: id, engine: engine)
         {
             // arguments will be checked in event
             if (arguments != null) this.Nodes = new ObservableCollection<INode>(arguments.ToList());
@@ -1087,20 +1456,20 @@ namespace OnTrack.Rulez.eXPressionTree
         /// gets or sets the type id of the variable
         /// </summary>
         /// <value></value>
-        public otDataType TypeId
+        public otDataType ReturnTypeId
         {
             get
             {
                 if (_result != null) return _result.TypeId;
                 return otDataType.Null;
             }
-          }
+        }
 
         /// <summary>
         /// gets or sets the type
         /// </summary>
         /// <value></value>
-        public IDataType DataType
+        public IDataType ReturnType
         {
             get
             {
@@ -1116,10 +1485,10 @@ namespace OnTrack.Rulez.eXPressionTree
         {
             get
             {
-               
-                    return _result;
+
+                return _result;
             }
-            
+
         }
 
         #endregion
@@ -1140,9 +1509,9 @@ namespace OnTrack.Rulez.eXPressionTree
                 {
                     // check if return is added -> check if the resultlist is the same is in the Property
                     if (aNode != null && aNode is @Return)
-                       // return expression must be a selectionExpression (or to-do a variable)
-                       if ((((@Return)aNode).Expression) is SelectionExpression)_result = ((SelectionExpression)((@Return)aNode).Expression).Results;
-                       else throw new RulezException(RulezException.Types.InvalidNodeType, arguments: new object[] { aNode.NodeType.ToString(), "SelectionExpression" });
+                        // return expression must be a selectionExpression (or to-do a variable)
+                        if ((((@Return)aNode).Expression) is SelectionExpression) _result = ((SelectionExpression)((@Return)aNode).Expression).Results;
+                        else throw new RulezException(RulezException.Types.InvalidNodeType, arguments: new object[] { aNode.NodeType.ToString(), "SelectionExpression" });
                     else
                     // only statements are allowed
                     if (aNode != null && !aNode.GetType().GetInterfaces().Contains(typeof(IStatement)))
@@ -1167,7 +1536,7 @@ namespace OnTrack.Rulez.eXPressionTree
         {
             bool comma = false;
             string aString = "{(" + NodeType.ToString() + ") ";
-            if (this.Result != null) 
+            if (this.Result != null)
                 aString += this.Result.DataType.ToString();
             aString += "[";
             foreach (ISymbol aSymbol in Variables)
@@ -1191,7 +1560,7 @@ namespace OnTrack.Rulez.eXPressionTree
     /// <summary>
     /// module definition node
     /// </summary>
-    public class Module: XPTree
+    public class Module : XPTree, IModule
     {
         private readonly CanonicalName _name;
         private readonly ulong _version;
@@ -1208,51 +1577,175 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// gets the ID of the module
         /// </summary>
-        public string Id {  get { return _name.FullId; } }
+        public string Id { get { return _name.FullId; } }
         /// <summary>
         /// gets the version of the module
         /// </summary>
-        public ulong Version {  get { return _version; } }
+        public ulong Version { get { return _version; } }
         /// <summary>
         /// gets the canonical name of the module
         /// </summary>
-        public CanonicalName Name {  get { return _name; } }
+        public CanonicalName Name { get { return _name; } }
+        /// <summary>
+        /// return signature
+        /// </summary>
+        public ISignature Signature
+        {
+            get
+            {
+                return new TypeSignature(id: this.Id);
+            }
+        }
+
+        public bool Equals(ISigned x, ISigned y)
+        {
+            return x.Signature.Equals(y.Signature);
+        }
+
+        public int GetHashCode(ISigned obj)
+        {
+            return obj.Signature.GetHashCode();
+        }
         #endregion
     }
+    /// <summary>
+    /// defines the function
+    /// </summary>
+    public class Function : XPTree, IComparable<Function>, ISigned, IFunctionDefinition
+    {
+        /// <summary>
+        /// inner variables
+        /// </summary>
+        private readonly ObjectName _name;
+        private readonly IDataType _returntype;
+        private readonly ParameterList _parameters = new ParameterList();
+
+        /// <summary>
+        /// constructor
+        /// </summary>
+        /// <param name="Token"></param>
+        /// <param name="arguments"></param>
+        /// <param name="priority"></param>
+        public Function(ObjectName name, IDataType returnType, ParameterList parameters = null, Engine engine = null)
+            : base(nodetype: otXPTNodeType.FunctionDefinition, engine: engine)
+        {
+            _name = name;
+            if (parameters != null) _parameters.AddRange(parameters);
+            _returntype = returnType;
+        }
+
+        #region "Properties"
+        /// <summary>
+        /// gets the id
+        /// </summary>
+        public string Id {  get { return _name.FullId;  } }
+        /// <summary>
+        /// gets the object name
+        /// </summary>
+        public ObjectName Name {  get { return _name; } }
+        /// <summary>
+        /// gets the parameters
+        /// </summary>
+        public ParameterList Parameters { get { return _parameters; } }
+        /// <summary>
+        /// gets or sets the return type of the operation
+        /// </summary>
+        public IDataType ReturnType { get { return _returntype; } }
+        /// <summary>
+        /// return Signature
+        /// </summary>
+        public ISignature Signature
+        {
+            get
+            {
+                return new NamedListSignature(name: this.Name, datatype: this.ReturnType, parameters: this.Parameters);
+            }
+        }
+        #endregion
+        /// <summary>
+        /// implementation of comparable
+        /// </summary>
+        /// <param id="obj"></param>
+        /// <returns></returns>
+        public int CompareTo(Function obj)
+        {
+            return this.Signature.CompareTo(obj.Signature);
+        }
+        /// <summary>
+        /// override Hashcode
+        /// </summary>
+        /// <returns></returns>
+        public override int GetHashCode()
+        {
+            return (int)this.Signature.GetHashCode();
+        }
+        /// <summary>
+        /// To string
+        /// </summary>
+        /// <returns></returns>
+        public override string ToString()
+        {
+            return this.Signature.ToString();
+        }
+        /// <summary>
+        /// Equals
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
+        public override bool Equals(Object obj)
+        {
+            if (obj == null || !(obj is Function))
+                return false;
+            else
+                return this.CompareTo((Function)obj) == 0;
+        }
+
+        public bool Equals(ISigned x, ISigned y)
+        {
+            return x.Signature.Equals(y.Signature);
+        }
+
+        public int GetHashCode(ISigned obj)
+        {
+            return obj.GetHashCode();
+        }
+    }
+
     /// <summary>
     /// function call node
     /// </summary>
     public class FunctionCall: XPTree , IStatement, IExpression
     {
-        protected readonly Token _function; // function Token
+        private readonly IFunctionDefinition _function;
         /// <summary>
         /// constructor
         /// </summary>
-        /// <param name="token"></param>
+        /// <param name="function"></param>
         /// <param name="arguments"></param>
-        public FunctionCall(Token token, INode [] arguments, Engine engine = null) : base(nodetype: otXPTNodeType.FunctionCall, engine: engine)
+        public FunctionCall(Function function, INode [] arguments, Engine engine = null) 
+            : base(nodetype: otXPTNodeType.FunctionCall, engine: engine)
         {
             // TODO: check the argumetns
-            _function = token;
-            this.Nodes = new ObservableCollection<INode> (arguments.ToList());
+            _function = function;
+           
         }
         #region Properties
         /// <summary>
         /// gets the Operation
         /// </summary>
-        public Token TokenID { get { return _function; } }
+        public ObjectName Name { get { return _function.Name; } }
         /// <summary>
         /// gets the Operator definition
         /// </summary>
-        public @Function Function { get { return OnTrack.Rules.Engine.GetFunctions(_function).FirstOrDefault(); } }
+        public IFunctionDefinition Function { get { return _function; } }
         /// <summary>
         /// gets the Datatype of this Expression
         /// </summary>
-        public IDataType DataType { get { return Scope.GetFunction(this.TokenID).ReturnType; }  }
+        public IDataType ReturnType { get { return _function.ReturnType; }  }
         /// <summary>
         /// gets the typeId of this Expression
         /// </summary>
-        public otDataType TypeId { get { return Scope.GetFunction(this.TokenID).ReturnType.TypeId; ; }  }
+        public otDataType ReturnTypeId { get { return _function.ReturnType.TypeId; ; }  }
         #endregion
         /// <summary>
         /// handler for changing the nodes list
@@ -1327,7 +1820,7 @@ namespace OnTrack.Rulez.eXPressionTree
         {
             if (token == null)
                 throw new RulezException(RulezException.Types.OperatorNotDefined, arguments: new object[] { "null" });
-            if (OnTrack.Rules.Engine.GetOperators(token) == null)
+            if (eXPressionTree.Operator.GetOperator(token) == null)
                 throw new RulezException(RulezException.Types.OperatorNotDefined, arguments: new object[] { token.ToString() });
             _token = token;
             if (this.Operator.Arguments != 0)
@@ -1338,7 +1831,7 @@ namespace OnTrack.Rulez.eXPressionTree
         {
             if (token == null)
                 throw new RulezException(RulezException.Types.OperatorNotDefined, arguments: new object[] { "null" });
-            if (OnTrack.Rules.Engine.GetOperators(token) == null)
+            if (eXPressionTree.Operator.GetOperator(token) == null)
                 throw new RulezException(RulezException.Types.OperatorNotDefined, arguments: new object[] { token.ToString() });
             _token = token;
             if (this.Operator.Arguments != 1)
@@ -1347,7 +1840,7 @@ namespace OnTrack.Rulez.eXPressionTree
                 this.Nodes.Add(operand);
             else throw new RulezException(RulezException.Types.OperandNull, arguments: new object[] { token.ToString(), "" });
         }
-        public OperationExpression(Operator op, INode operand, Engine engine = null, otXPTNodeType? nodetype = null)
+        public OperationExpression(IOperatorDefinition op, INode operand, Engine engine = null, otXPTNodeType? nodetype = null)
             : base(nodetype: (!nodetype.HasValue) ? otXPTNodeType.OperationExpression : nodetype.Value, engine: engine)
         {
 
@@ -1374,7 +1867,7 @@ namespace OnTrack.Rulez.eXPressionTree
             // default engine
             if (engine == null) engine = OnTrack.Rules.Engine;
 
-            if (OnTrack.Rules.Engine.GetOperators(token) == null)
+            if (eXPressionTree.Operator.GetOperator(token) == null)
                 throw new RulezException(RulezException.Types.OperatorNotDefined, arguments: new object[] { token.ToString() });
 
             _token = token;
@@ -1389,7 +1882,7 @@ namespace OnTrack.Rulez.eXPressionTree
             else throw new RulezException(RulezException.Types.OperandNull, arguments: new object[] { token.ToString(), "right" });
 
         }
-        public OperationExpression(Operator op, INode leftoperand, INode rightoperand, Engine engine = null, otXPTNodeType? nodetype = null)
+        public OperationExpression(IOperatorDefinition op, INode leftoperand, INode rightoperand, Engine engine = null, otXPTNodeType? nodetype = null)
             : base(nodetype: (!nodetype.HasValue) ? otXPTNodeType.OperationExpression : nodetype.Value, engine: engine)
         {
             // default engine
@@ -1431,7 +1924,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// gets the Operator definition
         /// </summary>
-        public Operator Operator { get { return OnTrack.Rules.Engine.GetOperators(_token).FirstOrDefault(); } }
+        public IOperatorDefinition Operator { get { return eXPressionTree.Operator.GetOperator(_token); } }
         /// <summary>
         /// get or sets the Priority of the Expression's Operator
         /// </summary>
@@ -1497,11 +1990,11 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// gets the Datatype of this Expression
         /// </summary>
-        public IDataType DataType { get { throw new NotImplementedException(); } set { throw new InvalidOperationException(); } }
+        public IDataType ReturnType { get { throw new NotImplementedException(); } set { throw new InvalidOperationException(); } }
         /// <summary>
         /// gets the typeId of this Expression
         /// </summary>
-        public otDataType TypeId { get { throw new NotImplementedException(); } set { throw new InvalidOperationException(); } }
+        public otDataType ReturnTypeId { get { throw new NotImplementedException(); } set { throw new InvalidOperationException(); } }
         /// <summary>
         /// returns true if node is a leaf
         /// </summary>
@@ -1562,7 +2055,7 @@ namespace OnTrack.Rulez.eXPressionTree
             if (this.Operator.Type != otOperatorType.Logical && this.Operator.Type != otOperatorType.Compare)
                 throw new RulezException(RulezException.Types.OperatorTypeNotExpected , arguments: new object[] { op.ToString(), "logical" });
         }
-        public LogicalExpression(Operator op, IExpression operand, Engine engine = null, otXPTNodeType? nodetype = null)
+        public LogicalExpression(IOperatorDefinition op, IExpression operand, Engine engine = null, otXPTNodeType? nodetype = null)
             : base(op, operand, engine, nodetype: (!nodetype.HasValue) ? otXPTNodeType.LogicalExpression : nodetype.Value)
         {
             if (this.Operator.Type != otOperatorType.Logical && this.Operator.Type != otOperatorType.Compare)
@@ -1581,7 +2074,7 @@ namespace OnTrack.Rulez.eXPressionTree
             if (this.Operator.Type != otOperatorType.Logical && this.Operator.Type != otOperatorType.Compare)
                 throw new RulezException(RulezException.Types.OperatorTypeNotExpected , arguments: new object[] { op.ToString(), "logical" });
         }
-        public LogicalExpression(Operator op, INode leftoperand, INode rightoperand, Engine engine = null, otXPTNodeType? nodetype = null)
+        public LogicalExpression(IOperatorDefinition op, INode leftoperand, INode rightoperand, Engine engine = null, otXPTNodeType? nodetype = null)
             : base(op, leftoperand, rightoperand, engine: engine, nodetype: (!nodetype.HasValue) ? otXPTNodeType.LogicalExpression : nodetype.Value)
         {
             if (this.Operator.Type !=  otOperatorType.Logical  && this.Operator.Type != otOperatorType.Compare )
@@ -1746,7 +2239,7 @@ namespace OnTrack.Rulez.eXPressionTree
             if (this.Operator.Type != otOperatorType.Logical && this.Operator.Type != otOperatorType.Compare)
                 throw new RulezException(RulezException.Types.OperatorTypeNotExpected, arguments: new object[] { op.ToString(), "compare" });
         }
-        public CompareExpression(Operator op, IExpression leftoperand, IExpression rightoperand, Engine engine = null, otXPTNodeType? nodetype = null)
+        public CompareExpression(IOperatorDefinition op, IExpression leftoperand, IExpression rightoperand, Engine engine = null, otXPTNodeType? nodetype = null)
             : base(op, leftoperand, rightoperand, nodetype: (!nodetype.HasValue) ? otXPTNodeType.CompareExpression : nodetype.Value, engine: engine)
         {
             if (this.Operator.Type != otOperatorType.Logical && this.Operator.Type != otOperatorType.Compare)
@@ -1964,11 +2457,11 @@ namespace OnTrack.Rulez.eXPressionTree
             get
             {
                 if (this.Nodes == null || this.Nodes.Count() == 0) return Core.DataType.GetDataType (otDataType.Null);
-                if (this.Nodes.Count() == 1) return ListType.GetDataType(innerDataType: ((IExpression)this.Nodes[0]).DataType, engine: this.Engine) ;
+                if (this.Nodes.Count() == 1) return ListType.GetDataType(innerDataType: ((IExpression)this.Nodes[0]).ReturnType, engine: this.Engine) ;
                 // get a Datatype according to the structure
                 var structure = new List<IDataType>();
                 var names = new List<string>();
-                foreach (ISymbol aResult in Nodes) { names.Add(aResult.Id);  structure.Add(aResult.DataType);}
+                foreach (ISymbol aResult in Nodes) { names.Add(aResult.Id);  structure.Add(aResult.ReturnType);}
                 IDataType innerType = TupleType.GetDataType(structure: structure.ToArray(), memberNames: names.ToArray(), engine: this.Engine);
                 return ListType.GetDataType(innerDataType: innerType, engine: this.Engine);
             }
@@ -1994,7 +2487,7 @@ namespace OnTrack.Rulez.eXPressionTree
     /// <summary>
     /// defines a selection rule expression
     /// </summary>
-    public class SelectionRule : Rule, IExpression
+    public class SelectionRule : Rule, ISelectionRule, IScope
     {
         #region Static
         /// <summary>
@@ -2034,11 +2527,8 @@ namespace OnTrack.Rulez.eXPressionTree
             throw new NotImplementedException();
         }
         #endregion
-
-
-        private readonly Dictionary<string, ISymbol> _parameters = new Dictionary<string, ISymbol>(); // parameters
-        
-        
+        // parameters
+        private readonly ParameterList  _parameters = new ParameterList(); 
         /// <summary>
         /// constructor
         /// </summary>
@@ -2051,16 +2541,12 @@ namespace OnTrack.Rulez.eXPressionTree
         /// gets or sets the type id of the variable
         /// </summary>
         /// <value></value>
-        public otDataType TypeId
+        public otDataType ReturnTypeId
         {
             get
             {
-                if (Selection != null) return Selection.TypeId;
+                if (Selection != null) return Selection.ReturnTypeId;
                 return otDataType.Null;
-            }
-            set
-            {
-                throw new InvalidOperationException();
             }
         }
 
@@ -2068,18 +2554,25 @@ namespace OnTrack.Rulez.eXPressionTree
         /// gets or sets the type
         /// </summary>
         /// <value></value>
-        public IDataType DataType
+        public IDataType ReturnType
         {
             get
             {
-                if (Selection != null) return Selection.DataType;
+                if (Selection != null) return Selection.ReturnType;
                 return null;
             }
         }
         /// <summary>
         /// gets or sets the result (which is a ResultList)
         /// </summary>
-        public ResultList Result { get { if (this.Nodes.Count > 0)  return ((SelectionStatementBlock)this.Nodes[0]).Result; return null;  } }
+        public ResultList Result
+        {
+            get
+            {
+                if (this.Nodes.Count > 0)  return ((SelectionStatementBlock)this.Nodes[0]).Result;
+                return null;
+            }
+        }
         /// <summary>
         /// gets or sets the selection expression
         /// </summary>
@@ -2099,12 +2592,63 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <summary>
         /// gets the list of parameters
         /// </summary>
-        public IEnumerable<ISymbol> Parameters { get { return _parameters.Values.ToList(); } }
+        public ParameterList Parameters { get { return _parameters; } }
+
+        public ObservableCollection<IScope> SubScopes
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public IRepository Repository
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public IScope Parent
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+
+            set
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public CanonicalName Name
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        IScope IScope.Parent
+        {
+            get
+            {
+                throw new NotImplementedException();
+            }
+
+            set
+            {
+                throw new NotImplementedException();
+            }
+        }
+
         /// <summary>
         /// returns a List of object names retrieved with this rule
         /// </summary>
         /// <returns></returns>
-        public IList<String> ResultingObjectnames()
+        public IList<String> ResultObjectIds()
         {
             if (Selection != null) return Selection.ResultingObjectnames();
             return new List<String>();
@@ -2115,27 +2659,27 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <param name="id"></param>
         /// <returns></returns>
         public bool HasParameter(string id)
-        { return _parameters.ContainsKey(id); }
+        { return _parameters.Where ( x => String.Compare (x.Id, id, ignoreCase:true)==0).Count() > 0; }
         /// <summary>
         /// gets the parameter by name
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public ISymbol GetParameter(string id)
-        { return _parameters[id]; }
+        public Parameter GetParameter(string id)
+        { return _parameters.Where(x => String.Compare(x.Id, id, ignoreCase: true) == 0).FirstOrDefault(); }
         /// <summary>
         /// Adds a Parameter to the Selection Rule
         /// </summary>
         /// <param name="handle"></param>
         /// <param name="dataTypeId"></param>
         /// <returns></returns>
-        public ISymbol AddNewParameter(string id, otDataType dataTypeId)
+        public Parameter AddNewParameter(string id, otDataType dataTypeId)
         {
-            if (_parameters.ContainsKey(id))
+            if (this.HasParameter(id))
                 throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { id, this.Id });
             // create and add Variable
-            var aVar = new Variable(id:id, dataTypeId:dataTypeId, scope:this);
-             _parameters.Add(aVar.Id,aVar);
+            var aVar = new Parameter(id:id, dataTypeId:dataTypeId);
+             _parameters.Add(aVar);
             return aVar;
         }
         /// <summary>
@@ -2144,16 +2688,13 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <param name="id"></param>
         /// <param name="datatype"></param>
         /// <returns></returns>
-        public ISymbol AddNewParameter(string id, IDataType datatype)
+        public Parameter AddNewParameter(string id, IDataType datatype)
         {
-            if (_parameters.ContainsKey(id))
-            {
+            if (this.HasParameter(id))
                 throw new RulezException(RulezException.Types.IdExists, arguments: new object[] { id, this.Id });
-            }
-            var aVar = new Variable(id: id, datatype: datatype, scope: this);
-            _parameters.Add(aVar.Id, aVar);
-            // add symbol to scope
-            if (this.Scope != null) this.Scope.AddSymbol(aVar);
+            var aVar = new Parameter(id: id, datatype: datatype);
+            // create and add Variable
+            _parameters.Add(aVar);
             return aVar;
         }
         /// <summary>
@@ -2162,20 +2703,139 @@ namespace OnTrack.Rulez.eXPressionTree
         /// <returns></returns>
         public override string ToString()
         {
-            bool comma = false;
             string aString = "{(" + NodeType.ToString() + ") " + this.Id + "[";
-            foreach (ISymbol aSymbol in Parameters)
-            {
-                if (comma) aString += ",";
-                aString += aSymbol.ToString();
-                comma = true;
-            }
+            aString += _parameters.Signature.ToString();
             aString += "]";
             if (this.Result != null) aString += Result.ToString();
             aString += "{";
             if (Selection != null) aString += Selection.ToString();
             aString += "}}";
             return aString;
+        }
+
+        public bool HasSubScope(string id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool HasScope(CanonicalName name)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool HasScope(string id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IScope GetSubScope(string id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IScope GetScope(CanonicalName name)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IScope GetScope(string id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IScope AddSubScope(string id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool AddScope(IScope scope)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool AddScope(string id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool AddScope(CanonicalName name)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IScope GetRoot()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IScope NewScope(string id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IScope NewScope(CanonicalName name)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void Scope_DataObjectRepositoryAdded(object sender, Engine.EventArgs e)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool RegisterDataObjectRepository(IDataObjectRepository dataObjectRepository)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool DeRegisterDataObjectRepository(IDataObjectRepository dataObjectRepository)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Add(ISigned signed)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Has(ISignature signature)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Has<T>(ISignature signature = null) where T : ISigned
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Has(CanonicalName name)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Has<T>(CanonicalName name) where T : ISigned
+        {
+            throw new NotImplementedException();
+        }
+
+        public IList<ISigned> Get(ISignature signature)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IList<T> Get<T>(ISignature signature = null) where T : ISigned
+        {
+            throw new NotImplementedException();
+        }
+
+        public IList<T> Get<T>(CanonicalName name) where T : ISigned
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Remove(ISignature signature)
+        {
+            throw new NotImplementedException();
         }
     }
     /// <summary>
@@ -2200,7 +2860,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// gets or sets the type id of the variable
         /// </summary>
         /// <value></value>
-        public otDataType TypeId
+        public otDataType ReturnTypeId
         {
             get
             {
@@ -2211,7 +2871,7 @@ namespace OnTrack.Rulez.eXPressionTree
         /// gets or sets the type
         /// </summary>
         /// <value></value>
-        public IDataType DataType  {  get  {  return Results.DataType;   }  }
+        public IDataType ReturnType  {  get  {  return Results.DataType;   }  }
         /// <summary>
         /// gets or sets the result (which is a ResultList)
         /// </summary>
@@ -2247,7 +2907,7 @@ namespace OnTrack.Rulez.eXPressionTree
         }
     }
     /// <summary>
-    /// top level 
+    /// mutual top level tree object
     /// </summary>
     public class Unit : XPTree
     {

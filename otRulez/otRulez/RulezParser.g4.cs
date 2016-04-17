@@ -60,10 +60,10 @@ namespace OnTrack.Rulez
         public struct VariableDefinition
         {
             public IDataType datatype;
-            public string name;
+            public string Id;
             public INode defaultvalue;
             public VariableDefinition(string name, IDataType datatype, INode defaultvalue = null)
-            { this.name = name; this.datatype = datatype; this.defaultvalue = defaultvalue; }
+            { this.Id = name; this.datatype = datatype; this.defaultvalue = defaultvalue; }
         }
         /// <summary>
         /// gets or sets the current XPTScope
@@ -103,8 +103,11 @@ namespace OnTrack.Rulez
             RuleContext root = GetRootContext(context, typeof(SelectStatementBlockContext));
             if (root != null)
             {
-                
-                return ((SelectStatementBlockContext)root).names.ContainsKey(name);
+                // if defined here then return true else if a parent than take next nested Statement Block
+                if (((SelectStatementBlockContext)root).names.ContainsKey(name) == true) return true;
+                else if (root.Parent != null) return IsVariableName(name, root.Parent);
+                return false;
+
             }
             // this.NotifyErrorListeners(String.Format(Messages.RCM_2, name, "SelectStatementBlock"));
             return false;
@@ -163,7 +166,11 @@ namespace OnTrack.Rulez
             RuleContext root = GetRootContext(context, typeof(SelectionRulezContext));
             if (root != null)
             {
-                return ((SelectionRulezContext)root).names.ContainsKey(name);
+
+                // if defined here then return true else if a parent than take next nested Statement Block
+                if (((SelectStatementBlockContext)root).names.ContainsKey(name) == true) return true;
+                else if (root.Parent != null) return IsParameterName(name, root.Parent);
+                return false;
             }
             // this.NotifyErrorListeners(String.Format(Messages.RCM_4, id, "SelectionRule"));
             return false;
@@ -188,26 +195,26 @@ namespace OnTrack.Rulez
         /// returns true if this a Data Object class
         /// </summary>
         /// <returns></returns>
-        bool IsDataObjectClass(string name, RuleContext context)
+        bool IsDataObjectClass(string id, RuleContext context)
         {
             // check the name might be a full name
-            return Engine.Globals.HasDataObjectDefinition(ObjectName.GetObjectID(name));
+            return Engine.Has<IObjectDefinition>(name: new ObjectName(id));
         }
         /// <summary>
         /// returns true if this a Data Object class
         /// </summary>
         /// <returns></returns>
-        bool IsDataObjectEntry(string name, RuleContext context)
+        bool IsDataObjectEntry(string id, RuleContext context)
         {
             // check the name might be a full name
-            EntryName aName = new EntryName(name);
-            string aClassId =  aName.ObjectId ;
-            string anEntryId = aName.Id;
+            var anEntryName = new EntryName(id);
+            string aClassId =  anEntryName.ObjectId ;
+            string anEntryId = anEntryName.Id;
 
             // if we are in the right context
             if (context is DataObjectEntryNameContext)
             {
-                DataObjectEntryNameContext ctx = (DataObjectEntryNameContext)context;
+                var ctx = (DataObjectEntryNameContext)context;
                 if (!ctx.Name.IsEntryName() || String.IsNullOrEmpty (ctx.Name.ObjectId )) aClassId = GetDefaultClassName(context);
                 else
                 {
@@ -219,27 +226,27 @@ namespace OnTrack.Rulez
             }
             else if (context is SelectExpressionContext)
             {
-                SelectExpressionContext ctx = (SelectExpressionContext)context;
+                var ctx = (SelectExpressionContext)context;
                 string aDefaultname = GetDefaultClassName(ctx);
                 if (!(String.IsNullOrEmpty(aDefaultname))) aClassId = aDefaultname;
             }
             else if (context is SelectConditionContext)
             {
-                SelectConditionContext ctx = (SelectConditionContext)context;
+                var ctx = (SelectConditionContext)context;
                 string aDefaultname = GetDefaultClassName(ctx);
                 if (!(String.IsNullOrEmpty(aDefaultname))) aClassId = aDefaultname;
             }
             else if (context is ResultSelectionContext)
             {
-                ResultSelectionContext ctx = (ResultSelectionContext)context;
+                var ctx = (ResultSelectionContext)context;
                 string aDefaultname = GetDefaultClassName(ctx);
                 if (string.IsNullOrEmpty(ctx.ClassName)) aClassId = GetDefaultClassName(context);
                 else if (!String.IsNullOrWhiteSpace(ctx.ClassName)) aClassId = ctx.ClassName;
             }
-                
+
             // check if DataObjectEntry is there
-            if (!string.IsNullOrWhiteSpace(aClassId) && Engine.Globals.HasDataObjectDefinition(aClassId))
-                return (Engine.Globals.GetDataObjectDefinition(aClassId).HasEntry(anEntryId));
+            if (!string.IsNullOrWhiteSpace(aClassId) && Engine.Has<IObjectDefinition>(anEntryName.ObjectName))
+                return (Engine.Has<IObjectEntryDefinition>(anEntryName));
             // no way to get classname and entryname
             return false;
         }
@@ -247,11 +254,11 @@ namespace OnTrack.Rulez
         /// checks if the name is a unique rule id and throws an error
         /// </summary>
         /// <returns></returns>
-        public bool CheckUniqueSelectionRuleId(string name)
+        public bool CheckUniqueSelectionRuleId(string id)
         {
-            if (Engine.Globals.HasSelectionRule (name))
+            if (Engine.Has<ISelectionRule> (new ObjectName(id)))
             {
-                this.NotifyErrorListeners(String.Format(Messages.RCM_7, name)); 
+                this.NotifyErrorListeners(String.Format(Messages.RCM_7, id)); 
                 return false;
             }
             return true;
@@ -353,49 +360,22 @@ namespace OnTrack.Rulez
             return GetCurrentScopeID(context.Parent);
         }
         /// <summary>
-        /// returns true if the id is a data type name
+        /// returns true if the id is a data type name of an optional given typeid
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        bool IsDataTypeName(string id)
+        bool IsDataType(string id, otDataType? typeid = null)
         {
+            var aName = new CanonicalName(id);
             if (this.Engine != null)
             {
-                return this.Engine.Globals.HasDataType(id);
-            }
-            return false;
-        }
-        /// <summary>
-        /// returns true if the id is a data object type name
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        bool IsDataObjectType(string id)
-        {
-            if (this.Engine != null)
-            {
-                if (this.Engine.Globals.HasDataType(id))
-                {
-                    IDataType aDatatype = this.Engine.Globals.GetDatatype(id);
-                    return (aDatatype.TypeId == otDataType.DataObject);
-                }
-            }
-            return false;
-        }
-        /// <summary>
-        /// returns true if the id is a data object type name
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        bool IsSymbolType(string id)
-        {
-            if (this.Engine != null)
-            {
-                if (this.Engine.Globals.HasDataType(id))
-                {
-                    IDataType aDatatype = this.Engine.Globals.GetDatatype(id);
-                    return (aDatatype.TypeId == otDataType.Symbol);
-                }
+                if (this.Engine.Has<IDataType>(aName))
+                    if (typeid.HasValue)
+                    {
+                        foreach (IDataType aDatatype in this.Engine.Get<IDataType>(aName))
+                            if (aDatatype.TypeId == typeid.Value) return true;
+                    }
+                    else return true;
             }
             return false;
         }

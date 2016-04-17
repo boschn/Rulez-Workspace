@@ -19,6 +19,8 @@ using OnTrack.Rulez.eXPressionTree;
 using OnTrack.Core;
 // add Dictionary
 using System.Collections.Generic;
+// Linq Extensions
+using System.Linq;
 }
 
 /* Rulez -> entry rule for parsing
@@ -83,7 +85,7 @@ returns [ Core.IDataType datatype]
 	| compositeType [$id] {$datatype = $ctx.compositeType().datatype;}
 
 	// defined data types by name such as data objects, if the save name is null
-	|  {$id == null && IsDataTypeName($ctx.GetText())}? identifier { $datatype = this.Engine.Globals.GetDatatype($ctx.identifier().GetText());}
+	|  {$id == null && IsDataType($ctx.GetText())}? identifier { $datatype = this.Engine.Get<IDataType>(new CanonicalName($ctx.identifier().GetText())).FirstOrDefault();}
 	;
 
 /* structure types
@@ -92,7 +94,8 @@ returns [ Core.IDataType datatype]
 datastructureType [string id]
 returns [ Core.IDataType datatype ]
 locals [ bool isnullable = false]
-	: LIST (isNullable {$isnullable = true;})? OF dataType[null] { $datatype = Rulez.ListType.GetDataType (innerDataType:$ctx.dataType().datatype, id: id, engine: this.Engine, isNullable: $isnullable);}
+	: LIST (isNullable {$isnullable = true;})? OF dataType[null] 
+	{ $datatype = Rulez.ListType.GetDataType (innerDataType:$ctx.dataType().datatype, id: id, engine: this.Engine, isNullable: $isnullable);}
 	;
 
 /*
@@ -117,8 +120,8 @@ returns [ Core.IDataType datatype ]
 decimalUnitDeclaration [string id]
 returns [ Core.IDataType datatype ]
 	: DECIMALUNIT OF symboldecl=symbolTypeDeclaration[null] {$datatype = Rulez.DecimalUnitType.GetDataType( unit: (SymbolType) $ctx.symboldecl.datatype, id: id, engine: this.Engine);  }
-	 {IsSymbolType($ctx.identifier().GetText())}? LANGUAGETEXT OF identifier 
-		{$datatype = Rulez.DecimalUnitType.GetDataType(unit: (SymbolType) this.Engine.Globals.GetDatatype($ctx.identifier().GetText()), id: id, engine: this.Engine);}
+	 {IsDataType($ctx.identifier().GetText(),otDataType.Symbol)}? LANGUAGETEXT OF identifier 
+		{$datatype = Rulez.DecimalUnitType.GetDataType(unit: (SymbolType) this.Engine.Get<IDataType>(new CanonicalName($ctx.identifier().GetText())), id: id, engine: this.Engine);}
 
 	;
 
@@ -132,8 +135,8 @@ returns [ Core.IDataType datatype ]
 languageTextDeclaration [string id]
 returns [ Core.IDataType datatype ]
 	: LANGUAGETEXT OF symboldecl=symbolTypeDeclaration[null] {$datatype = Rulez.LanguageTextType.GetDataType( cultural: (SymbolType) $ctx.symboldecl.datatype, id: id, engine: this.Engine);  }
-	| {IsSymbolType($ctx.identifier().GetText())}? LANGUAGETEXT OF identifier 
-		{$datatype = Rulez.LanguageTextType.GetDataType(cultural: (SymbolType) this.Engine.Globals.GetDatatype($ctx.identifier().GetText()), id: id,engine: this.Engine);}
+	| {IsDataType($ctx.identifier().GetText(), otDataType.Symbol)}? LANGUAGETEXT OF identifier 
+		{$datatype = Rulez.LanguageTextType.GetDataType(cultural: (SymbolType) this.Engine.Get<IDataType>(new CanonicalName($ctx.identifier().GetText())), id: id,engine: this.Engine);}
 	;
 /*
  * anonymous canonicalName declaration
@@ -356,12 +359,12 @@ returns [ OnTrack.Rulez.eXPressionTree.INode XPTreeNode ]
  * Logical Operator
  */
  logicalOperator_1
- returns [ OnTrack.Rulez.Operator Operator  ]
+ returns [ OnTrack.Rulez.eXPressionTree.IOperatorDefinition Operator  ]
     : NOT { $ctx.Operator = Operator.GetOperator(new Token(Token.NOT));}
     ;
 
  logicalOperator_2
- returns [ OnTrack.Rulez.Operator Operator  ]
+ returns [ OnTrack.Rulez.eXPressionTree.IOperatorDefinition Operator  ]
     : AND { $ctx.Operator = Operator.GetOperator(new Token(Token.ANDALSO));}
     | OR  { $ctx.Operator = Operator.GetOperator(new Token(Token.ORELSE));}
 	;
@@ -392,7 +395,7 @@ locals [ string defaultClassName ]
 /* Arithmetic Operators
  */
 arithmeticOperator
-returns [ OnTrack.Rulez.Operator Operator  ]
+returns [ OnTrack.Rulez.eXPressionTree.IOperatorDefinition Operator  ]
     : PLUS { $ctx.Operator = Operator.GetOperator(new Token(Token.PLUS));}
 	| MINUS { $ctx.Operator = Operator.GetOperator(new Token(Token.MINUS));}
 	| DIV { $ctx.Operator = Operator.GetOperator(new Token(Token.DIV));}
@@ -405,7 +408,7 @@ returns [ OnTrack.Rulez.Operator Operator  ]
  */
 
 compareOperator
-returns [ OnTrack.Rulez.Operator Operator  ]
+returns [ OnTrack.Rulez.eXPressionTree.IOperatorDefinition Operator  ]
     : EQ { $ctx.Operator = Operator.GetOperator(new Token(Token.EQ));}
 	| NEQ { $ctx.Operator = Operator.GetOperator(new Token(Token.NEQ));}
 	| GT  { $ctx.Operator = Operator.GetOperator(new Token(Token.GT));}
