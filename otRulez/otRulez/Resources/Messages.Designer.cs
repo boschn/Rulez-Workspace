@@ -106,6 +106,15 @@ namespace OnTrack.Rulez.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to generating code for &apos;{0}&apos; failed due to &apos;{1}&apos;.
+        /// </summary>
+        internal static string RCM_14 {
+            get {
+                return ResourceManager.GetString("RCM_14", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to no variable context &apos;{0}&apos; found.
         /// </summary>
         internal static string RCM_2 {
@@ -205,7 +214,7 @@ namespace OnTrack.Rulez.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Generating rule theCode failed - see inner exception.
+        ///   Looks up a localized string similar to Generating rule code failed - see inner exception.
         /// </summary>
         internal static string REM_12 {
             get {

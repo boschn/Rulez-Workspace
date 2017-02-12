@@ -64,6 +64,9 @@ namespace OnTrack.Rulez
                 return _engine;
             }
         }
+        /// <summary>
+        /// gets the Parser
+        /// </summary>
         public RulezParser Parser
         {
             get
@@ -352,6 +355,16 @@ namespace OnTrack.Rulez
             private set { _xptree = value; }
         }
         /// <summary>
+        /// gets the Parser
+        /// </summary>
+        public RulezParser Parser
+        {
+            get
+            {
+                return _parser;
+            }
+        }
+        /// <summary>
         /// returns the Declaration Tree
         /// </summary>
         public XPTDeclarator Declarations
@@ -387,9 +400,11 @@ namespace OnTrack.Rulez
             // selection Rulez
             if (ctx.oneRulez() != null && ctx.oneRulez().Count() > 0)
             {
-                if (ctx.XPTreeNode == null) ctx.XPTreeNode = new eXPressionTree.Unit(engine:this.Engine);
-                foreach (RulezParser.OneRulezContext aCtx in ctx.oneRulez()) ctx.XPTreeNode.Add((IXPTree)aCtx.XPTreeNode);
-                return ;
+                if (ctx.XPTreeNode == null) 
+                    ctx.XPTreeNode = new eXPressionTree.Unit(engine:this.Engine);
+
+                foreach (RulezParser.OneRulezContext aCtx in ctx.oneRulez()) 
+                    ctx.XPTreeNode.Add((IXPTree)aCtx.XPTreeNode);
             }
 
             return ;
@@ -403,15 +418,12 @@ namespace OnTrack.Rulez
         {
             // selection Rulez
             if (ctx.selectionRulez() != null)
-            {
                 ctx.XPTreeNode = ctx.selectionRulez().XPTreeNode;
-                return ;
-            }
+            else
             if (ctx.typeDeclaration() != null)
-            {
                 ctx.XPTreeNode = null;
-                return ;
-            }
+            // return    
+            return ;
         }
         
         /// <summary>
@@ -420,9 +432,12 @@ namespace OnTrack.Rulez
         /// <param name="context"></param>
         public override void EnterSelectionRulez(RulezParser.SelectionRulezContext context)
         {
-            if (context.XPTreeNode == null) context.XPTreeNode = new SelectionRule(engine: this.Engine);
+            // XPTreeNode missing ?!
+            if (context != null && context.XPTreeNode == null) 
+                context.XPTreeNode = new SelectionRule(engine: this.Engine);
             // set the _xptree by a new SelectionRule xPTree
-            if (this.XPTree == null) this.XPTree = (XPTree)context.XPTreeNode;
+            if (this.XPTree == null) 
+                this.XPTree = (XPTree)context.XPTreeNode;
         }
         /// <summary>
         /// builds the XPT node of this
@@ -433,8 +448,13 @@ namespace OnTrack.Rulez
         {
             // $ctx.XPTreeNode = (eXPressionTree.IeXPressionTree) new SelectionRule($ctx.ruleid().GetText(), engine: this.Engine);
             // get the name
-            var aRule = new SelectionRule(ctx.ruleid().GetText(), engine: this.Engine);
-            ctx.XPTreeNode = aRule;
+
+            // no rule ???! should be there if declarator has rn
+            if (ctx.XPTreeNode == null)
+                ctx.XPTreeNode = new SelectionRule(ctx.ruleid().GetText(), engine: this.Engine);
+
+            // get the rule
+            var aRule = (SelectionRule) ctx.XPTreeNode ;
 
             // add expression
             if (ctx.selection() != null)
@@ -443,6 +463,7 @@ namespace OnTrack.Rulez
                 aRule.Selection.Add(new @Return((SelectionExpression)ctx.selection().XPTreeNode));
             }
             else if (ctx.selectStatementBlock() != null) aRule.Selection = (SelectionStatementBlock)ctx.selectStatementBlock().XPTreeNode;
+
             // add the parameters
             foreach (RulezParser.ParameterDefinition aParameter in ctx.names.Values)
             {
@@ -461,9 +482,11 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public override void ExitSelectStatementBlock(RulezParser.SelectStatementBlockContext ctx)
         {
-            if (ctx.XPTreeNode == null) ctx.XPTreeNode = new OnTrack.Rulez.eXPressionTree.SelectionStatementBlock();
+            // create if not created
+            if (ctx.XPTreeNode == null) 
+                ctx.XPTreeNode = new OnTrack.Rulez.eXPressionTree.SelectionStatementBlock();
+            // define the block
             var aBlock = (SelectionStatementBlock)ctx.XPTreeNode;
-
             // add the defined variables to the XPT
             foreach (RulezParser.VariableDefinition aVariable in ctx.names.Values)
             {
@@ -475,11 +498,9 @@ namespace OnTrack.Rulez
             }
             // add statements
             foreach (RulezParser.SelectStatementContext statementCTX in ctx.selectStatement())
-            {
                 // add it to the Block
                 aBlock.Nodes.Add((IStatement)statementCTX.XPTreeNode);
-            }
-
+            //return 
             return;
         }
         /// <summary>
@@ -489,7 +510,7 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public override void ExitSelectStatement(RulezParser.SelectStatementContext ctx)
         {
-
+            // TODO: Implement
             return ;
         }
         /// <summary>
@@ -499,6 +520,7 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public override void ExitAssignment(RulezParser.AssignmentContext ctx)
         {
+            // TODO: Implement
             return;
         }
         /// <summary>
@@ -508,11 +530,12 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public override void ExitMatch(RulezParser.MatchContext ctx)
         {
+            // TODO: Implement
             return ;
         }
         public override void ExitMatchcase (RulezParser.MatchcaseContext ctx)
         {
-
+            // TODO: Implement
             return ;
         }
         /// <summary>
@@ -522,11 +545,10 @@ namespace OnTrack.Rulez
         /// <returns></returns>
         public override void ExitReturn(RulezParser.ReturnContext ctx)
         {
+            // if no expression ?! Build the default
             if (ctx.selectExpression() != null)
-            {
                 ctx.XPTreeNode = new Return(@return: (IExpression)ctx.selectExpression().XPTreeNode, engine: this.Engine);
-                return ;
-            }
+            //return
             return ;
         }
         /// <summary>
@@ -537,25 +559,33 @@ namespace OnTrack.Rulez
         public override void ExitSelection(RulezParser.SelectionContext ctx)
         {
             // extract the class name
-            if (String.IsNullOrEmpty(ctx.ClassName)) ctx.ClassName = ctx.dataObject.GetText();
-
+            if (String.IsNullOrEmpty(ctx.ClassName))
+                if (ObjectName.IsCanonical(ctx.dataObject.GetText()))
+                    ctx.ClassName = ctx.dataObject.GetText();
+                else ctx.ClassName = (new ObjectName(this.CurrentScope.Id, ctx.ClassName)).FullId;
+            // check the classname if in scope
+            if (this.CurrentScope.Has<IObjectDefinition>(new ObjectName (ctx.ClassName)) == false)
+            {
+                Parser.NotifyErrorListeners((String.Format(Messages.RCM_9, ctx.ClassName)));
+                return;
+            }
             // create the result with the data object class name
+            if (ctx.resultSelection().XPTreeNode == null)
+            {
+                Parser.NotifyErrorListeners((String.Format(Messages.RCM_14, ctx.ClassName , "no result")));
+                return;
+            }
+            // get result
             var aResult = (ResultList)ctx.resultSelection().XPTreeNode;
-
             // create a selection expression with the result
             var aSelection = new eXPressionTree.SelectionExpression(result: aResult, engine: this.Engine);
-
             //  L_SQUARE_BRACKET  R_SQUARE_BRACKET // all
             if (ctx.selectConditions() == null)
-            {
                 // simple true operator
                 aSelection.Nodes.Add(LogicalExpression.TRUE());
-            }
             else
-            {
                 // add the subtree to the selection
                 aSelection.Nodes.Add(ctx.selectConditions().XPTreeNode);
-            }
             // add it to selection as XPTreeNode
             ctx.XPTreeNode = aSelection;
             return ;

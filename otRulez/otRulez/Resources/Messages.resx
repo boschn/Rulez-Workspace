@@ -112,6 +112,9 @@
   <data name="RCM_13" xml:space="preserve">
     <value>selection rule '{0}' is defined more than once</value>
   </data>
+  <data name="RCM_14" xml:space="preserve">
+    <value>generating code for '{0}' failed due to '{1}'</value>
+  </data>
   <data name="RCM_2" xml:space="preserve">
     <value>no variable context '{0}' found</value>
   </data>
@@ -146,7 +149,7 @@
     <value>invalid type of node '{0}' - expected is {1}</value>
   </data>
   <data name="REM_12" xml:space="preserve">
-    <value>Generating rule theCode failed - see inner exception</value>
+    <value>Generating rule code failed - see inner exception</value>
   </data>
   <data name="REM_13" xml:space="preserve">
     <value>Running a rule failed - see inner exception</value>

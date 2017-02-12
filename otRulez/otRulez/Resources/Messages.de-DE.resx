@@ -132,6 +132,9 @@
   <data name="RCM_13" xml:space="preserve">
     <value>Auswahlregel '{0}' ist mehr wie einmal definiert.</value>
   </data>
+  <data name="RCM_14" xml:space="preserve">
+    <value>Generierung des Codes für '{0}' fehlgeschlagen. Zusätzlicher Hinweis: '{1}'</value>
+  </data>
   <data name="RCM_2" xml:space="preserve">
     <value>Keinen Variablen-Kontext '{0}' gefunden.</value>
   </data>
