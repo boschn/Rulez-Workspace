@@ -154,3 +154,7 @@ $RECYCLE.BIN/
 
 # Mac desktop service store files
 .DS_Store
+/.vs/Rulez Workspace/v15/Server/sqlite3
+/.vs
+/otIOCSV/.vs/otIOCSV/v15/Server/sqlite3
+/MigrationBackup/d036ea0f/otIOCSV
